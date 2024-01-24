@@ -2,9 +2,10 @@ from gojo.bytes.bytes import Byte
 
 
 fn trim_null_characters(b: DynamicVector[Byte]) -> DynamicVector[Byte]:
+    """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters."""
     var new_b = DynamicVector[Byte](b.size)
     for i in range(b.size):
-        if b[i] != 0:
+        if b[i] > 0 and b[i] < 127:
             new_b.append(b[i])
     return new_b
 
@@ -31,11 +32,6 @@ fn copy(inout target: DynamicVector[Byte], source: DynamicVector[Byte]) -> Int:
 
     target = trim_null_characters(target)
     return count
-
-
-# # ErrTooLarge is passed to panic if memory cannot be allocated to store data in a buffer.
-# var ErrTooLarge = errors.New("bytes.Buffer: too large")
-# var errNegativeRead = errors.New("bytes.Buffer: reader returned negative count from read")
 
 
 fn cap(buffer: DynamicVector[Byte]) -> Int:

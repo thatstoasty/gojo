@@ -193,14 +193,16 @@ struct Buffer(io.Writer, io.Reader):
         buffer becomes too large, write will panic with [ErrTooLarge].
         """
         self.last_read = op_invalid
-        var m: Int
-        let ok: Bool
-        m, ok = self.try_grow_by_reslice(p.size)
-        if not ok:
-            m = self.grow(p.size)
-
-        # var b = get_slice[Byte](self.buf, m, self.buf.size)
-        return copy(self.buf, trim_null_characters(p))
+        # var m: Int
+        # let ok: Bool
+        # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
+        # IDK why, but for now we can let the dynamicvector grow on its own and not try to mess w the capacity and growing it.
+        # m, ok = self.try_grow_by_reslice(p.size)
+        # if not ok:
+        #     m = self.grow(p.size)
+        # self.buf = get_slice[Byte](self.buf, m, self.buf.size)
+        let sl = trim_null_characters(p)
+        return copy(self.buf, sl)
 
     fn write_string(inout self, s: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -214,7 +216,6 @@ struct Buffer(io.Writer, io.Reader):
         if not ok:
             m = self.grow(len(s))
 
-        # print("slice from", m, "to", len(self.buf))
         # var buf = get_slice(self.buf, m, len(self.buf))
 
         # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
@@ -271,7 +272,7 @@ struct Buffer(io.Writer, io.Reader):
 
         # let b2 = append(DynamicVector[Byte](nil), make(DynamicVector[Byte], c)...)
         _ = copy(b2, b)
-        return get_slice[Byte](b2, 0, b.size)
+        return get_slice(b2, 0, b.size)
 
     fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int64:
         """Writes data to w until the buffer is drained or an error occurs.
@@ -283,7 +284,8 @@ struct Buffer(io.Writer, io.Reader):
         let n_bytes: Int = self.len()
         var n: Int64 = 0
         if n_bytes > 0:
-            let m = self.write(get_slice(self.buf, self.off, len(self.buf)))
+            let sl = get_slice(self.buf, self.off, len(self.buf))
+            let m = w.write(sl)
             if m > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")
 

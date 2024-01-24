@@ -1,6 +1,7 @@
 from gojo.collections import get_slice
 from gojo.bytes.util import to_string
 
+# TODO: Convert byte to UInt8 and refactor
 alias Byte = Int8
 
 
