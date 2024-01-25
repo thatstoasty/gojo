@@ -149,7 +149,7 @@ struct Buffer(io.Writer, io.Reader):
             return i
 
         # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
-        if self.buf.size == 0 and n <= small_buffer_size:
+        if len(self.buf) == 0 and n <= small_buffer_size:
             self.buf.reserve(small_buffer_size)
             # Returning 0 messed things up by inserting on the first index twice, but why?
             # return 0
@@ -166,7 +166,7 @@ struct Buffer(io.Writer, io.Reader):
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
             self.buf = self.grow_slice(
-                get_slice(self.buf, self.off, self.buf.size), self.off + n
+                get_slice(self.buf, self.off, len(self.buf)), self.off + n
             )
 
         # Restore self.off and len(self.buf).
@@ -200,7 +200,7 @@ struct Buffer(io.Writer, io.Reader):
         # m, ok = self.try_grow_by_reslice(p.size)
         # if not ok:
         #     m = self.grow(p.size)
-        # self.buf = get_slice[Byte](self.buf, m, self.buf.size)
+        # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
         let sl = trim_null_characters(p)
         return copy(self.buf, sl)
 
@@ -272,7 +272,7 @@ struct Buffer(io.Writer, io.Reader):
 
         # let b2 = append(DynamicVector[Byte](nil), make(DynamicVector[Byte], c)...)
         _ = copy(b2, b)
-        return get_slice(b2, 0, b.size)
+        return get_slice(b2, 0, len(b))
 
     fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int64:
         """Writes data to w until the buffer is drained or an error occurs.
@@ -356,7 +356,7 @@ struct Buffer(io.Writer, io.Reader):
 
             return 0
 
-        let b = get_slice(self.buf, self.off, self.buf.size)
+        let b = get_slice(self.buf, self.off, len(self.buf))
         let n = copy(p, b)
         self.off += n
         if n > 0:
@@ -465,7 +465,7 @@ struct Buffer(io.Writer, io.Reader):
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
         var lines: DynamicVector[Byte] = DynamicVector[Byte]()
-        for i in range(sl.size):
+        for i in range(len(sl)):
             let byte = sl[i]
             lines.append(byte)
         return lines
