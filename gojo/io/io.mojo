@@ -1,5 +1,5 @@
-from gojo.bytes.bytes import Byte
-from gojo.collections import get_slice
+from gojo.bytes.bytes import to_bytes
+from external.stdlib.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
 
@@ -80,8 +80,8 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 # nothing happened; in particular it does not indicate EOF.
 #
 # Implementations must not retain p.
-trait Reader:
-    fn read(inout self, inout p: DynamicVector[Byte]) -> Int:
+trait Reader(CollectionElement):
+    fn read(inout self, inout b: bytes) -> Int:
         ...
 
 
@@ -94,8 +94,8 @@ trait Reader:
 # Write must not modify the slice data, even temporarily.
 #
 # Implementations must not retain p.
-trait Writer:
-    fn write(inout self, p: DynamicVector[Byte]) raises -> Int:
+trait Writer(CollectionElement):
+    fn write(inout self, b: bytes) raises -> Int:
         ...
 
 
@@ -103,8 +103,8 @@ trait Writer:
 #
 # The behavior of Close after the first call is undefined.
 # Specific implementations may document their own behavior.
-trait Closer:
-    fn close(inout self, p: DynamicVector[Byte]) -> Int:
+trait Closer(CollectionElement):
+    fn close(inout self, b: bytes) -> Int:
         ...
 
 
@@ -123,7 +123,7 @@ trait Closer:
 # Seeking to any positive offset may be allowed, but if the new offset exceeds
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
-trait Seeker:
+trait Seeker(CollectionElement):
     fn seek(inout self, offset: Int64, whence: Int) -> Int:
         ...
 
@@ -219,7 +219,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 #
 # Implementations must not retain p.
 trait ReaderAt:
-    fn read_at(self, p: DynamicVector[Byte], off: Int64) -> Int:
+    fn read_at(self, p: bytes, off: Int64) -> Int:
         ...
 
 
@@ -239,7 +239,7 @@ trait ReaderAt:
 #
 # Implementations must not retain p.
 trait WriterAt:
-    fn write_at(self, p: DynamicVector[Byte], off: Int64) -> Int:
+    fn write_at(self, p: bytes, off: Int64) -> Int:
         ...
 
 
@@ -309,7 +309,8 @@ trait StringWriter:
 # If w implements [StringWriter], [StringWriter.WriteString] is invoked directly.
 # Otherwise, [Writer.Write] is called exactly once.
 fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
-    return w.write(s._buffer)
+    var s_buffer = to_bytes(s)
+    return w.write(s_buffer)
 
 
 fn write_string[T: StringWriter](w: T, s: String) -> Int:
@@ -324,22 +325,20 @@ fn write_string[T: StringWriter](w: T, s: String) -> Int:
 # If min is greater than the length of buf, read_at_least returns [ErrShortBuffer].
 # On return, n >= min if and only if err == nil.
 # If r returns an error having read at least min bytes, the error is dropped.
-fn read_at_least[
-    R: Reader
-](inout r: R, buf: DynamicVector[Byte], min: Int) raises -> Int:
+fn read_at_least[R: Reader](inout r: R, buf: bytes, min: Int) raises -> Int:
     if len(buf) < min:
         raise Error(ErrShortBuffer)
 
     var n: Int = 0
     while n < min:
-        var sl = get_slice(buf, n, len(buf))
+        var sl = buf[n:]
         let nn: Int = r.read(sl)
         n += nn
 
     return n
 
 
-fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
+fn read_full[R: Reader](inout r: R, buf: bytes) raises -> Int:
     """Reads exactly len(buf) bytes from r into buf.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -393,7 +392,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # #
 # # If either src implements [WriterTo] or dst implements [ReaderFrom],
 # # buf will not be used to perform the copy.
-# fn CopyBuffer(dst Writer, src Reader, buf DynamicVector[Byte]) (written int64, err error) {
+# fn CopyBuffer(dst Writer, src Reader, buf bytes) (written int64, err error) {
 # 	if buf != nil and len(buf) == 0 {
 # 		panic("empty buffer in CopyBuffer")
 # 	}
@@ -401,7 +400,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # }
 
 
-# fn copy_buffer[W: Writer, R: Reader](dst: W, src: R, buf: DynamicVector[Byte]) raises -> Int64:
+# fn copy_buffer[W: Writer, R: Reader](dst: W, src: R, buf: bytes) raises -> Int64:
 #     """Actual implementation of Copy and CopyBuffer.
 #     if buf is nil, one is allocated.
 #     """
@@ -421,11 +420,11 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 #     return written
 
 
-# fn copy_buffer[W: Writer, R: ReaderWriteTo](dst: W, src: R, buf: DynamicVector[Byte]) -> Int64:
+# fn copy_buffer[W: Writer, R: ReaderWriteTo](dst: W, src: R, buf: bytes) -> Int64:
 #     return src.write_to(dst)
 
 
-# fn copy_buffer[W: WriterReadFrom, R: Reader](dst: W, src: R, buf: DynamicVector[Byte]) -> Int64:
+# fn copy_buffer[W: WriterReadFrom, R: Reader](dst: W, src: R, buf: bytes) -> Int64:
 #     return dst.read_from(src)
 
 # # LimitReader returns a Reader that reads from r
@@ -441,7 +440,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	var R: Reader # underlying reader
 # 	N int64  # max bytes remaining
 
-# fn (l *LimitedReader) Read(p DynamicVector[Byte]) (n Int, err error) {
+# fn (l *LimitedReader) Read(p bytes) (n Int, err error) {
 # 	if l.N <= 0 {
 # 		return 0, EOF
 # 	}
@@ -478,7 +477,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	n     int64 # constant after creation
 # }
 
-# fn (s *SectionReader) Read(p DynamicVector[Byte]) (n Int, err error) {
+# fn (s *SectionReader) Read(p bytes) (n Int, err error) {
 # 	if s.off >= s.limit {
 # 		return 0, EOF
 # 	}
@@ -511,7 +510,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	return offset - s.base, nil
 # }
 
-# fn (s *SectionReader) ReadAt(p DynamicVector[Byte], off int64) (n Int, err error) {
+# fn (s *SectionReader) ReadAt(p bytes, off int64) (n Int, err error) {
 # 	if off < 0 or off >= s.Size() {
 # 		return 0, EOF
 # 	}
@@ -551,13 +550,13 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	return &OffsetWriter{w, off, off}
 # }
 
-# fn (o *OffsetWriter) Write(p DynamicVector[Byte]) (n Int, err error) {
+# fn (o *OffsetWriter) Write(p bytes) (n Int, err error) {
 # 	n, err = o.w.WriteAt(p, o.off)
 # 	o.off += int64(n)
 # 	return
 # }
 
-# fn (o *OffsetWriter) WriteAt(p DynamicVector[Byte], off int64) (n Int, err error) {
+# fn (o *OffsetWriter) WriteAt(p bytes, off int64) (n Int, err error) {
 # 	if off < 0 {
 # 		return 0, errOffset
 # 	}
@@ -596,7 +595,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	w Writer
 # }
 
-# fn (t *teeReader) Read(p DynamicVector[Byte]) (n Int, err error) {
+# fn (t *teeReader) Read(p bytes) (n Int, err error) {
 # 	n, err = t.r.Read(p)
 # 	if n > 0 {
 # 		if n, err := t.w.Write(p[:n]); err != nil {
@@ -616,7 +615,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # # io.Discard can avoid doing unnecessary work.
 # var _ ReaderFrom = discard{}
 
-# fn (discard) Write(p DynamicVector[Byte]) (Int, error) {
+# fn (discard) Write(p bytes) (Int, error) {
 # 	return len(p), nil
 # }
 
@@ -626,13 +625,13 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 
 # var blackHolePool = sync.Pool{
 # 	New: fn() any {
-# 		b := make(DynamicVector[Byte], 8192)
+# 		b := make(bytes, 8192)
 # 		return &b
 # 	},
 # }
 
 # fn (discard) ReadFrom(r Reader) (n int64, err error) {
-# 	bufp := blackHolePool.Get().(*DynamicVector[Byte])
+# 	bufp := blackHolePool.Get().(*bytes)
 # 	readSize := 0
 # 	for {
 # 		readSize, err = r.Read(*bufp)
@@ -678,8 +677,8 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # # A successful call returns err == nil, not err == EOF. Because ReadAll is
 # # defined to read from src until EOF, it does not treat an EOF from Read
 # # as an error to be reported.
-# fn ReadAll(r Reader) (DynamicVector[Byte], error) {
-# 	b := make(DynamicVector[Byte], 0, 512)
+# fn ReadAll(r Reader) (bytes, error) {
+# 	b := make(bytes, 0, 512)
 # 	for {
 # 		n, err := r.Read(b[len(b):cap(b)])
 # 		b = b[:len(b)+n]

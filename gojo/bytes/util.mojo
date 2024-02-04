@@ -1,38 +1,28 @@
-from gojo.bytes.bytes import Byte
+from external.stdlib.builtins._bytes import bytes, Byte
 
 
-fn trim_null_characters(b: DynamicVector[Byte]) -> DynamicVector[Byte]:
-    """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters."""
-    var new_b = DynamicVector[Byte](b.size)
-    for i in range(b.size):
+fn trim_null_characters(b: bytes) -> bytes:
+    """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters.
+    """
+    var new_b = bytes(len(b))
+    for i in range(len(b)):
         if b[i] > 0 and b[i] < 127:
-            new_b.append(b[i])
+            new_b[i] = b[i]
     return new_b
 
 
-fn to_string(b: DynamicVector[Byte]) -> String:
-    var s: String = ""
-    for i in range(b.size):
-        # TODO: Resizing isn't really working rn. The grow functions return the wrong index to append new bytes to.
-        # This is a hack to ignore the 0 null characters that are used to resize the dynamicvector capacity.
-        if b[i] != 0:
-            let char = chr(int(b[i]))
-            s += char
-    return s
-
-
-fn copy(inout target: DynamicVector[Byte], source: DynamicVector[Byte]) -> Int:
+fn copy(inout target: bytes, source: bytes) -> Int:
     var count = 0
 
     # TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
-    for i in range(source.size):
+    for i in range(len(source)):
         if source[i] != 0:
-            target.append(source[i])
+            target[i] = source[i]
             count += 1
 
     target = trim_null_characters(target)
     return count
 
 
-fn cap(buffer: DynamicVector[Byte]) -> Int:
-    return buffer.capacity
+fn cap(buffer: bytes) -> Int:
+    return buffer._vector.capacity
