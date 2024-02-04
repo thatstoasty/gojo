@@ -66,7 +66,7 @@ struct Buffer(io.Writer, io.Reader):
         passed to an immediately succeeding [Buffer.write] call.
         The buffer is only valid until the next write operation on self.
         """
-        return self.buf[len(self.buf):]
+        return self.buf[len(self.buf) :]
 
     fn string(self) -> String:
         """Returns the contents of the unread portion of the buffer
@@ -77,8 +77,8 @@ struct Buffer(io.Writer, io.Reader):
         # if self == nil:
         #     # Special case, useful in debugging.
         #     return "<nil>"
-        var b = self.buf[self.off:]
-        return to_string(self.buf[self.off:])
+        var b = self.buf[self.off :]
+        return to_string(self.buf[self.off :])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -166,7 +166,7 @@ struct Buffer(io.Writer, io.Reader):
             raise Error("buffer.Buffer: too large")
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
-            var sl = self.buf[self.off:]
+            var sl = self.buf[self.off :]
             self.grow_slice(sl, self.off + n)
             self.buf = sl
 
