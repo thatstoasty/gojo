@@ -1,13 +1,13 @@
-from gojo.http.url import URL
-from gojo.http.response import Response, DefaultReadCloser
-from gojo.http.header import Header
+from ..http.url import URL
+from ..http.response import Response, DefaultReadCloser
+from ..http.header import Header
 
 
 @value
 struct Request(Movable, Copyable):
     # Method specifies the HTTP method (GET, POST, PUT, etc.).
     # For client requests, an empty String means GET.
-    var Method: String
+    var method: String
 
     # URL specifies either the URI being requested (for server
     # requests) or the URL to access (for client requests).
@@ -21,16 +21,16 @@ struct Request(Movable, Copyable):
     # connect to, while the Request's Host field optionally
     # specifies the Host header value to send in the HTTP
     # request.
-    var URL: url.URL
+    var url: url.URL
 
     # The protocol version for incoming server requests.
     #
     # For client requests, these fields are ignored. The HTTP
     # client code always uses either HTTP/1.1 or HTTP/2.
     # See the docs on Transport for details.
-    var Proto: String  # "HTTP/1.0"
-    var ProtoMajor: Int  # 1
-    var ProtoMinor: Int  # 0
+    var proto: String  # "HTTP/1.0"
+    var proto_major: Int  # 1
+    var proto_minor: Int  # 0
 
     # Header contains the request header fields either received
     # by the server or to be sent by the client.
@@ -63,7 +63,7 @@ struct Request(Movable, Copyable):
     # and Connection are automatically written when needed and
     # values in Header may be ignored. See the documentation
     # for the Request.Write method.
-    var Header: Header
+    var header: Header
 
     # Body is the request's body.
     #
@@ -79,7 +79,7 @@ struct Request(Movable, Copyable):
     # Body must allow Read to be called concurrently with Close.
     # In particular, calling Close should unblock a Read waiting
     # for input.
-    var Body: DefaultReadCloser
+    var body: DefaultReadCloser
 
     # # GetBody defines an optional func to return a new copy of
     # # Body. It is used for client requests when a redirect requires
@@ -96,7 +96,7 @@ struct Request(Movable, Copyable):
     #
     # For client requests, a value of 0 with a non-nil Body is
     # also treated as unknown.
-    var ContentLength: Int64
+    var content_length: Int64
 
     # # TransferEncoding lists the transfer encodings from outermost to
     # # innermost. An empty list denotes the "identity" encoding.
@@ -115,7 +115,7 @@ struct Request(Movable, Copyable):
     # For client requests, setting this field prevents re-use of
     # TCP connections between requests to the same hosts, as if
     # Transport.DisableKeepAlives were set.
-    var Close: Bool
+    var close: Bool
 
     # For server requests, Host specifies the host on which the
     # URL is sought. For HTTP/1 (per RFC 7230, section 5.4), this
@@ -136,7 +136,7 @@ struct Request(Movable, Copyable):
     # header to send. If empty, the Request.Write method uses
     # the value of URL.Host. Host may contain an International
     # domain name.
-    var Host: String
+    var host: String
 
     # # Form contains the parsed form data, including both the URL
     # # field's query parameters and the PATCH, POST, or PUT form data.
@@ -183,13 +183,13 @@ struct Request(Movable, Copyable):
     # sets RemoteAddr to an "IP:port" address before invoking a
     # handler.
     # This field is ignored by the HTTP client.
-    var RemoteAddr: String
+    var remote_addr: String
 
     # RequestURI is the unmodified request-target of the
     # Request-Line (RFC 7230, Section 3.1.1) as sent by the client
     # to a server. Usually the URL field should be used instead.
     # It is an error to set this field in an HTTP client request.
-    var RequestURI: String
+    var request_uri: String
 
     # # TLS allows HTTP servers and other software to record
     # # information about the TLS connection on which the request
@@ -214,7 +214,7 @@ struct Request(Movable, Copyable):
     # Response is the redirect response which caused this request
     # to be created. This field is only populated during client
     # redirects.
-    var Response: Response
+    var response: Response
 
     # # ctx is either the client or server context. It should only
     # # be modified via copying the whole Request using Clone or WithContext.

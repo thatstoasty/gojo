@@ -1,8 +1,7 @@
-from gojo.bytes.bytes import index_byte, to_string, to_bytes
-from gojo.bytes.util import cap, copy, trim_null_characters
-from gojo import get_slice
-import gojo.io.io
-from external.stdlib.builtins._bytes import bytes, Byte
+import ..io.io
+from ..buffers._bytes import index_byte, to_string, to_bytes
+from ..buffers.util import cap, copy, trim_null_characters
+from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
 
@@ -33,8 +32,8 @@ alias max_int: Int = 2147483647
 alias MinRead: Int8 = 512
 
 # # ErrTooLarge is passed to panic if memory cannot be allocated to store data in a buffer.
-alias ErrTooLarge = "buffer.Buffer: too large"
-alias errNegativeRead = "buffer.Buffer: reader returned negative count from read"
+alias ErrTooLarge = "_buffer.Buffer: too large"
+alias errNegativeRead = "_buffer.Buffer: reader returned negative count from read"
 alias ErrShortWrite = "short write"
 
 
@@ -109,7 +108,7 @@ struct Buffer(io.Writer, io.Reader):
 
         self.last_read = op_invalid
         if n < 0 or n > self.len():
-            raise Error("buffer.Buffer: truncation out of range")
+            raise Error("_buffer.Buffer: truncation out of range")
 
         self.buf = self.buf[: self.off + n]
 
@@ -163,7 +162,7 @@ struct Buffer(io.Writer, io.Reader):
             # don't spend all our time copying.
             _ = copy(self.buf, self.buf[self.off :])
         elif c > max_int - c - n:
-            raise Error("buffer.Buffer: too large")
+            raise Error("_buffer.Buffer: too large")
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
             var sl = self.buf[self.off :]
@@ -183,12 +182,12 @@ struct Buffer(io.Writer, io.Reader):
         If the buffer can't grow it will panic with [ErrTooLarge].
         """
         if n < 0:
-            raise Error("buffer.Buffer.grow: negative count")
+            raise Error("_buffer.Buffer.grow: negative count")
 
         let m = self.grow(n)
         self.buf = self.buf[:m]
 
-    fn write(inout self, p: bytes) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         """Appends the contents of p to the buffer, growing the buffer as
         needed. The return value n is the length of p; err is always nil. If the
         buffer becomes too large, write will panic with [ErrTooLarge].
@@ -202,8 +201,7 @@ struct Buffer(io.Writer, io.Reader):
         # if not ok:
         #     m = self.grow(p.size)
         # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        let sl = trim_null_characters(p)
-        return copy(self.buf, sl)
+        return copy(self.buf, b)
 
     fn write_string(inout self, s: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -221,7 +219,6 @@ struct Buffer(io.Writer, io.Reader):
 
         # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
         var s_buffer = to_bytes(s)
-        s_buffer = trim_null_characters(s_buffer)
 
         return copy(self.buf, s_buffer)
 
@@ -289,7 +286,7 @@ struct Buffer(io.Writer, io.Reader):
             let sl = self.buf[self.off :]
             let m = w.write(sl)
             if m > n_bytes:
-                raise Error("buffer.Buffer.write_to: invalid write count")
+                raise Error("_buffer.Buffer.write_to: invalid write count")
 
             self.off += m
             n = Int64(m)
@@ -343,7 +340,7 @@ struct Buffer(io.Writer, io.Reader):
     #     self.buf = utf8.AppendRune(self.buf[:m], r)
     #     return len(self.buf) - m
 
-    fn read(inout self, inout p: bytes) -> Int:
+    fn read(inout self, inout b: bytes) -> Int:
         """Reads the next len(p) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(p) is zero);
@@ -353,13 +350,13 @@ struct Buffer(io.Writer, io.Reader):
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            if len(p) == 0:
+            if len(b) == 0:
                 return 0
 
             return 0
 
-        let b = self.buf[self.off :]
-        let n = copy(p, b)
+        let byte_buffer = self.buf[self.off :]
+        let n = copy(b, byte_buffer)
         self.off += n
         if n > 0:
             self.last_read = op_read
@@ -429,7 +426,7 @@ struct Buffer(io.Writer, io.Reader):
     # from any read operation.)
     # fn unread_rune(self):
     #     if self.last_read <= op_invalid
-    #         return errors.New("buffer.Buffer: unread_rune: previous operation was not a successful read_rune")
+    #         return errors.New("_buffer.Buffer: unread_rune: previous operation was not a successful read_rune")
     #
     #     if self.off >= Int(self.last_read)
     #         self.off -= Int(self.last_read)
@@ -437,7 +434,7 @@ struct Buffer(io.Writer, io.Reader):
     #     self.last_read = op_invalid
     #     return nil
 
-    # var err_unread_byte = errors.New("buffer.Buffer: unread_byte: previous operation was not a successful read")
+    # var err_unread_byte = errors.New("_buffer.Buffer: unread_byte: previous operation was not a successful read")
 
     fn unread_byte(inout self) raises -> None:
         """Unreads the last byte returned by the most recent successful
@@ -447,7 +444,7 @@ struct Buffer(io.Writer, io.Reader):
         """
         if self.last_read == op_invalid:
             raise Error(
-                "buffer.Buffer: unread_byte: previous operation was not a successful"
+                "_buffer.Buffer: unread_byte: previous operation was not a successful"
                 " read"
             )
 

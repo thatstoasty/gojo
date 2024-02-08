@@ -1,5 +1,5 @@
-from gojo.bytes.bytes import to_bytes
-from external.stdlib.builtins._bytes import bytes, Byte
+from ..buffers._bytes import to_bytes
+from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
 
@@ -219,7 +219,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 #
 # Implementations must not retain p.
 trait ReaderAt:
-    fn read_at(self, p: bytes, off: Int64) -> Int:
+    fn read_at(self, b: bytes, off: Int64) -> Int:
         ...
 
 
@@ -239,7 +239,7 @@ trait ReaderAt:
 #
 # Implementations must not retain p.
 trait WriterAt:
-    fn write_at(self, p: bytes, off: Int64) -> Int:
+    fn write_at(self, b: bytes, off: Int64) -> Int:
         ...
 
 

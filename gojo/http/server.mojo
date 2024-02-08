@@ -1,7 +1,7 @@
-from external.stdlib.builtins._bytes import bytes, Byte
-from gojo.http.header import Header
+from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
+from ..http.header import Header
 
-# from gojo.http.request import Request
+# from ..http.request import Request
 
 
 trait ResponseWriter(Movable, Copyable):
@@ -88,7 +88,7 @@ struct DefaultHandler(Handler):
 # A Server defines parameters for running an HTTP server.
 # The zero value for Server is a valid configuration.
 @value
-struct Server(CollectionElement):
+struct Server(Movable, Copyable):
     # Addr optionally specifies the TCP address for the server to listen on,
     # in the form "host:port". If empty, ":http" (port 80) is used.
     # The service names are defined in RFC 6335 and assigned by IANA.

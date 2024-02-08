@@ -1,6 +1,6 @@
-from gojo.http.header import Header
-from gojo.io import io
-from external.stdlib.builtins._bytes import bytes, Byte
+from ..http.header import Header
+from ..io import io
+from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
 
 
 @value

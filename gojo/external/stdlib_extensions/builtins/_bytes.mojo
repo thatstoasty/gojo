@@ -301,7 +301,7 @@ struct bytes(Stringable, Sized, CollectionElement):
         if span.end == 9223372036854775807:
             end = len(self._vector)
         var new_vector = DynamicVector[UInt8](capacity=end - span.start)
-        for i in range(span.start, end):
+        for i in range(span.start, end, span.step):
             new_vector.push_back(self._vector[i])
         return bytes(new_vector)
 
