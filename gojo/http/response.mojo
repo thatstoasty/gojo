@@ -1,6 +1,6 @@
 from ..http.header import Header
 from ..io import io
-from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
+from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 
 @value

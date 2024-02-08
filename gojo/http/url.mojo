@@ -1,4 +1,4 @@
-from ..external.stdlib_extensions.builtins._dict import dict, HashableStr
+from ..stdlib_extensions.builtins._dict import dict, HashableStr
 
 
 @value

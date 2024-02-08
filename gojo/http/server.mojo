@@ -1,4 +1,4 @@
-from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
+from ..stdlib_extensions.builtins._bytes import bytes, Byte
 from ..http.header import Header
 
 # from ..http.request import Request

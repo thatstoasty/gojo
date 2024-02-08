@@ -1,7 +1,7 @@
 import ..io.io
-from ..buffers._bytes import index_byte, to_string, to_bytes
-from ..buffers.util import cap, copy, trim_null_characters
-from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
+from ._bytes import index_byte, to_string, to_bytes
+from .util import cap, copy, trim_null_characters
+from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
 

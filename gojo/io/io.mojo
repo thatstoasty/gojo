@@ -1,5 +1,5 @@
 from ..buffers._bytes import to_bytes
-from ..external.stdlib_extensions.builtins._bytes import bytes, Byte
+from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
 

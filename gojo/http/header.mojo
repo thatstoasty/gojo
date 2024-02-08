@@ -1,6 +1,6 @@
 from collections.optional import Optional
 from ..io import io
-from ..external.stdlib_extensions.builtins._dict import dict, HashableStr
+from ..stdlib_extensions.builtins._dict import dict, HashableStr
 
 
 alias Byte = UInt8
