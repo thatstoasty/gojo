@@ -5,7 +5,7 @@ from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 @value
 struct DefaultReadCloser(io.ReadCloser):
-    fn read(inout self, inout b: bytes) -> Int:
+    fn read(inout self, inout b: bytes) raises -> Int:
         # TODO: Implement
         return 1
 

@@ -49,7 +49,7 @@ struct Buffer(io.Writer, io.Reader):
         self.off = 0
         self.last_read = op_invalid
 
-    fn bytes(self) -> bytes:
+    fn bytes(self) raises -> bytes:
         """Returns a slice of length self.len() holding the unread portion of the buffer.
         The slice is valid for use only until the next buffer modification (that is,
         only until the next call to a method like [Buffer.read], [Buffer.write], [Buffer.reset], or [Buffer.truncate]).
@@ -58,7 +58,7 @@ struct Buffer(io.Writer, io.Reader):
         """
         return self.buf[self.off :]
 
-    fn available_buffer(self) -> bytes:
+    fn available_buffer(self) raises -> bytes:
         """Returns an empty buffer with self.Available() capacity.
         This buffer is intended to be appended to and
         passed to an immediately succeeding [Buffer.write] call.
@@ -66,7 +66,7 @@ struct Buffer(io.Writer, io.Reader):
         """
         return self.buf[len(self.buf) :]
 
-    fn string(self) -> String:
+    fn string(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
         as a string. If the [Buffer] is a nil pointer, it returns "<nil>".
 
@@ -111,7 +111,7 @@ struct Buffer(io.Writer, io.Reader):
 
         self.buf = self.buf[: self.off + n]
 
-    fn reset(inout self):
+    fn reset(inout self) raises:
         """Resets the buffer to be empty,
         but it retains the underlying storage for use by future writes.
         reset is the same as [buffer.truncate](0)."""
@@ -119,7 +119,7 @@ struct Buffer(io.Writer, io.Reader):
         self.off = 0
         self.last_read = op_invalid
 
-    fn try_grow_by_reslice(inout self, n: Int) -> (Int, Bool):
+    fn try_grow_by_reslice(inout self, n: Int) raises -> (Int, Bool):
         """Inlineable version of grow for the fast-case where the
         internal buffer only needs to be resliced.
         It returns the index where bytes should be written and whether it succeeded."""
@@ -363,7 +363,7 @@ struct Buffer(io.Writer, io.Reader):
 
         return n
 
-    fn next(inout self, inout n: Int) -> bytes:
+    fn next(inout self, inout n: Int) raises -> bytes:
         """Returns a slice containing the next n bytes from the buffer,
         advancing the buffer as if the bytes had been returned by [Buffer.read].
         If there are fewer than n bytes in the buffer, next returns the entire buffer.
@@ -381,7 +381,7 @@ struct Buffer(io.Writer, io.Reader):
 
         return data
 
-    fn read_byte(inout self) -> Byte:
+    fn read_byte(inout self) raises -> Byte:
         """Reads and returns the next byte from the buffer.
         If no byte is available, it returns error io.EOF.
         """
@@ -452,7 +452,7 @@ struct Buffer(io.Writer, io.Reader):
         if self.off > 0:
             self.off -= 1
 
-    fn read_bytes(inout self, delim: Byte) -> bytes:
+    fn read_bytes(inout self, delim: Byte) raises -> bytes:
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -468,7 +468,7 @@ struct Buffer(io.Writer, io.Reader):
             lines[i] = sl[i]
         return lines
 
-    fn read_slice(inout self, delim: Byte) -> bytes:
+    fn read_slice(inout self, delim: Byte) raises -> bytes:
         """Like read_bytes but returns a reference to internal buffer data."""
         let i = index_byte(self.buf[self.off :], delim)
         var end = self.off + i + 1
@@ -480,7 +480,7 @@ struct Buffer(io.Writer, io.Reader):
         self.last_read = op_read
         return line
 
-    fn read_string(inout self, delim: Byte) -> String:
+    fn read_string(inout self, delim: Byte) raises -> String:
         """Reads until the first occurrence of delim in the input,
         returning a string containing the data up to and including the delimiter.
         If read_string encounters an error before finding a delimiter,

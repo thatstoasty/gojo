@@ -32,14 +32,15 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
             raise Error("EOF")
         
         self.prev_rune = -1
-        b += self.s[self.index:]
-
-        let n = len(self.s[self.index:])
+        let unread_bytes = self.s[int(self.index):]
+        b += unread_bytes
+    
+        let n = len(unread_bytes)
         self.index += n
         return n
 
     # ReadAt implements the [io.ReaderAt] Interface.
-    fn read_at(self, b: bytes, off: Int64) raises -> Int:
+    fn read_at(self, inout b: bytes, off: Int64) raises -> Int:
         # cannot modify state - see io.ReaderAt
         if off < 0:
             raise Error("bytes.Reader.ReadAt: negative offset")
@@ -47,7 +48,9 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
         if off >= Int64(len(self.s)):
             raise Error("EOF")
         
-        let n = len(self.s[off:])
+        let unread_bytes = self.s[int(off):]
+        b += unread_bytes
+        let n = len(unread_bytes)
         if n < len(b):
             raise Error("EOF")
         

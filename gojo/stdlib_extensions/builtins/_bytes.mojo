@@ -294,16 +294,20 @@ struct bytes(Stringable, Sized, CollectionElement):
     fn __getitem__(self, index: Int) -> UInt8:
         return self._vector[index]
 
-    fn __getitem__(self: Self, span: slice) -> bytes:
+    fn __getitem__(self: Self, limits: slice) raises -> Self:
         # TODO: Specifying no end to the span sets span end to this super large int for some reason.
-        # Set it to len of the vector if that happens.
-        var end = span.end
-        if span.end == 9223372036854775807:
+        # Set it to len of the vector if that happens. Otherwise, if end is just too large in general, throw OOB error.
+        var end = limits.end
+        if limits.end == 9223372036854775807:
             end = len(self._vector)
-        var new_vector = DynamicVector[UInt8](capacity=end - span.start)
-        for i in range(span.start, end, span.step):
-            new_vector.push_back(self._vector[i])
-        return bytes(new_vector)
+        elif limits.end > self._vector.__len__():
+            let error = "bytes: Index out of range for limits.end. Received: " + str(limits.end) + " but the length is " + str(self._vector.__len__())
+            raise Error(error)
+        
+        var new_bytes = Self()
+        for i in range(limits.start, end, limits.step):
+            new_bytes._vector.append(self._vector[i])
+        return new_bytes
 
     fn __setitem__(inout self, index: Int, value: UInt8):
         self._vector[index] = value

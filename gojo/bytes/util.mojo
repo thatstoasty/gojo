@@ -33,19 +33,18 @@ fn equal(a: bytes, b: bytes) -> Bool:
     return to_string(a) == to_string(b)
 
 
-fn has_prefix(s: bytes, prefix: bytes) -> Bool:
+fn has_prefix(s: bytes, prefix: bytes) raises -> Bool:
     """Reports whether the byte slice s begins with prefix."""
     let len_comparison = len(s) >= len(prefix)
     let prefix_comparison = equal(s[0 : len(prefix)], prefix)
     return len_comparison and prefix_comparison
 
 
-fn has_suffix(s: bytes, suffix: bytes) -> Bool:
+fn has_suffix(s: bytes, suffix: bytes) raises -> Bool:
     """Reports whether the byte slice s ends with suffix."""
     let len_comparison = len(s) >= len(suffix)
     let suffix_comparison = equal(s[len(s) - len(suffix) : len(s)], suffix)
     return len_comparison and suffix_comparison
-
 
 
 fn trim_null_characters(b: bytes) -> bytes:

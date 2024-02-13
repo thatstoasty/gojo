@@ -219,7 +219,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 #
 # Implementations must not retain p.
 trait ReaderAt:
-    fn read_at(self, b: bytes, off: Int64) raises -> Int:
+    fn read_at(self, inout b: bytes, off: Int64) raises -> Int:
         ...
 
 
