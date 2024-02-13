@@ -1,4 +1,4 @@
-from ..buffers._bytes import to_bytes
+from ..bytes.util import to_bytes
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
@@ -16,9 +16,9 @@ alias Rune = Int32
 # various implementations, unless otherwise informed clients should not
 # assume they are safe for parallel execution.
 # Seek whence values.
-alias seek_start: UInt8 = 0  # seek relative to the origin of the file
-alias seek_current: UInt8 = 1  # seek relative to the current offset
-alias seek_end: UInt8 = 2  # seek relative to the end
+alias seek_start = 0  # seek relative to the origin of the file
+alias seek_current = 1  # seek relative to the current offset
+alias seek_end = 2  # seek relative to the end
 
 # ErrShortWrite means that a write accepted fewer bytes than requested
 # but failed to return an explicit error.
@@ -81,7 +81,7 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 #
 # Implementations must not retain p.
 trait Reader(Movable, Copyable):
-    fn read(inout self, inout b: bytes) -> Int:
+    fn read(inout self, inout b: bytes) raises -> Int:
         ...
 
 
@@ -124,7 +124,7 @@ trait Closer(Movable, Copyable):
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
 trait Seeker(Movable, Copyable):
-    fn seek(inout self, offset: Int64, whence: Int) -> Int:
+    fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
         ...
 
 
@@ -184,7 +184,7 @@ trait WriterReadFrom(Writer, ReaderFrom):
 #
 # The Copy fntion uses WriterTo if available.
 trait WriterTo:
-    fn write_to[W: Writer](self, w: W) -> Int:
+    fn write_to[W: Writer](inout self, inout w: W) raises -> Int:
         ...
 
 
@@ -219,7 +219,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 #
 # Implementations must not retain p.
 trait ReaderAt:
-    fn read_at(self, b: bytes, off: Int64) -> Int:
+    fn read_at(self, b: bytes, off: Int64) raises -> Int:
         ...
 
 
@@ -266,7 +266,7 @@ trait ByteReader:
 # last-unread byte), or (in implementations that support the [Seeker] interface)
 # seek to one byte before the current offset.
 trait ByteScanner:
-    fn unread_byte(self) -> Byte:
+    fn unread_byte(inout self) raises:
         ...
 
 

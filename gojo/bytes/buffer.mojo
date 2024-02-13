@@ -1,6 +1,5 @@
 import ..io.io
-from ._bytes import index_byte, to_string, to_bytes
-from .util import cap, copy, trim_null_characters
+from .util import index_byte, to_string, to_bytes, cap, copy, trim_null_characters
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 alias Rune = Int32
@@ -76,8 +75,8 @@ struct Buffer(io.Writer, io.Reader):
         # if self == nil:
         #     # Special case, useful in debugging.
         #     return "<nil>"
-        var b = self.buf[self.off :]
-        return to_string(self.buf[self.off :])
+        var b = self.buf[self.off:]
+        return to_string(self.buf[self.off:])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -201,7 +200,8 @@ struct Buffer(io.Writer, io.Reader):
         # if not ok:
         #     m = self.grow(p.size)
         # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        return copy(self.buf, b)
+        self.buf += b
+        return len(b)
 
     fn write_string(inout self, s: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -217,10 +217,10 @@ struct Buffer(io.Writer, io.Reader):
 
         # var buf = get_slice(self.buf, m, len(self.buf))
 
-        # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
         var s_buffer = to_bytes(s)
+        self.buf += s_buffer
 
-        return copy(self.buf, s_buffer)
+        return len(s_buffer)
 
     # fn read_from(inout self, r: io.Reader) -> Int64:
     #     """Reads data from r until EOF and appends it to the buffer, growing
@@ -340,7 +340,7 @@ struct Buffer(io.Writer, io.Reader):
     #     self.buf = utf8.AppendRune(self.buf[:m], r)
     #     return len(self.buf) - m
 
-    fn read(inout self, inout b: bytes) -> Int:
+    fn read(inout self, inout b: bytes) raises -> Int:
         """Reads the next len(p) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(p) is zero);
