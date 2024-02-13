@@ -300,13 +300,13 @@ struct bytes(Stringable, Sized, CollectionElement):
         var end = limits.end
         if limits.end == 9223372036854775807:
             end = len(self._vector)
-        elif limits.end > self._vector.__len__():
+        elif limits.end > self.__len__():
             let error = "bytes: Index out of range for limits.end. Received: " + str(limits.end) + " but the length is " + str(self._vector.__len__())
             raise Error(error)
         
         var new_bytes = Self()
         for i in range(limits.start, end, limits.step):
-            new_bytes._vector.append(self._vector[i])
+            new_bytes._vector.append(self[i])
         return new_bytes
 
     fn __setitem__(inout self, index: Int, value: UInt8):
@@ -355,9 +355,11 @@ struct bytes(Stringable, Sized, CollectionElement):
                 self._vector.push_back(self[j])
 
     fn __str__(self) -> String:
-        alias mapping = get_mapping_byte_to_value()
+        # TODO: Changed mapping to a var instead of alias. The alias would crash randomly.
+        let mapping = get_mapping_byte_to_value()
         var result_string: String = "b'"
         for i in range(self.__len__()):
+            print(i, self._vector[i])
             result_string += mapping.unchecked_get(self._vector[i].to_int())
         result_string += "'"
         return result_string

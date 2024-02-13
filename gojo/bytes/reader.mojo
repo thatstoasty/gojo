@@ -1,5 +1,8 @@
+from collections.optional import Optional
+from .util import copy
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
 import ..io.io
+
 
 # A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
 # io.ByteScanner, and io.RuneScanner Interfaces by reading from
@@ -28,14 +31,16 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
 
     # Read implements the [io.Reader] Interface.
     fn read(inout self, inout b: bytes) raises -> Int:
+        print("read")
         if self.index >= len(self.s):
             raise Error("EOF")
         
         self.prev_rune = -1
-        let unread_bytes = self.s[int(self.index):]
-        b += unread_bytes
+        let start = int(self.index)
+        let unread_bytes = self.s[start:]
+        print(unread_bytes)
+        let n = copy(b, unread_bytes)
     
-        let n = len(unread_bytes)
         self.index += n
         return n
 
@@ -49,8 +54,7 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
             raise Error("EOF")
         
         let unread_bytes = self.s[int(off):]
-        b += unread_bytes
-        let n = len(unread_bytes)
+        let n = copy(b, unread_bytes)
         if n < len(b):
             raise Error("EOF")
         

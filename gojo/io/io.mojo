@@ -1,5 +1,6 @@
-from ..bytes.util import to_bytes
+from ..bytes.util import to_bytes, cap
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
+from collections.optional import Optional
 
 alias Rune = Int32
 
@@ -673,25 +674,20 @@ fn read_full[R: Reader](inout r: R, buf: bytes) raises -> Int:
 # 	return c.Reader.(WriterTo).WriteTo(w)
 # }
 
-# # ReadAll reads from r until an error or EOF and returns the data it read.
-# # A successful call returns err == nil, not err == EOF. Because ReadAll is
-# # defined to read from src until EOF, it does not treat an EOF from Read
-# # as an error to be reported.
-# fn ReadAll(r Reader) (bytes, error) {
-# 	b := make(bytes, 0, 512)
-# 	for {
-# 		n, err := r.Read(b[len(b):cap(b)])
-# 		b = b[:len(b)+n]
-# 		if err != nil {
-# 			if err == EOF {
-# 				err = nil
-# 			}
-# 			return b, err
-# 		}
-
-# 		if len(b) == cap(b) {
-# 			# Add more capacity (let append pick how much).
-# 			b = append(b, 0)[:len(b)]
-# 		}
-# 	}
-# }
+# ReadAll reads from r until an error or EOF and returns the data it read.
+# A successful call returns err == nil, not err == EOF. Because ReadAll is
+# defined to read from src until EOF, it does not treat an EOF from Read
+# as an error to be reported.
+fn read_all[R: Reader](inout r: R) raises -> bytes:
+    var b = bytes()
+    var n: Int = 0
+    
+    while True:
+        try:
+            n = r.read(b)
+        except e:
+            if e.__str__() == EOF:
+                break
+            raise
+    
+    return b

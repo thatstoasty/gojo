@@ -2,10 +2,12 @@ from gojo.bytes import reader
 from gojo.bytes.util import to_bytes
 from gojo.stdlib_extensions.builtins import bytes
 from gojo.io import io
+from gojo.io.io import read_all
 from testing import testing
 
 
 fn test_read() raises:
+    print("Testing read")
     var r = reader.new_reader(to_bytes("0123456789"))
     var b = bytes()
     _ = r.read(b)
@@ -13,6 +15,7 @@ fn test_read() raises:
 
 
 fn test_read_at() raises:
+    print("Testing read_at")
     var r = reader.new_reader(to_bytes("0123456789"))
 
     var b = bytes()
@@ -25,6 +28,7 @@ fn test_read_at() raises:
 
 
 fn test_seek() raises:
+    print("Testing seek")
     var r = reader.new_reader(to_bytes("0123456789"))
     let pos = r.seek(5, io.seek_start)
     var b = bytes()
@@ -32,7 +36,15 @@ fn test_seek() raises:
     testing.assert_equal(b, to_bytes("56789"))
 
 
+fn test_read_all() raises:
+    print("Testing read_all")
+    var r = reader.new_reader(to_bytes("0123456789"))
+    let result = read_all(r)
+    print(result)
+
+
 fn main() raises:
     test_read()
     test_read_at()
     test_seek()
+    test_read_all()
