@@ -31,14 +31,11 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
 
     # Read implements the [io.Reader] Interface.
     fn read(inout self, inout b: bytes) raises -> Int:
-        print("read")
         if self.index >= len(self.s):
             raise Error("EOF")
         
         self.prev_rune = -1
-        let start = int(self.index)
-        let unread_bytes = self.s[start:]
-        print(unread_bytes)
+        let unread_bytes = self.s[int(self.index):]
         let n = copy(b, unread_bytes)
     
         self.index += n
@@ -133,7 +130,7 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
         if self.index >= len(self.s):
             return 0
         
-        var b = self.s[self.index:]
+        var b = self.s[int(self.index):]
         var write_count = w.write(b)
         if write_count > len(b):
             raise Error("bytes.Reader.WriteTo: invalid Write count")

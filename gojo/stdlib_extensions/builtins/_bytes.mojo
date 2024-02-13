@@ -359,7 +359,6 @@ struct bytes(Stringable, Sized, CollectionElement):
         let mapping = get_mapping_byte_to_value()
         var result_string: String = "b'"
         for i in range(self.__len__()):
-            print(i, self._vector[i])
             result_string += mapping.unchecked_get(self._vector[i].to_int())
         result_string += "'"
         return result_string
