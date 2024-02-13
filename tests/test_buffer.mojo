@@ -1,5 +1,5 @@
 from gojo.bytes.buffer import new_buffer_string
-from gojo.bytes.bytes import to_bytes
+from gojo.bytes.util import to_bytes
 
 fn main() raises:
     var a: String = "Hello"
