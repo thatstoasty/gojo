@@ -10,7 +10,7 @@ alias O_RDWR = 0o2
 # This is a simple wrapper around POSIX-style fcntl.h functions.
 # thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
 @value
-struct Reader(io.Reader):
+struct Reader(io.ReaderWriteTo):
     var fd: Int
     var buffer: buffer.Buffer
 
@@ -56,10 +56,37 @@ struct Reader(io.Reader):
 
         return read_count
     
+    fn read(inout self) raises -> Int:
+        let buf_size = self.buffer.buf._vector.capacity
+        let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
+        if read_count == -1:
+            raise Error("Failed to read file descriptor " + self.fd.__str__())
+
+        if read_count == self.buffer.buf._vector.capacity:
+            raise Error(
+                "You can only read up to "
+                + String(buf_size)
+                + " bytes at a time. Adjust the buffer size or handle larger data"
+                " in segments."
+            )
+
+        return read_count
+    
     fn string(inout self) raises -> String:
-        _ = self.read(self.buffer.buf)
-        return self.buffer.string()
+        let position = self.read(self.buffer.buf)
+        return self.buffer.string()[:position]
     
     fn bytes(inout self) raises -> String:
-        _ = self.read(self.buffer.buf)
-        return self.buffer.bytes()
+        let position = self.read(self.buffer.buf)
+        print(position)
+        return self.buffer.bytes()[:position]
+
+    fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int:
+        var write_count = w.write(self.buffer.buf)
+        # if write_count > len(self.buffer.buf):
+        #     raise Error("std.Reader.write_to: invalid Write count")
+        
+        # if write_count != len(self.buffer.buf):
+        #     raise Error(io.ErrShortWrite)
+        
+        return write_count

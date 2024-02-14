@@ -10,7 +10,7 @@ alias O_RDWR = 0o2
 # This is a simple wrapper around POSIX-style fcntl.h functions.
 # thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
 @value
-struct Writer(io.Writer):
+struct Writer(io.WriterReadFrom):
     var fd: Int
     var buffer: buffer.Buffer
 
@@ -42,3 +42,8 @@ struct Writer(io.Writer):
     
     fn write_string(inout self, b: String) raises -> Int:
         return self.write(to_bytes(b))
+    
+    fn read_from[R: io.Reader](inout self, inout r: R) raises -> Int:
+        _ = r.read(self.buffer.buf)
+        return self.write(self.buffer.buf)
+

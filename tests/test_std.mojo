@@ -10,4 +10,10 @@ fn main() raises:
 
     # var r = Reader(int(FD_STDIN))
     var r = Reader("test.txt")
-    print(r.string())
+    # _ = r.read()
+    # print(r.bytes())
+    var w = Writer(int(FD_STDOUT))
+    _ = w.read_from(r)
+    # _ = r.write_to(w)
+    # _ = w.read_from(r)
+    # print(r.string())

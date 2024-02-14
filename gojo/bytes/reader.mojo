@@ -10,7 +10,7 @@ import ..io.io
 # Unlike a [Buffer], a Reader is read-only and supports seeking.
 # The zero value for Reader operates like a Reader of an empty slice.
 @value
-struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
+struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteReader, io.ByteScanner):
     var s: bytes
     var index: Int64 # current reading index
     var prev_rune: Int   # index of previous rune; or < 0
@@ -30,19 +30,19 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
         return len(self.s)
 
     # Read implements the [io.Reader] Interface.
-    fn read(inout self, inout b: bytes) raises -> Int:
+    fn read(inout self, inout dest: bytes) raises -> Int:
         if self.index >= len(self.s):
             raise Error("EOF")
         
         self.prev_rune = -1
         let unread_bytes = self.s[int(self.index):]
-        let n = copy(b, unread_bytes)
+        let n = copy(dest, unread_bytes)
     
         self.index += n
         return n
 
     # ReadAt implements the [io.ReaderAt] Interface.
-    fn read_at(self, inout b: bytes, off: Int64) raises -> Int:
+    fn read_at(self, inout dest: bytes, off: Int64) raises -> Int:
         # cannot modify state - see io.ReaderAt
         if off < 0:
             raise Error("bytes.Reader.ReadAt: negative offset")
@@ -51,8 +51,8 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
             raise Error("EOF")
         
         let unread_bytes = self.s[int(off):]
-        let n = copy(b, unread_bytes)
-        if n < len(b):
+        let n = copy(dest, unread_bytes)
+        if n < len(dest):
             raise Error("EOF")
         
         return n
@@ -125,7 +125,7 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
         return int(abs)
 
     # WriteTo implements the [io.WriterTo] Interface.
-    fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int:
+    fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int64:
         self.prev_rune = -1
         if self.index >= len(self.s):
             return 0
@@ -139,7 +139,7 @@ struct Reader(io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteScanner):
         if write_count != len(b):
             raise Error(io.ErrShortWrite)
         
-        return write_count
+        return Int64(write_count)
 
 
     # Reset resets the [Reader.Reader] to be reading from b.

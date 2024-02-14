@@ -82,7 +82,7 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 #
 # Implementations must not retain p.
 trait Reader(Movable, Copyable):
-    fn read(inout self, inout b: bytes) raises -> Int:
+    fn read(inout self, inout dest: bytes) raises -> Int:
         ...
 
 
@@ -96,7 +96,7 @@ trait Reader(Movable, Copyable):
 #
 # Implementations must not retain p.
 trait Writer(Movable, Copyable):
-    fn write(inout self, b: bytes) raises -> Int:
+    fn write(inout self, src: bytes) raises -> Int:
         ...
 
 
@@ -168,8 +168,8 @@ trait ReadWriteSeeker(Reader, Writer, Seeker):
 # Any error except EOF encountered during the read is also returned.
 #
 # The [Copy] fntion uses [ReaderFrom] if available.
-trait ReaderFrom:
-    fn read_from[R: Reader](self, r: R) -> Int:
+trait ReaderFrom():
+    fn read_from[R: Reader](inout self, inout reader: R) raises -> Int64:
         ...
 
 
@@ -185,7 +185,7 @@ trait WriterReadFrom(Writer, ReaderFrom):
 #
 # The Copy fntion uses WriterTo if available.
 trait WriterTo:
-    fn write_to[W: Writer](inout self, inout w: W) raises -> Int:
+    fn write_to[W: Writer](inout self, inout writer: W) raises -> Int64:
         ...
 
 
@@ -220,7 +220,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 #
 # Implementations must not retain p.
 trait ReaderAt:
-    fn read_at(self, inout b: bytes, off: Int64) raises -> Int:
+    fn read_at(self, inout dest: bytes, off: Int64) raises -> Int:
         ...
 
 
@@ -240,7 +240,7 @@ trait ReaderAt:
 #
 # Implementations must not retain p.
 trait WriterAt:
-    fn write_at(self, b: bytes, off: Int64) -> Int:
+    fn write_at(self, src: bytes, off: Int64) raises -> Int:
         ...
 
 
@@ -254,7 +254,7 @@ trait WriterAt:
 # processing. A [Reader] that does not implement  ByteReader
 # can be wrapped using bufio.NewReader to add this method.
 trait ByteReader:
-    fn read_byte(self) -> Byte:
+    fn read_byte(inout self) raises -> Byte:
         ...
 
 
@@ -273,7 +273,7 @@ trait ByteScanner:
 
 # ByteWriter is the interface that wraps the WriteByte method.
 trait ByteWriter:
-    fn write_byte(self, c: Byte) -> Int:
+    fn write_byte(inout self, byte: Byte) raises -> Int:
         ...
 
 
@@ -283,7 +283,7 @@ trait ByteWriter:
 # and returns the rune and its size in bytes. If no character is
 # available, err will be set.
 trait RuneReader:
-    fn read_rune(self) -> (Rune, Int):
+    fn read_rune(inout self) -> (Rune, Int):
         ...
 
 
@@ -296,13 +296,13 @@ trait RuneReader:
 # last-unread rune), or (in implementations that support the [Seeker] interface)
 # seek to the start of the rune before the current offset.
 trait RuneScanner(RuneReader):
-    fn unread_rune(self) -> Rune:
+    fn unread_rune(inout self) -> Rune:
         ...
 
 
 # StringWriter is the interface that wraps the WriteString method.
 trait StringWriter:
-    fn write_string(self, s: String) -> Int:
+    fn write_string(inout self, s: String) raises -> Int:
         ...
 
 
@@ -314,7 +314,7 @@ fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
     return w.write(s_buffer)
 
 
-fn write_string[T: StringWriter](w: T, s: String) -> Int:
+fn write_string[T: StringWriter](inout w: T, s: String) raises -> Int:
     return w.write_string(s)
 
 
@@ -326,20 +326,20 @@ fn write_string[T: StringWriter](w: T, s: String) -> Int:
 # If min is greater than the length of buf, read_at_least returns [ErrShortBuffer].
 # On return, n >= min if and only if err == nil.
 # If r returns an error having read at least min bytes, the error is dropped.
-fn read_at_least[R: Reader](inout r: R, buf: bytes, min: Int) raises -> Int:
-    if len(buf) < min:
+fn read_at_least[R: Reader](inout reader: R, dest: bytes, min: Int) raises -> Int:
+    if len(dest) < min:
         raise Error(ErrShortBuffer)
 
     var n: Int = 0
     while n < min:
-        var sl = buf[n:]
-        let nn: Int = r.read(sl)
+        var sl = dest[n:]
+        let nn: Int = reader.read(sl)
         n += nn
 
     return n
 
 
-fn read_full[R: Reader](inout r: R, buf: bytes) raises -> Int:
+fn read_full[R: Reader](inout reader: R, dest: bytes) raises -> Int:
     """Reads exactly len(buf) bytes from r into buf.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -348,7 +348,7 @@ fn read_full[R: Reader](inout r: R, buf: bytes) raises -> Int:
     On return, n == len(buf) if and only if err == nil.
     If r returns an error having read at least len(buf) bytes, the error is dropped.
     """
-    return read_at_least(r, buf, len(buf))
+    return read_at_least(reader, dest, len(dest))
 
 
 # fn copy_n[W: Writer, R: Reader](dst: W, src: R, n: Int64) raises -> Int64:
@@ -678,16 +678,16 @@ fn read_full[R: Reader](inout r: R, buf: bytes) raises -> Int:
 # A successful call returns err == nil, not err == EOF. Because ReadAll is
 # defined to read from src until EOF, it does not treat an EOF from Read
 # as an error to be reported.
-fn read_all[R: Reader](inout r: R) raises -> bytes:
-    var b = bytes()
-    var n: Int = 0
+fn read_all[R: Reader](inout reader: R) raises -> bytes:
+    var dest = bytes()
+    var index: Int = 0
     
     while True:
         try:
-            n = r.read(b)
+            index = reader.read(dest)
         except e:
             if e.__str__() == EOF:
                 break
             raise
     
-    return b
+    return dest
