@@ -27,7 +27,8 @@ fn test_writer() raises:
     var writer = Writer(file ^)
     var src = to_bytes(String("12345"))
     let bytes_written = writer.write(src)
-    print(bytes_written)
+    _ = writer.write_string("Hello")
+    # print(bytes_written)
 
 fn main() raises:
     # test_file()
