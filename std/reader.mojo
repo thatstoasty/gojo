@@ -40,7 +40,7 @@ struct Reader(io.ReaderWriteTo):
         let new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn read(inout self, inout b: bytes) raises -> Int:
+    fn read(inout self, inout dest: bytes) raises -> Int:
         let buf_size = self.buffer.buf._vector.capacity
         let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
         if read_count == -1:
@@ -81,8 +81,8 @@ struct Reader(io.ReaderWriteTo):
         print(position)
         return self.buffer.bytes()[:position]
 
-    fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int:
-        var write_count = w.write(self.buffer.buf)
+    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
+        var write_count = writer.write(self.buffer.buf)
         # if write_count > len(self.buffer.buf):
         #     raise Error("std.Reader.write_to: invalid Write count")
         

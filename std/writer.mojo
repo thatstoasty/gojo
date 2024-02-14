@@ -32,8 +32,8 @@ struct Writer(io.WriterReadFrom):
         let new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, b: bytes) raises -> Int:
-        let write_count: c_ssize_t = external_call["write", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, b._vector.data, b.__len__())
+    fn write(inout self, src: bytes) raises -> Int:
+        let write_count: c_ssize_t = external_call["write", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, src._vector.data, src.__len__())
 
         if write_count == -1:
             raise Error("Failed to write to file descriptor " + self.fd.__str__())
@@ -43,7 +43,7 @@ struct Writer(io.WriterReadFrom):
     fn write_string(inout self, b: String) raises -> Int:
         return self.write(to_bytes(b))
     
-    fn read_from[R: io.Reader](inout self, inout r: R) raises -> Int:
-        _ = r.read(self.buffer.buf)
+    fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
+        _ = reader.read(self.buffer.buf)
         return self.write(self.buffer.buf)
 
