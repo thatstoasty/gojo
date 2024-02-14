@@ -200,10 +200,10 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         # if not ok:
         #     m = self.grow(p.size)
         # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        let index = copy(self.buf, src)
-        return index
+        self.buf += src
+        return len(src)
 
-    fn write_string(inout self, s: String) raises -> Int:
+    fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
         needed. The return value n is the length of s; err is always nil. If the
         buffer becomes too large, write_string will panic with [ErrTooLarge].
@@ -217,10 +217,10 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         # var buf = get_slice(self.buf, m, len(self.buf))
 
-        var s_buffer = to_bytes(s)
-        let index = copy(self.buf, s_buffer)
+        var src_buffer = to_bytes(src)
+        self.buf += src_buffer
 
-        return index
+        return len(src)
 
     fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
         """Reads data from r until EOF and appends it to the buffer, growing

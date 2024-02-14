@@ -1,4 +1,7 @@
+from math import min
 from .external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
+from .file import FileDescriptor
+from ._file import File
 from gojo.io import io
 from gojo.bytes import buffer
 from gojo.bytes.util import to_bytes
@@ -11,66 +14,72 @@ alias O_RDWR = 0o2
 # thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
 @value
 struct Reader(io.ReaderWriteTo):
-    var fd: Int
+    var file: File
     var buffer: buffer.Buffer
 
-    fn __init__(inout self, fd: Int):
-        alias buffer_size: Int = 2**13
-        self.fd = fd
-        var buf = bytes(buffer_size)
-        self.buffer = buffer.Buffer(buf)
-
-    fn __init__(inout self, path: StringLiteral):
+    fn __init__(inout self, owned file: File):
         alias buffer_size: Int = 2**13
         var buf = bytes(buffer_size)
         self.buffer = buffer.Buffer(buf)
-        let mode: Int = 0o644  # file permission
-        # TODO: handle errors
-        self.fd = external_call["open", Int, StringLiteral, Int, Int](path, O_RDWR, mode)
+        self.file = file
 
     # This takes ownership of a POSIX file descriptor.
     fn __moveinit__(inout self, owned existing: Self):
-        self.fd = existing.fd
+        self.file = existing.file
         self.buffer = existing.buffer
-
-    fn __del__(owned self):
-        _ = external_call["close", Int, Int](self.fd)
-
-    fn dup(self) -> Self:
-        let new_fd = external_call["dup", Int, Int](self.fd)
-        return Self(new_fd)
-
-    fn read(inout self, inout dest: bytes) raises -> Int:
-        let buf_size = self.buffer.buf._vector.capacity
-        let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
-        if read_count == -1:
-            raise Error("Failed to read file descriptor " + self.fd.__str__())
-
-        if read_count == self.buffer.buf._vector.capacity:
-            raise Error(
-                "You can only read up to "
-                + String(buf_size)
-                + " bytes at a time. Adjust the buffer size or handle larger data"
-                " in segments."
-            )
-
-        return read_count
     
-    fn read(inout self) raises -> Int:
-        let buf_size = self.buffer.buf._vector.capacity
-        let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
-        if read_count == -1:
-            raise Error("Failed to read file descriptor " + self.fd.__str__())
+    fn read(inout self, inout dest: bytes) raises -> Int:
+        var dest_index = 0
+        var start = 0
+        var end = 0
 
-        if read_count == self.buffer.buf._vector.capacity:
-            raise Error(
-                "You can only read up to "
-                + String(buf_size)
-                + " bytes at a time. Adjust the buffer size or handle larger data"
-                " in segments."
-            )
+        while dest_index < len(dest):
+            let written = min(len(dest) - dest_index, end - start)
+            if written == 0:
+                # buf empty, fill it
+                let n = self.file.read(self.buffer.buf)
+                if n == 0:
+                    # reading from the unbuffered stream returned nothing
+                    # so we have nothing left to read.
+                    return dest_index
+                start = 0
+                end = n
+            start += written
+            dest_index += written
+        return len(dest)
 
-        return read_count
+    # fn read(inout self, inout dest: bytes) raises -> Int:
+    #     let buf_size = self.buffer.buf._vector.capacity
+    #     let fd = int(self.file.handle.load())
+    #     let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](fd, self.buffer.buf._vector.data, buf_size)
+    #     if read_count == -1:
+    #         raise Error("Failed to read file descriptor " + fd.__str__())
+
+    #     if read_count == self.buffer.buf._vector.capacity:
+    #         raise Error(
+    #             "You can only read up to "
+    #             + String(buf_size)
+    #             + " bytes at a time. Adjust the buffer size or handle larger data"
+    #             " in segments."
+    #         )
+
+    #     return read_count
+    
+    # fn read(inout self) raises -> Int:
+    #     let buf_size = self.buffer.buf._vector.capacity
+    #     let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
+    #     if read_count == -1:
+    #         raise Error("Failed to read file descriptor " + self.fd.__str__())
+
+    #     if read_count == self.buffer.buf._vector.capacity:
+    #         raise Error(
+    #             "You can only read up to "
+    #             + String(buf_size)
+    #             + " bytes at a time. Adjust the buffer size or handle larger data"
+    #             " in segments."
+    #         )
+
+    #     return read_count
     
     fn string(inout self) raises -> String:
         let position = self.read(self.buffer.buf)
