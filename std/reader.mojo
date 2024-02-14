@@ -33,7 +33,8 @@ struct Reader(io.ReaderWriteTo):
         var start = 0
         var end = 0
 
-        while dest_index < len(dest):
+        # while dest_index < len(dest):
+        while dest_index < dest._vector.capacity:
             let written = min(len(dest) - dest_index, end - start)
             if written == 0:
                 # buf empty, fill it
@@ -87,9 +88,9 @@ struct Reader(io.ReaderWriteTo):
     
     fn bytes(inout self) raises -> String:
         let position = self.read(self.buffer.buf)
-        print(position)
         return self.buffer.bytes()[:position]
 
+    # TODO: It writes a bunch of null chars only
     fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
         var write_count = writer.write(self.buffer.buf)
         # if write_count > len(self.buffer.buf):

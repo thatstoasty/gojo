@@ -4,6 +4,7 @@ from math import min
 from .external.libc import fopen, fread, fclose, fwrite
 from .external.libc import strnlen
 from gojo.stdlib_extensions.builtins import bytes
+from gojo.io import io
 
 
 alias c_char = UInt8
@@ -21,7 +22,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 
 @value
-struct File():
+struct File(io.Writer, io.Reader):
     var handle: Pointer[UInt64]
     var fname: Pointer[c_char]
     var mode: Pointer[c_char]
@@ -62,18 +63,16 @@ struct File():
     fn do_nothing(self):
         pass
 
-    fn read(self, buffer: bytes) raises -> Int:
-        print("reading", self.handle.load())
-        return fread(buffer._vector.data.value, sizeof[UInt8](), BUF_SIZE, self.handle
-        ).to_int()
+    fn read(inout self, inout dest: bytes) raises -> Int:
+        return fread(dest._vector.data.value, sizeof[UInt8](), BUF_SIZE, self.handle).to_int()
 
-    fn write(self, buffer: bytes) raises -> Int:
-        return fwrite(buffer._vector.data.value, sizeof[UInt8](), len(buffer), self.handle).to_int()
+    fn write(inout self, src: bytes) raises -> Int:
+        return fwrite(src._vector.data.value, sizeof[UInt8](), len(src), self.handle).to_int()
 
-    # fn write_all(self, buffer: bytes) raises:
-    #     var index = 0
-    #     while index != len(buffer):
-    #         index += self.write(buffer)
+    fn write_all(inout self, src: bytes) raises:
+        var index = 0
+        while index != len(src):
+            index += self.write(src)
 
     # fn write_byte(self, byte: UInt8) raises:
     #     let buf = Buffer[1, DType.uint8]().stack_allocation()

@@ -4,6 +4,7 @@ from std.reader import Reader
 from std.writer import Writer
 from std.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.stdlib_extensions.builtins import bytes
+from gojo.bytes.util import to_bytes
 
 
 # fn test_file() raises:
@@ -15,15 +16,22 @@ from gojo.stdlib_extensions.builtins import bytes
 
 fn test_reader() raises:
     var file = File("2.txt", "r")
-    var r = Reader(file ^)
+    var reader = Reader(file ^)
     var dest = bytes()
-    _ = r.read(dest)
-    print(r.bytes())
+    _ = reader.read(dest)
+    # print(reader.bytes())
 
+
+fn test_writer() raises:
+    var file = File("3.txt", "w")
+    var writer = Writer(file ^)
+    var src = to_bytes(String("12345"))
+    let bytes_written = writer.write(src)
+    print(bytes_written)
 
 fn main() raises:
     # test_file()
-    test_reader()
+    test_writer()
     # var f = Writer(int(FD_STDOUT))
     # _ = f.write_string("Hello, world!\n")
     # var e = Writer(int(FD_STDERR))
