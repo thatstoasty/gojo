@@ -1,7 +1,6 @@
 from math import min
 from .external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
-from .file import FileDescriptor
-from ._file import File
+from .file import File
 from gojo.io import io
 from gojo.bytes import buffer
 from gojo.bytes.util import to_bytes
@@ -13,7 +12,7 @@ alias O_RDWR = 0o2
 # This is a simple wrapper around POSIX-style fcntl.h functions.
 # thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
 @value
-struct Reader(io.ReaderWriteTo):
+struct Reader(io.Reader):
     var file: File
     var buffer: buffer.Buffer
 
@@ -90,13 +89,13 @@ struct Reader(io.ReaderWriteTo):
         let position = self.read(self.buffer.buf)
         return self.buffer.bytes()[:position]
 
-    # TODO: It writes a bunch of null chars only
-    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
-        var write_count = writer.write(self.buffer.buf)
-        # if write_count > len(self.buffer.buf):
-        #     raise Error("std.Reader.write_to: invalid Write count")
+    # # TODO: It writes a bunch of null chars only
+    # fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
+    #     var write_count = writer.write(self.buffer.buf)
+    #     # if write_count > len(self.buffer.buf):
+    #     #     raise Error("std.Reader.write_to: invalid Write count")
         
-        # if write_count != len(self.buffer.buf):
-        #     raise Error(io.ErrShortWrite)
+    #     # if write_count != len(self.buffer.buf):
+    #     #     raise Error(io.ErrShortWrite)
         
-        return write_count
+    #     return write_count

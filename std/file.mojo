@@ -1,86 +1,128 @@
-from .external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
+from memory import memset
+from math import min
+
+from .external.libc import fopen, fread, fclose, fwrite
+from .external.libc import strnlen
 from gojo.stdlib_extensions.builtins import bytes
+from gojo.bytes.util import to_string, to_bytes
 from gojo.io import io
 
 
-alias O_RDWR = 0o2
+alias c_char = UInt8
+alias FILE = UInt64
+alias BUF_SIZE = 4096
 
 
-# This is a simple wrapper around POSIX-style fcntl.h functions.
-# thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
+fn to_char_ptr(s: String) -> Pointer[c_char]:
+    """Only ASCII-based strings."""
+    let ptr = Pointer[c_char]().alloc(len(s) + 1)
+    for i in range(len(s)):
+        ptr.store(i, ord(s[i]))
+    ptr.store(len(s), ord("\0"))
+    return ptr
+
+
 @value
-struct FileDescriptor(io.Reader, io.Writer):
-    var fd: Int
+struct File(io.Writer, io.Reader):
+    var handle: Pointer[UInt64]
+    var fname: Pointer[c_char]
+    var mode: Pointer[c_char]
 
-    # This takes ownership of a POSIX file descriptor.
-    fn __moveinit__(inout self, owned existing: Self):
-        self.fd = existing.fd
+    fn __init__(inout self, filename: String, mode: StringLiteral):
+        let fname = to_char_ptr(filename)
 
-    fn __init__(inout self, fd: Int):
-        self.fd = fd
+        let mode_cstr = to_char_ptr(mode)
+        let handle = fopen(fname, mode_cstr)
 
-    fn __init__(inout self, path: StringLiteral):
-        let mode: Int = 0o644  # file permission
-        # TODO: handle errors
-        self = FileDescriptor(
-            external_call["open", Int, StringLiteral, Int, Int](path, O_RDWR, mode)
-        )
+        self.fname = fname
+        self.mode = mode_cstr
+        self.handle = handle
+
+    fn __bool__(self) -> Bool:
+        return self.handle.__bool__()
 
     fn __del__(owned self):
-        _ = external_call["close", Int, Int](self.fd)
+        if self.handle:
+            pass
+            # TODO: uncomment when external_call resolution bug is fixed
+            # let c = fclose(self.handle)
+            # if c != 0:
+            #     print("Failed to close file")
+        if self.fname:
+            self.fname.free()
+        if self.mode:
+            self.mode.free()
 
-    fn dup(self) -> Self:
-        let new_fd = external_call["dup", Int, Int](self.fd)
-        return Self(new_fd)
-    
+    fn __moveinit__(inout self, owned other: Self):
+        self.fname = other.fname
+        self.mode = other.mode
+        self.handle = other.handle
+        other.handle = Pointer[FILE]()
+        other.fname = Pointer[c_char]()
+        other.mode = Pointer[c_char]()
+
+    fn do_nothing(self):
+        pass
+
     fn read(inout self, inout dest: bytes) raises -> Int:
-        alias buffer_size: Int = 2**13
-        var buf = bytes(buffer_size)
-        # let buffer_size = dest._vector.capacity
-
-        let read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, buf._vector.data, buffer_size)
-        if read_count == -1:
-            raise Error("Failed to read file descriptor " + self.fd.__str__())
-
-        if read_count == buffer_size:
-            raise Error(
-                "You can only read up to "
-                + String(buffer_size)
-                + " bytes at a time. Adjust the buffer size or handle larger data"
-                " in segments."
-            )
-
-        return read_count
-
-    fn read(self) raises -> String:
-        alias buffer_size: Int = 2**13
-        let buffer: Str
-        with Str(size=buffer_size) as buffer:
-            let read_count: c_ssize_t = external_call[
-                "read", c_ssize_t, c_int, char_pointer, c_size_t
-            ](self.fd, buffer.vector.data, buffer_size)
-
-            if read_count == -1:
-                raise Error("Failed to read file descriptor " + self.fd.__str__())
-
-            if read_count == buffer_size:
-                raise Error(
-                    "You can only read up to "
-                    + String(buffer_size)
-                    + " bytes at a time. Adjust the buffer size or handle larger data"
-                    " in segments."
-                )
-
-            return buffer.to_string(read_count)
+        return fread(dest._vector.data.value, sizeof[UInt8](), BUF_SIZE, self.handle).to_int()
 
     fn write(inout self, src: bytes) raises -> Int:
-        let buffer: Str
-        with Str(src) as buffer:
-            let write_count: c_ssize_t = external_call[
-                "write", c_ssize_t, c_int, char_pointer, c_size_t
-            ](self.fd, buffer.vector.data, src.__len__())
+        return fwrite(src._vector.data.value, sizeof[UInt8](), len(src), self.handle).to_int()
 
-            if write_count == -1:
-                raise Error("Failed to write to file descriptor " + self.fd.__str__())
+    fn write_all(inout self, src: bytes) raises:
+        var index = 0
+        while index != len(src):
+            index += self.write(src)
 
-            return write_count
+    # fn write_byte(self, byte: UInt8) raises:
+    #     let buf = Buffer[1, DType.uint8]().stack_allocation()
+    #     buf[0] = byte
+    #     self.write_all(buf)
+
+    # fn write_byte_n_times(self, byte: UInt8, n: Int) raises:
+    #     var bytes = StaticTuple[256, UInt8]()
+    #     let bytes_ptr = DTypePointer[DType.uint8](
+    #         Pointer.address_of(bytes).bitcast[UInt8]()
+    #     )
+    #     memset[DType.uint8](
+    #         bytes_ptr,
+    #         byte,
+    #         256,
+    #     )
+    #     var remaining = n
+    #     while remaining > 0:
+    #         let to_write = min(remaining, bytes.__len__())
+    #         self.write_all(Buffer[Dim(), DType.uint8](bytes_ptr, to_write))
+    #         remaining -= to_write
+
+
+struct FileWrapper(Movable, io.ReadSeekCloser, io.Writer):
+    var handle: FileHandle
+
+    fn __init__(inout self, path: String, mode: StringLiteral) raises:
+        self.handle = open(path, mode)
+    
+    fn __moveinit__(inout self, owned existing: Self):
+        self.handle = existing.handle ^
+
+    fn close(inout self) raises:
+        self.handle.close()
+    
+    fn read(inout self, inout dest: bytes) raises -> Int:
+        let result_bytes = to_bytes(self.handle.read(dest._vector.capacity))
+        dest += result_bytes
+        return len(result_bytes)
+    
+    fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
+        return self.handle.read_bytes(size)
+    
+    fn read_bytes(inout self) raises -> Tensor[DType.int8]:
+        return self.handle.read_bytes()
+    
+    fn seek(inout self, offset: Int64, whence: Int = 0) raises -> Int:
+        return int(self.handle.seek(offset.cast[DType.uint64]()))
+    
+    fn write(inout self, src: bytes) raises -> Int:
+        self.handle.write(to_string(src))
+        return len(src)

@@ -81,7 +81,7 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 # nothing happened; in particular it does not indicate EOF.
 #
 # Implementations must not retain p.
-trait Reader(Movable, Copyable):
+trait Reader(Movable):
     fn read(inout self, inout dest: bytes) raises -> Int:
         ...
 
@@ -95,7 +95,7 @@ trait Reader(Movable, Copyable):
 # Write must not modify the slice data, even temporarily.
 #
 # Implementations must not retain p.
-trait Writer(Movable, Copyable):
+trait Writer(Movable):
     fn write(inout self, src: bytes) raises -> Int:
         ...
 
@@ -104,8 +104,8 @@ trait Writer(Movable, Copyable):
 #
 # The behavior of Close after the first call is undefined.
 # Specific implementations may document their own behavior.
-trait Closer(Movable, Copyable):
-    fn close(inout self, b: bytes) -> Int:
+trait Closer(Movable):
+    fn close(inout self) raises:
         ...
 
 
@@ -124,7 +124,7 @@ trait Closer(Movable, Copyable):
 # Seeking to any positive offset may be allowed, but if the new offset exceeds
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
-trait Seeker(Movable, Copyable):
+trait Seeker(Movable):
     fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
         ...
 
