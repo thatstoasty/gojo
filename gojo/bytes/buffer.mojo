@@ -39,7 +39,7 @@ alias ErrShortWrite = "short write"
 # A Buffer is a variable-sized buffer of bytes with [Buffer.read] and [Buffer.write] methods.
 # The zero value for Buffer is an empty buffer ready to use.
 @value
-struct Buffer(io.Writer, io.Reader):
+struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWriter, io.WriterTo, io.ReaderFrom):
     var buf: bytes  # contents are the bytes buf[off : len(buf)]
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
@@ -56,7 +56,7 @@ struct Buffer(io.Writer, io.Reader):
         The slice aliases the buffer content at least until the next buffer modification,
         so immediate changes to the slice will affect the result of future reads.
         """
-        return self.buf[self.off :]
+        return self.buf[self.off:]
 
     fn available_buffer(self) raises -> bytes:
         """Returns an empty buffer with self.Available() capacity.
@@ -186,7 +186,7 @@ struct Buffer(io.Writer, io.Reader):
         let m = self.grow(n)
         self.buf = self.buf[:m]
 
-    fn write(inout self, b: bytes) raises -> Int:
+    fn write(inout self, src: bytes) raises -> Int:
         """Appends the contents of p to the buffer, growing the buffer as
         needed. The return value n is the length of p; err is always nil. If the
         buffer becomes too large, write will panic with [ErrTooLarge].
@@ -200,10 +200,10 @@ struct Buffer(io.Writer, io.Reader):
         # if not ok:
         #     m = self.grow(p.size)
         # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        self.buf += b
-        return len(b)
+        self.buf += src
+        return len(src)
 
-    fn write_string(inout self, s: String) raises -> Int:
+    fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
         needed. The return value n is the length of s; err is always nil. If the
         buffer becomes too large, write_string will panic with [ErrTooLarge].
@@ -217,35 +217,28 @@ struct Buffer(io.Writer, io.Reader):
 
         # var buf = get_slice(self.buf, m, len(self.buf))
 
-        var s_buffer = to_bytes(s)
-        self.buf += s_buffer
+        var src_buffer = to_bytes(src)
+        self.buf += src_buffer
 
-        return len(s_buffer)
+        return len(src)
 
-    # fn read_from(inout self, r: io.Reader) -> Int64:
-    #     """Reads data from r until EOF and appends it to the buffer, growing
-    #     the buffer as needed. The return value n is the number of bytes read. Any
-    #     error except io.EOF encountered during the read is also returned. If the
-    #     buffer becomes too large, read_from will panic with [ErrTooLarge].
-    #     """
-    #     self.last_read = op_invalid
-    #     for
-    #         i := self.grow(MinRead)
-    #         self.buf = self.buf[:i]
-    #         m, e := r.read(self.buf[i:cap(self.buf)])
-    #         if m < 0
-    #             panic(errNegativeRead)
-    #
-
-    #         self.buf = self.buf[:i+m]
-    #         n += int64(m)
-    #         if e == io.EOF
-    #             return n, nil # e is EOF, so return nil explicitly
-    #
-    #         if e != nil
-    #             return n, e
-    #
-    #
+    fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
+        """Reads data from r until EOF and appends it to the buffer, growing
+        the buffer as needed. The return value n is the number of bytes read. Any
+        error except io.EOF encountered during the read is also returned. If the
+        buffer becomes too large, read_from will panic with [ErrTooLarge].
+        """
+        self.last_read = op_invalid
+        var read_count: Int64 = 0
+        while True:
+            try:
+                read_count = reader.read(self.buf)
+            except e:
+                if e.__str__() == "EOF":
+                    break
+                raise
+        
+        return len(self.buf)
 
     fn grow_slice(self, inout b: bytes, n: Int):
         """Grows b by n, preserving the original content of self.
@@ -273,7 +266,7 @@ struct Buffer(io.Writer, io.Reader):
         # return b2[:len(b)]
         b._vector.reserve(c)
 
-    fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int64:
+    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
         """Writes data to w until the buffer is drained or an error occurs.
         The return value n is the number of bytes written; it always fits into an
         Int, but it is int64 to match the io.WriterTo interface. Any error
@@ -284,7 +277,7 @@ struct Buffer(io.Writer, io.Reader):
         var n: Int64 = 0
         if n_bytes > 0:
             let sl = self.buf[self.off :]
-            let m = w.write(sl)
+            let m = writer.write(sl)
             if m > n_bytes:
                 raise Error("_buffer.Buffer.write_to: invalid write count")
 
@@ -300,7 +293,7 @@ struct Buffer(io.Writer, io.Reader):
         self.reset()
         return n
 
-    fn write_byte(inout self, c: Byte) raises:
+    fn write_byte(inout self, byte: Byte) raises -> Int:
         """Appends the byte c to the buffer, growing the buffer as needed.
         The returned error is always nil, but is included to match [bufio.Writer]'s
         write_byte. If the buffer becomes too large, write_byte will panic with
@@ -308,7 +301,7 @@ struct Buffer(io.Writer, io.Reader):
         """
         # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
         # not working correctly and the 0s remaining in the empty dynamic vector indices.
-        if c != 0:
+        if byte != 0:
             self.last_read = op_invalid
             var m: Int
             let ok: Bool
@@ -317,7 +310,9 @@ struct Buffer(io.Writer, io.Reader):
                 m = self.grow(1)
 
             # why is m 0 twice in a row?
-            self.buf[m] = c
+            self.buf[m] = byte
+            return m
+        return 0
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the
@@ -340,7 +335,7 @@ struct Buffer(io.Writer, io.Reader):
     #     self.buf = utf8.AppendRune(self.buf[:m], r)
     #     return len(self.buf) - m
 
-    fn read(inout self, inout b: bytes) raises -> Int:
+    fn read(inout self, inout dest: bytes) raises -> Int:
         """Reads the next len(p) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(p) is zero);
@@ -350,18 +345,18 @@ struct Buffer(io.Writer, io.Reader):
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            if len(b) == 0:
+            if len(dest) == 0:
                 return 0
 
             return 0
 
         let byte_buffer = self.buf[self.off :]
-        let n = copy(b, byte_buffer)
-        self.off += n
-        if n > 0:
+        let index = copy(dest, byte_buffer)
+        self.off += index
+        if index > 0:
             self.last_read = op_read
 
-        return n
+        return index
 
     fn next(inout self, inout n: Int) raises -> bytes:
         """Returns a slice containing the next n bytes from the buffer,
@@ -493,7 +488,7 @@ struct Buffer(io.Writer, io.Reader):
 
 
 fn new_buffer(inout buf: bytes) -> Buffer:
-    """Creates and initializes a new [Buffer] using buf as its
+    """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to
     prepare a [Buffer] to read existing data. It can also be used to set
