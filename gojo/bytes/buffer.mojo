@@ -166,8 +166,8 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
             var sl = self.buf[self.off :]
-            self.grow_slice(sl, self.off + n)
-            self.buf = sl
+            self.buf = self.grow_slice(sl, self.off + n)
+            # self.buf = sl
 
         # Restore self.off and len(self.buf).
         self.off = 0
@@ -238,7 +238,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         
         return len(self.buf)
 
-    fn grow_slice(self, inout b: bytes, n: Int):
+    fn grow_slice(self, inout b: bytes, n: Int) raises -> bytes:
         """Grows b by n, preserving the original content of self.
         If the allocation fails, it panics with ErrTooLarge.
         """
@@ -256,13 +256,16 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
             # we could rely purely on append to determine the growth rate.
             c = 2 * cap(b)
 
+        var resized_buffer = bytes(c)
+        _ = copy(resized_buffer, b)
         # var b2: bytes = bytes()
         # b2._vector.reserve(c)
 
         # # let b2 = append(bytes(nil), make(bytes, c)...)
         # _ = copy(b2, b)
         # return b2[:len(b)]
-        b._vector.reserve(c)
+        # b._vector.reserve(c)
+        return resized_buffer[:len(b)]
 
     fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
         """Writes data to w until the buffer is drained or an error occurs.
