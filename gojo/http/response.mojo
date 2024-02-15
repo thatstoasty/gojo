@@ -5,13 +5,13 @@ from ..stdlib_extensions.builtins._bytes import bytes, Byte
 
 @value
 struct DefaultReadCloser(io.ReadCloser):
-    fn read(inout self, inout b: bytes) raises -> Int:
+    fn read(inout self, inout dest: bytes) raises -> Int:
         # TODO: Implement
         return 1
 
-    fn close(inout self, b: bytes) -> Int:
+    fn close(inout self) raises:
         # TODO: Implement
-        return 1
+        return None
 
 
 @value

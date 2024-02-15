@@ -1,5 +1,5 @@
 from collections.optional import Optional
-from .util import copy
+from ..builtins import cap, copy
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
 import ..io.io
 

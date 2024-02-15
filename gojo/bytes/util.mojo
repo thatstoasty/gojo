@@ -55,26 +55,3 @@ fn trim_null_characters(b: bytes) -> bytes:
         if b[i] > 0 and b[i] < 127:
             new_b[i] = b[i]
     return new_b
-
-
-fn copy(inout target: bytes, source: bytes) -> Int:
-    """Copies the contents of source into target at the same index. Returns the number of bytes copied.
-    TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
-    TODO: It appends additional values if the source is longer than the target, if not then it overwrites the target.
-    """
-    var count = 0
-
-    for i in range(len(source)):
-        if source[i] != 0:
-            if len(target) <= i:
-                target._vector.append(source[i])
-            else:
-                target[i] = source[i]
-            count += 1
-
-    # target = trim_null_characters(target)
-    return count
-
-
-fn cap(buffer: bytes) -> Int:
-    return buffer._vector.capacity

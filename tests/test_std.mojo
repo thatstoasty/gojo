@@ -1,7 +1,7 @@
-from std.file import File, FileWrapper
-from std.reader import Reader
-from std.writer import STDWriter
-from std.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
+from io.file import File, FileWrapper
+from io.reader import Reader
+from io.writer import STDWriter
+from io.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.stdlib_extensions.builtins import bytes
 from gojo.bytes.util import to_bytes
 
@@ -11,14 +11,14 @@ fn test_file() raises:
     # var dest = bytes(4096)
     # print(file.read(dest))
     # print(dest)
-    var file = FileWrapper("2.txt", "r")
-    var dest = bytes(1)
+    var file = FileWrapper("test.txt", "r")
+    var dest = bytes(1200)
     print(file.read(dest))
     print(dest)
 
 
 fn test_reader() raises:
-    var file = File("2.txt", "r")
+    var file = File("test.txt", "r")
     var reader = Reader(file ^)
     var dest = bytes()
     _ = reader.read(dest)
