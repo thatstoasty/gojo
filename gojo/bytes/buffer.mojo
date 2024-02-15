@@ -488,6 +488,21 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         return to_string(sl)
 
 
+fn new_buffer() -> Buffer:
+    """Creates and initializes a new [Buffer] using buf as its`
+    initial contents. The new [Buffer] takes ownership of buf, and the
+    caller should not use buf after this call. new_buffer is intended to
+    prepare a [Buffer] to read existing data. It can also be used to set
+    the initial size of the internal buffer for writing. To do that,
+    buf should have the desired capacity but a length of zero.
+
+    In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
+    sufficient to initialize a [Buffer].
+    """
+    var b = bytes()
+    return Buffer(b)
+
+
 fn new_buffer(inout buf: bytes) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
@@ -499,7 +514,7 @@ fn new_buffer(inout buf: bytes) -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    return Buffer(buf=buf)
+    return Buffer(buf)
 
 
 fn new_buffer_string(inout s: String) -> Buffer:
@@ -510,5 +525,5 @@ fn new_buffer_string(inout s: String) -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var sbuffer = to_bytes(s)
-    return Buffer(buf=sbuffer)
+    var s_buffer = to_bytes(s)
+    return Buffer(s_buffer)
