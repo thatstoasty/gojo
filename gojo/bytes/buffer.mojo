@@ -72,10 +72,6 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        # if self == nil:
-        #     # Special case, useful in debugging.
-        #     return "<nil>"
-        var b = self.buf[self.off:]
         return to_string(self.buf[self.off:])
 
     fn empty(self) -> Bool:
@@ -126,7 +122,10 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         let l = self.len()
 
         if n <= cap(self.buf) - l:
-            self.buf = self.buf[: l + n]
+            # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
+            # Instead, just add bytes of len(n) to the end of the buffer for now.
+            # self.buf = self.buf[: l + n]
+            self.buf += bytes(n)
             return l, True
 
         return 0, False
@@ -149,10 +148,12 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
         if len(self.buf) == 0 and n <= small_buffer_size:
-            self.buf._vector.reserve(small_buffer_size)
+            self.buf = bytes(small_buffer_size)
+            # self.buf._vector.reserve(small_buffer_size)
             # Returning 0 messed things up by inserting on the first index twice, but why?
             # return 0
             pass
+    
         let c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
             # We can slide things down instead of allocating a new
@@ -170,7 +171,10 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         # Restore self.off and len(self.buf).
         self.off = 0
-        self.buf = self.buf[: m + n]
+        # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
+        # Instead, just add bytes of len(n) to the end of the buffer for now.
+        # self.buf = self.buf[: m + n]
+        self.buf += bytes(n)
         return m
 
     fn Grow(inout self, n: Int) raises:
@@ -192,16 +196,15 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         buffer becomes too large, write will panic with [ErrTooLarge].
         """
         self.last_read = op_invalid
-        # var m: Int
-        # let ok: Bool
+        var m: Int
+        let ok: Bool
         # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
         # IDK why, but for now we can let the dynamicvector grow on its own and not try to mess w the capacity and growing it.
-        # m, ok = self.try_grow_by_reslice(p.size)
-        # if not ok:
-        #     m = self.grow(p.size)
-        # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        self.buf += src
-        return len(src)
+        m, ok = self.try_grow_by_reslice(len(src))
+        if not ok:
+            m = self.grow(len(src))
+        var b = self.buf[m:]
+        return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -209,18 +212,13 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         buffer becomes too large, write_string will panic with [ErrTooLarge].
         """
         self.last_read = op_invalid
-        # var m: Int
-        # let ok: Bool
-        # m, ok = self.try_grow_by_reslice(len(s))
-        # if not ok:
-        #     m = self.grow(len(s))
-
-        # var buf = get_slice(self.buf, m, len(self.buf))
-
-        var src_buffer = to_bytes(src)
-        self.buf += src_buffer
-
-        return len(src)
+        var m: Int
+        let ok: Bool
+        m, ok = self.try_grow_by_reslice(len(src))
+        if not ok:
+            m = self.grow(len(src))
+        var b = self.buf[m:]
+        return copy(self.buf, to_bytes(src), m)
 
     fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
         """Reads data from r until EOF and appends it to the buffer, growing

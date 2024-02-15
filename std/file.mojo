@@ -4,7 +4,7 @@ from math import min
 from .external.libc import fopen, fread, fclose, fwrite
 from .external.libc import strnlen
 from gojo.stdlib_extensions.builtins import bytes
-from gojo.bytes.util import to_string, to_bytes
+from gojo.bytes.util import to_string, to_bytes, copy
 from gojo.io import io
 
 
@@ -110,9 +110,12 @@ struct FileWrapper(Movable, io.ReadSeekCloser, io.Writer):
         self.handle.close()
     
     fn read(inout self, inout dest: bytes) raises -> Int:
+        # Pretty hacky way to force the filehandle read into the defined trait.
+        # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         let result_bytes = to_bytes(self.handle.read(dest._vector.capacity))
-        dest += result_bytes
-        return len(result_bytes)
+        let elements_copied = copy(dest, result_bytes)
+        dest = dest[:elements_copied]
+        return elements_copied
     
     fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes(size)
