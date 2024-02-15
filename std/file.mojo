@@ -1,5 +1,6 @@
 from memory import memset
 from math import min
+from utils.list import Dim
 
 from .external.libc import fopen, fread, fclose, fwrite
 from .external.libc import strnlen
@@ -97,7 +98,7 @@ struct File(io.Writer, io.Reader):
     #         remaining -= to_write
 
 
-struct FileWrapper(Movable, io.ReadSeekCloser, io.Writer):
+struct FileWrapper(Movable):
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:
@@ -109,9 +110,14 @@ struct FileWrapper(Movable, io.ReadSeekCloser, io.Writer):
     fn close(inout self) raises:
         self.handle.close()
     
-    fn read(inout self, inout dest: bytes) raises -> Int:
-        let result_bytes = to_bytes(self.handle.read(dest._vector.capacity))
-        dest += result_bytes
+    fn read[D: Dim](inout self, inout dest: Buffer[D, DType.uint8]) raises -> Int:
+        let result_bytes = to_bytes(self.handle.read(dest.dynamic_size))
+        # let result_bytes = to_bytes(self.handle.read(dest._vector.capacity))
+        let buffer_len = len(dest) - 1
+        for i in range(len(result_bytes)):
+            dest.simd_store(i, result_bytes[i])
+            print(chr(int(dest.__getitem__(i))))
+
         return len(result_bytes)
     
     fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
