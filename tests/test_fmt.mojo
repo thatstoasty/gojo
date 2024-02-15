@@ -9,15 +9,18 @@ fn to_bytes(s: String) -> DynamicVector[UInt8]:
     return b
 
 
-fn printf(formatting_options: String, text: String) -> Int32:
+fn printf(formatting_options: String, text: String) raises:
     var formatting_options_copy = formatting_options
     var formatting_options_copy_ptr = formatting_options_copy._as_ptr()
     var formatting_options_ptr = formatting_options_copy_ptr._as_scalar_pointer().bitcast[UInt8]()
 
     var text_copy = text
     var text_ptr = text_copy._steal_ptr()
-    return fmt.printf(formatting_options_ptr, text_ptr)
+    let bytes_written = fmt.printf(formatting_options_ptr, text_ptr)
+
+    if bytes_written == -1:
+        raise Error("printf failed to write bytes to stdout.")
 
 
-fn main():
-    _ = printf("%s", "Hello, World!\n")
+fn main() raises:
+    printf("%s", "Hello, World!\n")
