@@ -22,9 +22,10 @@ struct STDWriter(io.Writer):
         self.fd = existing.fd
 
     fn __del__(owned self):
-        let res = external_call["close", Int, Int](self.fd)
-        if res == -1:
-            print("Failed to close the file.")
+        pass
+        # let res = external_call["close", Int, Int](self.fd)
+        # if res == -1:
+        #     print("Failed to close the file.")
 
     fn dup(self) -> Self:
         let new_fd = external_call["dup", Int, Int](self.fd)
