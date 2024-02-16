@@ -7,23 +7,18 @@ Boolean
 %t	the word true or false
 
 Integer
-%b	base 2
+%d	base 10
 
 Floating-point and complex constituents:
 %f	decimal point but no exponent, e.g. 123.456
 
 String and slice of bytes (treated equivalently with these verbs):
 %s	the uninterpreted bytes of the string or slice
-%q	a double-quoted string safely escaped with Go syntax
 
-The default formatting for %v is:
-bool:                    %t
-int, int8 etc.:          %d
-uint, uint8 etc.:        %d, %#x if printed with %#v
-float32, complex64, etc: %g
-string:                  %s
-chan:                    %p
-pointer:                 %p
+TODO:
+- Add support for more formatting options
+- Switch to buffered writing to avoid multiple string concatenations
+- Add support for width and precision formatting options
 """
 
 from utils.variant import Variant
@@ -99,8 +94,3 @@ fn sprintf(formatting: String, *args: Args) raises -> String:
             raise Error("Unknown for argument #" + String(i))
 
     return text
-
-
-# fn main() raises:
-#     let s = sprintf("Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!", String("world"), 29, Float64(29.5), True)
-#     print(s)
