@@ -1,7 +1,7 @@
-from io.file import File, FileWrapper
-from io.reader import Reader
-from io.writer import STDWriter
-from io.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
+from gojo.io.file import File, FileWrapper
+from gojo.io.reader import Reader
+from gojo.io.std_writer import STDWriter
+from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.stdlib_extensions.builtins import bytes
 from gojo.bytes.util import to_bytes
 

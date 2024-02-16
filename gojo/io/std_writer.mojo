@@ -1,7 +1,7 @@
-from .external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.io import io
-from gojo.bytes.util import to_bytes
-from gojo.stdlib_extensions.builtins import bytes
+from ..external.libc import c_ssize_t, c_size_t, c_int, char_pointer
+from ..io import io
+from ..bytes.util import to_bytes
+from ..stdlib_extensions.builtins import bytes
 
 
 @value

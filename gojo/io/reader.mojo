@@ -1,10 +1,10 @@
 from math import min
-from .external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
+from ..external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
 from .file import File
-from gojo.io import io
-from gojo.bytes import buffer
-from gojo.bytes.util import to_bytes
-from gojo.stdlib_extensions.builtins import bytes
+from ..io import io
+from ..bytes import buffer
+from ..bytes.util import to_bytes
+from ..stdlib_extensions.builtins import bytes
 
 alias O_RDWR = 0o2
 
