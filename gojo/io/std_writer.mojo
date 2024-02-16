@@ -1,31 +1,19 @@
-from .external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.io import io
-from gojo.bytes import buffer
-from gojo.bytes.util import to_bytes
-from gojo.stdlib_extensions.builtins import bytes
-
-alias O_RDWR = 0o2
+from ..external.libc import c_ssize_t, c_size_t, c_int, char_pointer
+from ..io import io
+from ..bytes.util import to_bytes
+from ..stdlib_extensions.builtins import bytes
 
 
-# This is a simple wrapper around POSIX-style fcntl.h functions.
-# thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
 @value
 struct STDWriter(io.Writer):
     var fd: Int
-    var buffer: bytes
 
     fn __init__(inout self, fd: Int):
-        alias buffer_size: Int = 4096
         self.fd = fd
-        self.buffer = bytes()
     
     # This takes ownership of a POSIX file descriptor.
     fn __moveinit__(inout self, owned existing: Self):
         self.fd = existing.fd
-        self.buffer = existing.buffer
-
-    fn __del__(owned self):
-        _ = external_call["close", Int, Int](self.fd)
 
     fn dup(self) -> Self:
         let new_fd = external_call["dup", Int, Int](self.fd)

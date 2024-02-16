@@ -1,4 +1,5 @@
-from ..bytes.util import to_bytes, cap
+from ..bytes.util import to_bytes
+from ..builtins import cap
 from ..stdlib_extensions.builtins._bytes import bytes, Byte
 from collections.optional import Optional
 
