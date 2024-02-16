@@ -12,20 +12,19 @@ alias O_RDWR = 0o2
 @value
 struct STDWriter(io.Writer):
     var fd: Int
-    var buffer: bytes
 
     fn __init__(inout self, fd: Int):
         alias buffer_size: Int = 4096
         self.fd = fd
-        self.buffer = bytes()
     
     # This takes ownership of a POSIX file descriptor.
     fn __moveinit__(inout self, owned existing: Self):
         self.fd = existing.fd
-        self.buffer = existing.buffer
 
     fn __del__(owned self):
-        _ = external_call["close", Int, Int](self.fd)
+        let res = external_call["close", Int, Int](self.fd)
+        if res == -1:
+            print("Failed to close the file.")
 
     fn dup(self) -> Self:
         let new_fd = external_call["dup", Int, Int](self.fd)

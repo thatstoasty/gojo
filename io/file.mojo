@@ -4,8 +4,9 @@ from math import min
 from .external.libc import fopen, fread, fclose, fwrite
 from .external.libc import strnlen
 from gojo.stdlib_extensions.builtins import bytes
-from gojo.bytes.util import to_string, to_bytes, copy
+from gojo.bytes.util import to_string, to_bytes
 from gojo.io import io
+from gojo.builtins import copy
 
 
 alias c_char = UInt8
