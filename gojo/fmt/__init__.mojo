@@ -1,1 +1,0 @@
-from .fmt import sprintf
