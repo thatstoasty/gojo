@@ -1,15 +1,14 @@
-from gojo.bytes import reader, buffer
-from gojo.bytes.util import to_bytes
-from gojo.stdlib_extensions.builtins import bytes
-from gojo.io import io
-from gojo.io.io import read_all
 from testing import testing
+from gojo.bytes import reader, buffer
+from gojo.builtins._bytes import Bytes, to_bytes
+from gojo.io.io import read_all
+import gojo.io.traits as io
 
 
 fn test_read() raises:
     print("Testing read")
     var r = reader.new_reader(to_bytes("0123456789"))
-    var b = bytes()
+    var b = Bytes()
     _ = r.read(b)
     testing.assert_equal(b, to_bytes("0123456789"))
 
@@ -18,11 +17,11 @@ fn test_read_at() raises:
     print("Testing read_at")
     var r = reader.new_reader(to_bytes("0123456789"))
 
-    var b = bytes()
+    var b = Bytes()
     var pos = r.read_at(b, 0)
     testing.assert_equal(b[:pos], to_bytes("0123456789"))
-    
-    b = bytes()
+
+    b = Bytes()
     pos = r.read_at(b, 1)
     testing.assert_equal(b[:pos], to_bytes("123456789"))
 
@@ -36,8 +35,8 @@ fn test_seek() raises:
     print("Testing seek")
     var r = reader.new_reader(to_bytes("0123456789"))
     let pos = r.seek(5, io.seek_start)
-    
-    var b = bytes()
+
+    var b = Bytes()
     _ = r.read(b)
     testing.assert_equal(b, to_bytes("56789"))
 
@@ -66,7 +65,7 @@ fn test_write_to() raises:
     testing.assert_equal(w.string(), String("Hello World0123456789"))
 
 
-fn main() raises:
+fn reader_tests() raises:
     test_read()
     test_read_at()
     test_seek()

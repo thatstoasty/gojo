@@ -1,9 +1,10 @@
-import ..io.io
+from ..io.traits import Reader, Writer, ByteReader, ByteWriter, WriterTo, StringWriter, ReaderFrom
 from ..builtins import cap, copy
-from .util import index_byte, to_string, to_bytes, trim_null_characters
-from ..stdlib_extensions.builtins._bytes import bytes, Byte
+from ..builtins._bytes import Bytes, Byte, index_byte, to_string, to_bytes, trim_null_characters
+
 
 alias Rune = Int32
+
 
 # TODO: Maybe I need to use static vectors here?
 # smallbuffer_size is an initial allocation minimal capacity.
@@ -40,26 +41,34 @@ alias ErrShortWrite = "short write"
 # A Buffer is a variable-sized buffer of bytes with [Buffer.read] and [Buffer.write] methods.
 # The zero value for Buffer is an empty buffer ready to use.
 @value
-struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWriter, io.WriterTo, io.ReaderFrom):
-    var buf: bytes  # contents are the bytes buf[off : len(buf)]
+struct Buffer(
+    Writer,
+    StringWriter,
+    Reader,
+    ByteReader,
+    ByteWriter,
+    WriterTo,
+    ReaderFrom,
+):
+    var buf: Bytes  # contents are the bytes buf[off : len(buf)]
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    fn __init__(inout self, inout buf: bytes):
+    fn __init__(inout self, inout buf: Bytes):
         self.buf = buf
         self.off = 0
         self.last_read = op_invalid
 
-    fn bytes(self) raises -> bytes:
+    fn bytes(self) raises -> Bytes:
         """Returns a slice of length self.len() holding the unread portion of the buffer.
         The slice is valid for use only until the next buffer modification (that is,
         only until the next call to a method like [Buffer.read], [Buffer.write], [Buffer.reset], or [Buffer.truncate]).
         The slice aliases the buffer content at least until the next buffer modification,
         so immediate changes to the slice will affect the result of future reads.
         """
-        return self.buf[self.off:]
+        return self.buf[self.off :]
 
-    fn availablebuffer(self) raises -> bytes:
+    fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.Available() capacity.
         This buffer is intended to be appended to and
         passed to an immediately succeeding [Buffer.write] call.
@@ -73,7 +82,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        return to_string(self.buf[self.off:])
+        return to_string(self.buf[self.off :])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -81,7 +90,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
     fn len(self) -> Int:
         """Returns the number of bytes of the unread portion of the buffer;
-        self.len() == len(self.bytes())."""
+        self.len() == len(self.Bytes())."""
         return len(self.buf) - self.off
 
     fn cap(self) -> Int:
@@ -126,7 +135,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
             # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
             # Instead, just add bytes of len(n) to the end of the buffer for now.
             # self.buf = self.buf[: l + n]
-            self.buf += bytes(n)
+            self.buf += Bytes(n)
             return l, True
 
         return 0, False
@@ -149,12 +158,12 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
         if len(self.buf) == 0 and n <= smallbuffer_size:
-            self.buf = bytes(smallbuffer_size)
+            self.buf = Bytes(smallbuffer_size)
             # self.buf._vector.reserve(smallbuffer_size)
             # Returning 0 messed things up by inserting on the first index twice, but why?
             # return 0
             pass
-    
+
         let c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
             # We can slide things down instead of allocating a new
@@ -175,7 +184,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
         # Instead, just add bytes of len(n) to the end of the buffer for now.
         # self.buf = self.buf[: m + n]
-        self.buf += bytes(n)
+        self.buf += Bytes(n)
         return m
 
     fn Grow(inout self, n: Int) raises:
@@ -191,7 +200,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         let m = self.grow(n)
         self.buf = self.buf[:m]
 
-    fn write(inout self, src: bytes) raises -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         """Appends the contents of p to the buffer, growing the buffer as
         needed. The return value n is the length of p; err is always nil. If the
         buffer becomes too large, write will panic with [ErrTooLarge].
@@ -221,7 +230,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         var b = self.buf[m:]
         return copy(self.buf, to_bytes(src), m)
 
-    fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
+    fn read_from[R: Reader](inout self, inout reader: R) raises -> Int64:
         """Reads data from r until EOF and appends it to the buffer, growing
         the buffer as needed. The return value n is the number of bytes read. Any
         error except io.EOF encountered during the read is also returned. If the
@@ -236,10 +245,10 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
                 if e.__str__() == "EOF":
                     break
                 raise
-        
+
         return len(self.buf)
 
-    fn grow_slice(self, inout b: bytes, n: Int) raises -> bytes:
+    fn grow_slice(self, inout b: Bytes, n: Int) raises -> Bytes:
         """Grows b by n, preserving the original content of self.
         If the allocation fails, it panics with ErrTooLarge.
         """
@@ -257,18 +266,18 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
             # we could rely purely on append to determine the growth rate.
             c = 2 * cap(b)
 
-        var resizedbuffer = bytes(c)
+        var resizedbuffer = Bytes(c)
         _ = copy(resizedbuffer, b)
-        # var b2: bytes = bytes()
+        # var b2: Bytes = Bytes()
         # b2._vector.reserve(c)
 
         # # let b2 = append(bytes(nil), make(bytes, c)...)
         # _ = copy(b2, b)
         # return b2[:len(b)]
         # b._vector.reserve(c)
-        return resizedbuffer[:len(b)]
+        return resizedbuffer[: len(b)]
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
+    fn write_to[W: Writer](inout self, inout writer: W) raises -> Int64:
         """Writes data to w until the buffer is drained or an error occurs.
         The return value n is the number of bytes written; it always fits into an
         Int, but it is int64 to match the io.WriterTo interface. Any error
@@ -337,7 +346,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
     #     self.buf = utf8.AppendRune(self.buf[:m], r)
     #     return len(self.buf) - m
 
-    fn read(inout self, inout dest: bytes) raises -> Int:
+    fn read(inout self, inout dest: Bytes) raises -> Int:
         """Reads the next len(p) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(p) is zero);
@@ -360,7 +369,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
 
         return index
 
-    fn next(inout self, inout n: Int) raises -> bytes:
+    fn next(inout self, inout n: Int) raises -> Bytes:
         """Returns a slice containing the next n bytes from the buffer,
         advancing the buffer as if the bytes had been returned by [Buffer.read].
         If there are fewer than n bytes in the buffer, next returns the entire buffer.
@@ -449,7 +458,7 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         if self.off > 0:
             self.off -= 1
 
-    fn read_bytes(inout self, delim: Byte) raises -> bytes:
+    fn read_bytes(inout self, delim: Byte) raises -> Bytes:
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -460,12 +469,12 @@ struct Buffer(io.Writer, io.StringWriter, io.Reader, io.ByteReader, io.ByteWrite
         let sl = self.read_slice(delim)
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
-        var lines = bytes()
+        var lines = Bytes()
         for i in range(len(sl)):
             lines[i] = sl[i]
         return lines
 
-    fn read_slice(inout self, delim: Byte) raises -> bytes:
+    fn read_slice(inout self, delim: Byte) raises -> Bytes:
         """Like read_bytes but returns a reference to internal buffer data."""
         let i = index_byte(self.buf[self.off :], delim)
         var end = self.off + i + 1
@@ -500,11 +509,11 @@ fn new_buffer() -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var b = bytes()
+    var b = Bytes()
     return Buffer(b)
 
 
-fn new_buffer(inout buf: bytes) -> Buffer:
+fn new_buffer(inout buf: Bytes) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to

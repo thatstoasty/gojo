@@ -1,6 +1,9 @@
-from ..stdlib_extensions.builtins import bytes
+from ._bytes import Bytes, Byte
 
-fn copy(inout target: DynamicVector[Int], source: DynamicVector[Int], start: Int = 0) -> Int:
+
+fn copy(
+    inout target: DynamicVector[Int], source: DynamicVector[Int], start: Int = 0
+) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
     TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
@@ -10,16 +13,18 @@ fn copy(inout target: DynamicVector[Int], source: DynamicVector[Int], start: Int
 
     for i in range(len(source)):
         if source[i] != 0:
-            if len(target) <= i+start:
+            if len(target) <= i + start:
                 target.append(source[i])
             else:
-                target[i+start] = source[i]
+                target[i + start] = source[i]
             count += 1
 
     return count
 
 
-fn copy(inout target: DynamicVector[String], source: DynamicVector[String], start: Int = 0) -> Int:
+fn copy(
+    inout target: DynamicVector[String], source: DynamicVector[String], start: Int = 0
+) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
     TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
@@ -29,16 +34,16 @@ fn copy(inout target: DynamicVector[String], source: DynamicVector[String], star
 
     for i in range(len(source)):
         if source[i] != 0:
-            if len(target) <= i+start:
+            if len(target) <= i + start:
                 target.append(source[i])
             else:
-                target[i+start] = source[i]
+                target[i + start] = source[i]
             count += 1
 
     return count
 
 
-fn copy(inout target: bytes, source: bytes, start: Int = 0) -> Int:
+fn copy(inout target: Bytes, source: Bytes, start: Int = 0) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
     TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
@@ -48,16 +53,16 @@ fn copy(inout target: bytes, source: bytes, start: Int = 0) -> Int:
 
     for i in range(len(source)):
         if source[i] != 0:
-            if len(target) <= i+start:
+            if len(target) <= i + start:
                 target._vector.append(source[i])
             else:
-                target[i+start] = source[i]
+                target[i + start] = source[i]
             count += 1
 
     return count
 
 
-fn cap(buffer: bytes) -> Int:
+fn cap(buffer: Bytes) -> Int:
     return buffer._vector.capacity
 
 

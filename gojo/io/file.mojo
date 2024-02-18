@@ -1,9 +1,7 @@
-from ..external.libc import fopen, fread, fclose, fwrite
-from ..external.libc import strnlen
-from ..stdlib_extensions.builtins import bytes
-from ..bytes.util import to_string, to_bytes
-from ..io import io
+from ..external.libc import fopen, fread, fclose, fwrite, strnlen
+from ..builtins._bytes import Bytes, Byte, to_string, to_bytes
 from ..builtins import copy
+from .traits import Writer, Reader, ReadSeekCloser
 
 
 alias c_char = UInt8
@@ -21,7 +19,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 
 @value
-struct File(io.Writer, io.Reader):
+struct File(Writer, Reader):
     var handle: Pointer[UInt64]
     var fname: Pointer[c_char]
     var mode: Pointer[c_char]
@@ -62,13 +60,17 @@ struct File(io.Writer, io.Reader):
     fn do_nothing(self):
         pass
 
-    fn read(inout self, inout dest: bytes) raises -> Int:
-        return fread(dest._vector.data.value, sizeof[UInt8](), BUF_SIZE, self.handle).to_int()
+    fn read(inout self, inout dest: Bytes) raises -> Int:
+        return fread(
+            dest._vector.data.value, sizeof[UInt8](), BUF_SIZE, self.handle
+        ).to_int()
 
-    fn write(inout self, src: bytes) raises -> Int:
-        return fwrite(src._vector.data.value, sizeof[UInt8](), len(src), self.handle).to_int()
+    fn write(inout self, src: Bytes) raises -> Int:
+        return fwrite(
+            src._vector.data.value, sizeof[UInt8](), len(src), self.handle
+        ).to_int()
 
-    fn write_all(inout self, src: bytes) raises:
+    fn write_all(inout self, src: Bytes) raises:
         var index = 0
         while index != len(src):
             index += self.write(src)
@@ -95,35 +97,35 @@ struct File(io.Writer, io.Reader):
     #         remaining -= to_write
 
 
-struct FileWrapper(Movable, io.ReadSeekCloser, io.Writer):
+struct FileWrapper(Movable, ReadSeekCloser, Writer):
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:
         self.handle = open(path, mode)
-    
+
     fn __moveinit__(inout self, owned existing: Self):
         self.handle = existing.handle ^
 
     fn close(inout self) raises:
         self.handle.close()
-    
-    fn read(inout self, inout dest: bytes) raises -> Int:
+
+    fn read(inout self, inout dest: Bytes) raises -> Int:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         let result_bytes = to_bytes(self.handle.read(dest._vector.capacity))
         let elements_copied = copy(dest, result_bytes)
         dest = dest[:elements_copied]
         return elements_copied
-    
+
     fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes(size)
-    
+
     fn read_bytes(inout self) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes()
-    
+
     fn seek(inout self, offset: Int64, whence: Int = 0) raises -> Int:
         return int(self.handle.seek(offset.cast[DType.uint64]()))
-    
-    fn write(inout self, src: bytes) raises -> Int:
+
+    fn write(inout self, src: Bytes) raises -> Int:
         self.handle.write(to_string(src))
         return len(src)
