@@ -867,6 +867,7 @@ fn fopen(__filename: Pointer[UInt8], __mode: Pointer[UInt8]) -> Pointer[FILE]:
         __filename, __mode
     )
 
+
 fn fwrite(
     __ptr: Pointer[UInt8], __size: UInt64, __nitems: UInt64, __stream: Pointer[FILE]
 ) -> UInt64:

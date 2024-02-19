@@ -1,6 +1,21 @@
-from ..io.traits import Reader, Writer, ByteReader, ByteWriter, WriterTo, StringWriter, ReaderFrom
+from ..io.traits import (
+    Reader,
+    Writer,
+    ByteReader,
+    ByteWriter,
+    WriterTo,
+    StringWriter,
+    ReaderFrom,
+)
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, index_byte, to_string, to_bytes, trim_null_characters
+from ..builtins._bytes import (
+    Bytes,
+    Byte,
+    index_byte,
+    to_string,
+    to_bytes,
+    trim_null_characters,
+)
 
 
 alias Rune = Int32

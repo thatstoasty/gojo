@@ -43,7 +43,7 @@ fn replace_first(s: String, old: String, new: String) -> String:
 
     # If the old substring is found, replace it
     if index != -1:
-        return s[:index] + new + s[index + len(old):]
+        return s[:index] + new + s[index + len(old) :]
 
     # If the old substring is not found, return the original string
     return s

@@ -77,7 +77,7 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 # nothing happened; in particular it does not indicate EOF.
 #
 # Implementations must not retain p.
-trait Reader(Movable):
+trait Reader(Copyable, Movable):
     fn read(inout self, inout dest: Bytes) raises -> Int:
         ...
 
@@ -91,7 +91,7 @@ trait Reader(Movable):
 # Write must not modify the slice data, even temporarily.
 #
 # Implementations must not retain p.
-trait Writer(Movable):
+trait Writer(Copyable, Movable):
     fn write(inout self, src: Bytes) raises -> Int:
         ...
 
@@ -100,7 +100,7 @@ trait Writer(Movable):
 #
 # The behavior of Close after the first call is undefined.
 # Specific implementations may document their own behavior.
-trait Closer(Movable):
+trait Closer(Copyable, Movable):
     fn close(inout self) raises:
         ...
 
@@ -120,7 +120,7 @@ trait Closer(Movable):
 # Seeking to any positive offset may be allowed, but if the new offset exceeds
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
-trait Seeker(Movable):
+trait Seeker(Copyable, Movable):
     fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
         ...
 
@@ -164,7 +164,7 @@ trait ReadWriteSeeker(Reader, Writer, Seeker):
 # Any error except EOF encountered during the read is also returned.
 #
 # The [Copy] fntion uses [ReaderFrom] if available.
-trait ReaderFrom():
+trait ReaderFrom:
     fn read_from[R: Reader](inout self, inout reader: R) raises -> Int64:
         ...
 
@@ -180,7 +180,7 @@ trait WriterReadFrom(Writer, ReaderFrom):
 # written. Any error encountered during the write is also returned.
 #
 # The Copy fntion uses WriterTo if available.
-trait WriterTo():
+trait WriterTo:
     fn write_to[W: Writer](inout self, inout writer: W) raises -> Int64:
         ...
 
@@ -215,7 +215,7 @@ trait ReaderWriteTo(Reader, WriterTo):
 # same input source.
 #
 # Implementations must not retain p.
-trait ReaderAt():
+trait ReaderAt:
     fn read_at(self, inout dest: Bytes, off: Int64) raises -> Int:
         ...
 
@@ -235,7 +235,7 @@ trait ReaderAt():
 # destination if the ranges do not overlap.
 #
 # Implementations must not retain p.
-trait WriterAt():
+trait WriterAt:
     fn write_at(self, src: Bytes, off: Int64) raises -> Int:
         ...
 
@@ -249,7 +249,7 @@ trait WriterAt():
 # ReadByte provides an efficient interface for byte-at-time
 # processing. A [Reader] that does not implement  ByteReader
 # can be wrapped using bufio.NewReader to add this method.
-trait ByteReader():
+trait ByteReader:
     fn read_byte(inout self) raises -> Byte:
         ...
 
@@ -262,13 +262,13 @@ trait ByteReader():
 # return an error, unread the last byte read (or the byte prior to the
 # last-unread byte), or (in implementations that support the [Seeker] interface)
 # seek to one byte before the current offset.
-trait ByteScanner():
+trait ByteScanner:
     fn unread_byte(inout self) raises:
         ...
 
 
 # ByteWriter is the interface that wraps the WriteByte method.
-trait ByteWriter():
+trait ByteWriter:
     fn write_byte(inout self, byte: Byte) raises -> Int:
         ...
 
@@ -278,7 +278,7 @@ trait ByteWriter():
 # ReadRune reads a single encoded Unicode character
 # and returns the rune and its size in bytes. If no character is
 # available, err will be set.
-trait RuneReader():
+trait RuneReader:
     fn read_rune(inout self) -> (Rune, Int):
         ...
 
@@ -297,6 +297,6 @@ trait RuneScanner(RuneReader):
 
 
 # StringWriter is the interface that wraps the WriteString method.
-trait StringWriter():
+trait StringWriter:
     fn write_string(inout self, src: String) raises -> Int:
         ...

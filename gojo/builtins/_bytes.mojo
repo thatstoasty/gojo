@@ -300,9 +300,11 @@ struct Bytes(Stringable, Sized, CollectionElement):
         if limits.end == 9223372036854775807:
             end = len(self._vector)
         elif limits.end > self.__len__():
-            let error = "Bytes: Index out of range for limits.end. Received: " + str(limits.end) + " but the length is " + str(self._vector.__len__())
+            let error = "Bytes: Index out of range for limits.end. Received: " + str(
+                limits.end
+            ) + " but the length is " + str(self._vector.__len__())
             raise Error(error)
-        
+
         var new_bytes = Self()
         for i in range(limits.start, end, limits.step):
             new_bytes._vector.append(self[i])

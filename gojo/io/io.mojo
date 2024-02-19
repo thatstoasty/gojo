@@ -372,6 +372,7 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 # 	return c.Reader.(WriterTo).WriteTo(w)
 # }
 
+
 # ReadAll reads from r until an error or EOF and returns the data it read.
 # A successful call returns err == nil, not err == EOF. Because ReadAll is
 # defined to read from src until EOF, it does not treat an EOF from Read

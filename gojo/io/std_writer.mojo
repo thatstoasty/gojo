@@ -19,7 +19,9 @@ struct STDWriter(Writer):
         return Self(new_fd)
 
     fn write(inout self, src: Bytes) raises -> Int:
-        let write_count: c_ssize_t = external_call["write", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, src._vector.data, src.__len__())
+        let write_count: c_ssize_t = external_call[
+            "write", c_ssize_t, c_int, char_pointer, c_size_t
+        ](self.fd, src._vector.data, src.__len__())
 
         if write_count == -1:
             raise Error("Failed to write to file descriptor " + self.fd.__str__())
