@@ -96,8 +96,7 @@ struct File(Writer, Reader):
     #         self.write_all(Buffer[Dim(), DType.uint8](bytes_ptr, to_write))
     #         remaining -= to_write
 
-
-struct FileWrapper(Movable, ReadSeekCloser, Writer):
+struct FileWrapper():
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:
