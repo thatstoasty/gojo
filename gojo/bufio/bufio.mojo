@@ -695,6 +695,8 @@ struct Writer[W: io.Writer]():
                 try:
                     var sl = self.buf[self.n:]
                     m = reader.read(sl)
+                    if m != 0:
+                        break
                 except e:
                     if str(e) == io.EOF:
                         # If we filled the buffer exactly, flush preemptively.
