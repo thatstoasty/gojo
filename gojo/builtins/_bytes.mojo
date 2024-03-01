@@ -13,30 +13,20 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
     """
 
     var _vector: DynamicVector[Int8]
-    # var write_position: Int
 
     fn __init__(inout self):
         self._vector = DynamicVector[Int8]()
-        # self.write_position = 0
 
     fn __init__(inout self, owned vector: DynamicVector[Int8]):
         self._vector = vector
-        # self.write_position = len(vector)
 
     fn __init__(inout self, size: Int):
         self._vector = DynamicVector[Int8](capacity=size)
-        # for i in range(size):
-        #     self._vector.push_back(0)
-        
-        # self.write_position = 0
     
     fn __init__(inout self, owned s: String):
         self._vector = s.as_bytes()
-        # self.write_position = len(self._vector)
 
     fn __len__(self) -> Int:
-        # Length should only be what's written to the vector, and not include any 0 initialized elements.
-        # return self.write_position
         return len(self._vector)
 
     fn __getitem__(self, index: Int) -> Int8:
@@ -47,7 +37,6 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
         # Set it to len of the vector if that happens. Otherwise, if end is just too large in general, throw OOB error.
         var end = limits.end
         if limits.end == 9223372036854775807:
-            # end = self.write_position
             end = len(self._vector)
         elif limits.end > len(self._vector):
             var error = "Bytes: Index out of range for limits.end. Received: " + str(
@@ -91,10 +80,6 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
             self._vector.reserve(added_size * 2)
         self._vector.reserve(self.__len__() + other.__len__())
         self._vector.extend(other._vector)
-        # for i in range(other.__len__()):
-        #     self._vector.append(other[i])
-            # self._vector[self.write_position + i] = other[i]
-            # self.write_position += 1
 
     fn __str__(self) raises -> String:
         # Copy vector and add null terminator
@@ -108,15 +93,12 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
         
     fn append(inout self, value: Int8):
         self._vector.append(value)
-        # self.write_position += 1
     
     fn extend(inout self, value: String):
         self += value
-        # self.write_position += len(value)
     
     fn extend(inout self, value: DynamicVector[Int8]):
         self += value
-        # self.write_position += len(value)
     
     fn index_byte(self, c: Byte) -> Int:
         var i = 0
