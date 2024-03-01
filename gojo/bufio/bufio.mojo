@@ -128,7 +128,7 @@ struct Reader[R: io.Reader](io.Reader):
             raise Error(ErrBufferFull)
 
         # 0 <= n <= len(self.buf)
-        let available_space = self.write_pos - self.read_pos
+        var available_space = self.write_pos - self.read_pos
         if available_space < n:
             # not enough data in buffer
             raise Error(ErrBufferFull)
@@ -218,7 +218,7 @@ struct Reader[R: io.Reader](io.Reader):
 
     # ReadByte reads and returns a single byte.
     # If no byte is available, returns an error.
-    fn read_byte(inout self) raises -> UInt8:
+    fn read_byte(inout self) raises -> Int8:
         self.last_rune_size = -1
         while self.read_pos == self.write_pos:
             self.fill()  # buffer is empty
@@ -295,7 +295,7 @@ struct Reader[R: io.Reader](io.Reader):
     # by the next I/O operation, most clients should use
     # [Reader.ReadBytes] or ReadString instead.
     # ReadSlice returns err != nil if and only if line does not end in delim.
-    fn read_slice(inout self, delim: UInt8) raises -> Bytes:
+    fn read_slice(inout self, delim: Int8) raises -> Bytes:
         var s = 0  # search start index
         var line: Bytes = Bytes()
         while True:
@@ -317,7 +317,7 @@ struct Reader[R: io.Reader](io.Reader):
             self.fill()  # buffer is not full
 
         # Handle last byte, if any.
-        let i = len(line) - 1
+        var i = len(line) - 1
         if i >= 0:
             self.last_byte = int(line[i])
             self.last_rune_size = -1
@@ -380,7 +380,7 @@ struct Reader[R: io.Reader](io.Reader):
     # to minimize allocations and copies.
     fn collect_fragments(
         inout self,
-        delim: UInt8,
+        delim: Int8,
         inout frag: Bytes,
         inout full_buffers: DynamicVector[Bytes],
         inout total_len: Int,
@@ -409,7 +409,7 @@ struct Reader[R: io.Reader](io.Reader):
     # ReadBytes returns err != nil if and only if the returned data does not end in
     # delim.
     # For simple uses, a Scanner may be more convenient.
-    fn read_bytes(inout self, delim: UInt8) raises -> Bytes:
+    fn read_bytes(inout self, delim: Int8) raises -> Bytes:
         var full = DynamicVector[Bytes]()
         var frag = Bytes()
         var n: Int = 0
@@ -419,7 +419,7 @@ struct Reader[R: io.Reader](io.Reader):
         n = 0
         # Copy full pieces and fragment in.
         for i in range(len(full)):
-            let buffer = full[i]
+            var buffer = full[i]
             var sl = buf[n:]
             n += copy(sl, buffer)
 
@@ -434,7 +434,7 @@ struct Reader[R: io.Reader](io.Reader):
     # ReadString returns err != nil if and only if the returned data does not end in
     # delim.
     # For simple uses, a Scanner may be more convenient.
-    fn read_string(inout self, delim: UInt8) raises -> String:
+    fn read_string(inout self, delim: Int8) raises -> String:
         var full = DynamicVector[Bytes]()
         var frag = Bytes()
         var n: Int = 0
@@ -446,7 +446,7 @@ struct Reader[R: io.Reader](io.Reader):
 
         # Copy full pieces and fragment in.
         for i in range(len(full)):
-            let buffer = full[i]
+            var buffer = full[i]
             _ = buf.write(buffer)
 
         _ = buf.write(frag)
@@ -486,7 +486,7 @@ struct Reader[R: io.Reader](io.Reader):
 
     # writeBuf writes the [Reader]'s buffer to the writer.
     fn write_buf[W: io.Writer](inout self, inout writer: W) raises -> Int64:
-        let n = writer.write(self.buf[self.read_pos : self.write_pos])
+        var n = writer.write(self.buf[self.read_pos : self.write_pos])
         if n < 0:
             raise Error(errNegativeWrite)
 
@@ -625,7 +625,7 @@ struct Writer[W: io.Writer]():
         return nn
 
     # write_byte writes a single byte.
-    fn write_byte(inout self, src: UInt8) raises:
+    fn write_byte(inout self, src: Int8) raises:
         # if self.err != nil:
         #     return self.err
 

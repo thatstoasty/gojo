@@ -8,11 +8,11 @@ fn print_test() capturing:
 
 
 fn writer_test() raises:
-    let start = now()
+    var start = now()
     var writer = STDWriter(1)
     for i in range(1, 10000):
         _ = writer.write_string(str(i))
-    let end = now()
+    var end = now()
     print("\nwriter seconds: " + str((end - start) / 1e9))
 
 

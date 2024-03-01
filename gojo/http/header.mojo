@@ -46,7 +46,7 @@
 #     var upper = True
 #     var i = 0
 #     while i < len(header_key):
-#         let char = header_key[i]
+#         var char = header_key[i]
 #         if not valid_header_field_byte(ord(char)):
 #             return header_key
 
@@ -72,7 +72,7 @@
 #     # Add adds the key, value pair to the header.
 #     # It appends to any existing values associated with key.
 #     fn add(inout self, inout key: String, value: String) raises:
-#         let mime_key = canonical_mime_header_key(key)
+#         var mime_key = canonical_mime_header_key(key)
 #         self.value[mime_key].append(value)
 
 
@@ -94,7 +94,7 @@
 #         if len(self.value) == 0:
 #             return ""
 
-#         let v = self.value[canonical_mime_header_key(key)]
+#         var v = self.value[canonical_mime_header_key(key)]
 #         if len(v) == 0:
 #             return ""
 
@@ -160,7 +160,7 @@
 
 #     # get is like Get, but key must already be in CanonicalHeaderKey form.
 #     fn _get(self, key: String) raises -> String:
-#         let v = self.value[key]
+#         var v = self.value[key]
 #         if len(v) > 0:
 #             return v[0]
 
@@ -171,7 +171,7 @@
 #     fn has(self, key: String) -> Bool:
 #         var default_value = DynamicVector[String]()
 #         default_value.append("default")
-#         let result = self.value.get(key, DynamicVector[String]())
+#         var result = self.value.get(key, DynamicVector[String]())
 
 #         if len(result) == 1 and result[0] == "default":
 #             return False
@@ -250,9 +250,9 @@
 #     # TODO: Implement the key sorter stuff
 #     fn write_subset[W: io.StringWriter](self, w: W):
 #         for item in self.value.items():
-#             let values = item.value
+#             var values = item.value
 #             for i in range(len(values)):
-#                 let value = values[i]
+#                 var value = values[i]
 #                 _ = w.write_string(String(item.key) + ": " + value + "\r\n")
 
 #         # ws, ok := w.(io.StringWriter)
