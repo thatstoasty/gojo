@@ -113,7 +113,7 @@
 #     # # request, including the body. A zero or negative value means
 #     # # there will be no timeout.
 #     # #
-#     # # Because ReadTimeout does not let Handlers make per-request
+#     # # Because ReadTimeout does not var Handlers make per-request
 #     # # decisions on each request body's acceptable deadline or
 #     # # upload rate, most users will prefer to use
 #     # # ReadHeaderTimeout. It is valid to use them both.
@@ -130,7 +130,7 @@
 #     # # WriteTimeout is the maximum duration before timing out
 #     # # writes of the response. It is reset whenever a new
 #     # # request's header is read. Like ReadTimeout, it does not
-#     # # let Handlers make decisions on a per-request basis.
+#     # # var Handlers make decisions on a per-request basis.
 #     # # A zero or negative value means there will be no timeout.
 #     # WriteTimeout time.Duration
 

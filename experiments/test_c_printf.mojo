@@ -20,7 +20,7 @@ fn test_printf(formatting_options: String, text: String) raises:
     var other_text_ptr = other_text._as_ptr()
     var ptr = other_text_ptr._as_scalar_pointer().bitcast[UInt8]()
 
-    let bytes_written = fmt.printf(formatting_options_ptr)
+    var bytes_written = fmt.printf(formatting_options_ptr)
 
     if bytes_written == -1:
         raise Error("printf failed to write bytes to stdout.")

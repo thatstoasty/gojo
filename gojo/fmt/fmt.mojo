@@ -43,7 +43,7 @@ fn replace_first(s: String, old: String, new: String) -> String:
 
     # If the old substring is found, replace it
     if index != -1:
-        return s[:index] + new + s[index + len(old):]
+        return s[:index] + new + s[index + len(old) :]
 
     # If the old substring is not found, return the original string
     return s
@@ -73,7 +73,7 @@ fn format_boolean(s: String, arg: Bool) -> String:
 
 fn sprintf(formatting: String, *args: Args) raises -> String:
     var text = formatting
-    let formatter_count = formatting.count("%")
+    var formatter_count = formatting.count("%")
 
     if formatter_count > len(args):
         raise Error("Not enough arguments for format string")
@@ -83,13 +83,13 @@ fn sprintf(formatting: String, *args: Args) raises -> String:
     for i in range(len(args)):
         var argument = args[i]
         if argument.isa[String]():
-            text = format_string(text, argument.get[String]())
+            text = format_string(text, argument.get[String]()[])
         elif argument.isa[Int]():
-            text = format_integer(text, argument.get[Int]())
+            text = format_integer(text, argument.get[Int]()[])
         elif argument.isa[Float64]():
-            text = format_float(text, argument.get[Float64]())
+            text = format_float(text, argument.get[Float64]()[])
         elif argument.isa[Bool]():
-            text = format_boolean(text, argument.get[Bool]())
+            text = format_boolean(text, argument.get[Bool]()[])
         else:
             raise Error("Unknown for argument #" + String(i))
 

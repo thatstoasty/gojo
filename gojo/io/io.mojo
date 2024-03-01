@@ -31,7 +31,7 @@ fn read_at_least[R: Reader](inout reader: R, dest: Bytes, min: Int) raises -> In
     var n: Int = 0
     while n < min:
         var sl = dest[n:]
-        let nn: Int = reader.read(sl)
+        var nn: Int = reader.read(sl)
         n += nn
 
     return n
@@ -57,7 +57,7 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 
 #     If dst implements [ReaderFrom], the copy is implemented using it.
 #     """
-#     let written = copy(dst, LimitReader(src, n))
+#     var written = copy(dst, LimitReader(src, n))
 #     if written == n:
 #         return n
 
@@ -103,16 +103,16 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 #     """Actual implementation of Copy and CopyBuffer.
 #     if buf is nil, one is allocated.
 #     """
-#     let nr: Int
+#     var nr: Int
 #     nr = src.read(buf)
 #     while True:
 #         if nr > 0:
-#             let nw: Int
+#             var nw: Int
 #             nw = dst.write(get_slice(buf, 0, nr))
 #             if nw < 0 or nr < nw:
 #                 nw = 0
 
-#             let written = Int64(nw)
+#             var written = Int64(nw)
 #             if nr != nw:
 #                 raise Error(ErrShortWrite)
 
@@ -371,6 +371,7 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 # fn (c nopCloserWriterTo) WriteTo(w Writer) (n int64, err error) {
 # 	return c.Reader.(WriterTo).WriteTo(w)
 # }
+
 
 # ReadAll reads from r until an error or EOF and returns the data it read.
 # A successful call returns err == nil, not err == EOF. Because ReadAll is

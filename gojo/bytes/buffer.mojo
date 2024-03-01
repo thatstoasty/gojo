@@ -1,10 +1,22 @@
-from ..io.traits import Reader, Writer, ByteReader, ByteWriter, WriterTo, StringWriter, ReaderFrom
+from tensor import Tensor
+from ..io.traits import (
+    Reader,
+    Writer,
+    ByteReader,
+    ByteWriter,
+    WriterTo,
+    StringWriter,
+    ReaderFrom,
+)
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, index_byte, to_string, to_bytes, trim_null_characters
+from ..builtins._bytes import (
+    Bytes,
+    Byte,
+    trim_null_characters,
+)
 
 
 alias Rune = Int32
-
 
 # TODO: Maybe I need to use static vectors here?
 # smallbuffer_size is an initial allocation minimal capacity.
@@ -49,18 +61,20 @@ struct Buffer(
     ByteWriter,
     WriterTo,
     ReaderFrom,
+    StringableRaising,
+    Sized
 ):
     var buf: Bytes  # contents are the bytes buf[off : len(buf)]
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    fn __init__(inout self, inout buf: Bytes):
+    fn __init__(inout self, owned buf: Bytes):
         self.buf = buf
         self.off = 0
         self.last_read = op_invalid
 
     fn bytes(self) raises -> Bytes:
-        """Returns a slice of length self.len() holding the unread portion of the buffer.
+        """Returns a slice of length self.__len__() holding the unread portion of the buffer.
         The slice is valid for use only until the next buffer modification (that is,
         only until the next call to a method like [Buffer.read], [Buffer.write], [Buffer.reset], or [Buffer.truncate]).
         The slice aliases the buffer content at least until the next buffer modification,
@@ -76,21 +90,21 @@ struct Buffer(
         """
         return self.buf[len(self.buf) :]
 
-    fn string(self) raises -> String:
+    fn __str__(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
         as a string. If the [Buffer] is a nil pointer, it returns "<nil>".
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        return to_string(self.buf[self.off :])
+        return str(self.buf[self.off :])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
         return len(self.buf) <= self.off
 
-    fn len(self) -> Int:
+    fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the buffer;
-        self.len() == len(self.Bytes())."""
+        self.__len__() == len(self.Bytes())."""
         return len(self.buf) - self.off
 
     fn cap(self) -> Int:
@@ -112,7 +126,7 @@ struct Buffer(
             return
 
         self.last_read = op_invalid
-        if n < 0 or n > self.len():
+        if n < 0 or n > self.__len__():
             raise Error("buffer.Buffer: truncation out of range")
 
         self.buf = self.buf[: self.off + n]
@@ -129,7 +143,7 @@ struct Buffer(
         """Inlineable version of grow for the fast-case where the
         internal buffer only needs to be resliced.
         It returns the index where bytes should be written and whether it succeeded."""
-        let l = self.len()
+        var l = self.__len__()
 
         if n <= cap(self.buf) - l:
             # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
@@ -144,14 +158,14 @@ struct Buffer(
         """Grows the buffer to guarantee space for n more bytes.
         It returns the index where bytes should be written.
         If the buffer can't grow it will panic with ErrTooLarge."""
-        let m: Int = self.len()
+        var m: Int = self.__len__()
         # If buffer is empty, reset to recover space.
         if m == 0 and self.off != 0:
             self.reset()
 
         # Try to grow by means of a reslice.
-        let i: Int
-        let ok: Bool
+        var i: Int
+        var ok: Bool
         i, ok = self.try_grow_by_reslice(n)
         if ok:
             return i
@@ -164,11 +178,11 @@ struct Buffer(
             # return 0
             pass
 
-        let c = cap(self.buf)
+        var c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
             # We can slide things down instead of allocating a new
             # slice. We only need m+n <= c to slide, but
-            # we instead let capacity get twice as large so we
+            # we instead var capacity get twice as large so we
             # don't spend all our time copying.
             _ = copy(self.buf, self.buf[self.off :])
         elif c > max_int - c - n:
@@ -197,7 +211,7 @@ struct Buffer(
         if n < 0:
             raise Error("buffer.Buffer.grow: negative count")
 
-        let m = self.grow(n)
+        var m = self.grow(n)
         self.buf = self.buf[:m]
 
     fn write(inout self, src: Bytes) raises -> Int:
@@ -206,29 +220,29 @@ struct Buffer(
         buffer becomes too large, write will panic with [ErrTooLarge].
         """
         self.last_read = op_invalid
-        var m: Int
-        let ok: Bool
-        # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
-        # IDK why, but for now we can let the dynamicvector grow on its own and not try to mess w the capacity and growing it.
-        m, ok = self.try_grow_by_reslice(len(src))
-        if not ok:
-            m = self.grow(len(src))
-        var b = self.buf[m:]
-        return copy(self.buf, src, m)
+        # var m: Int
+        # var ok: Bool
+        # # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
+        # # IDK why, but for now we can var the dynamicvector grow on its own and not try to mess w the capacity and growing it.
+        # m, ok = self.try_grow_by_reslice(len(src))
+        # if not ok:
+        #     m = self.grow(len(src))
+        # var b = self.buf[m:]
+        return copy(self.buf, src, len(self.buf))
 
     fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
         needed. The return value n is the length of s; err is always nil. If the
         buffer becomes too large, write_string will panic with [ErrTooLarge].
         """
-        self.last_read = op_invalid
-        var m: Int
-        let ok: Bool
-        m, ok = self.try_grow_by_reslice(len(src))
-        if not ok:
-            m = self.grow(len(src))
-        var b = self.buf[m:]
-        return copy(self.buf, to_bytes(src), m)
+        # self.last_read = op_invalid
+        # var m: Int
+        # var ok: Bool
+        # m, ok = self.try_grow_by_reslice(len(src))
+        # if not ok:
+        #     m = self.grow(len(src))
+        # var b = self.buf[m:]
+        return self.write(Bytes(src))
 
     fn read_from[R: Reader](inout self, inout reader: R) raises -> Int64:
         """Reads data from r until EOF and appends it to the buffer, growing
@@ -271,7 +285,7 @@ struct Buffer(
         # var b2: Bytes = Bytes()
         # b2._vector.reserve(c)
 
-        # # let b2 = append(bytes(nil), make(bytes, c)...)
+        # # var b2 = append(bytes(nil), make(bytes, c)...)
         # _ = copy(b2, b)
         # return b2[:len(b)]
         # b._vector.reserve(c)
@@ -284,11 +298,11 @@ struct Buffer(
         encountered during the write is also returned.
         """
         self.last_read = op_invalid
-        let n_bytes: Int = self.len()
+        var n_bytes: Int = self.__len__()
         var n: Int64 = 0
         if n_bytes > 0:
-            let sl = self.buf[self.off :]
-            let m = writer.write(sl)
+            var sl = self.buf[self.off :]
+            var m = writer.write(sl)
             if m > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")
 
@@ -312,18 +326,21 @@ struct Buffer(
         """
         # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
         # not working correctly and the 0s remaining in the empty dynamic vector indices.
-        if byte != 0:
-            self.last_read = op_invalid
-            var m: Int
-            let ok: Bool
-            m, ok = self.try_grow_by_reslice(1)
-            if not ok:
-                m = self.grow(1)
+        # if byte != 0:
+        #     self.last_read = op_invalid
+        #     var m: Int
+        #     var ok: Bool
+        #     m, ok = self.try_grow_by_reslice(1)
+        #     if not ok:
+        #         m = self.grow(1)
 
-            # why is m 0 twice in a row?
-            self.buf[m] = byte
-            return m
-        return 0
+        #     # why is m 0 twice in a row?
+        #     self.buf[m] = byte
+        #     return m
+        # return 0
+        self.last_read = op_invalid
+        self.buf.append(byte)
+        return 1
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the
@@ -337,8 +354,8 @@ struct Buffer(
     #         return 1
 
     #     self.last_read = op_invalid
-    #     let m: Int
-    #     let ok: Bool
+    #     var m: Int
+    #     var ok: Bool
     #     m, ok = self.try_grow_by_reslice(utf8.UTFMax)
     #     if not ok:
     #         m = self.grow(utf8.UTFMax)
@@ -361,8 +378,8 @@ struct Buffer(
 
             return 0
 
-        let bytebuffer = self.buf[self.off :]
-        let index = copy(dest, bytebuffer)
+        var bytebuffer = self.buf[self.off :]
+        var index = copy(dest, bytebuffer)
         self.off += index
         if index > 0:
             self.last_read = op_read
@@ -376,11 +393,11 @@ struct Buffer(
         The slice is only valid until the next call to a read or write method.
         """
         self.last_read = op_invalid
-        let m = self.len()
+        var m = self.__len__()
         if n > m:
             n = m
 
-        let data = self.buf[self.off : self.off + n]
+        var data = self.buf[self.off : self.off + n]
         self.off += n
         if n > 0:
             self.last_read = op_read
@@ -396,7 +413,7 @@ struct Buffer(
             self.reset()
             return 0
 
-        let c = self.buf[self.off]
+        var c = self.buf[self.off]
         self.off += 1
         self.last_read = op_read
 
@@ -466,7 +483,7 @@ struct Buffer(
         read_bytes returns err != nil if and only if the returned data does not end in
         delim.
         """
-        let sl = self.read_slice(delim)
+        var sl = self.read_slice(delim)
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
         var lines = Bytes()
@@ -476,12 +493,12 @@ struct Buffer(
 
     fn read_slice(inout self, delim: Byte) raises -> Bytes:
         """Like read_bytes but returns a reference to internal buffer data."""
-        let i = index_byte(self.buf[self.off :], delim)
+        var i = self.buf[self.off:].index_byte(delim)
         var end = self.off + i + 1
         if i < 0:
             end = len(self.buf)
 
-        let line = self.buf[self.off : end]
+        var line = self.buf[self.off : end]
         self.off = end
         self.last_read = op_read
         return line
@@ -494,8 +511,8 @@ struct Buffer(
         read_string returns err != nil if and only if the returned data does not end
         in delim.
         """
-        let sl = self.read_slice(delim)
-        return to_string(sl)
+        var sl = self.read_slice(delim)
+        return str(sl)
 
 
 fn new_buffer() -> Buffer:
@@ -510,10 +527,10 @@ fn new_buffer() -> Buffer:
     sufficient to initialize a [Buffer].
     """
     var b = Bytes()
-    return Buffer(b)
+    return Buffer(b ^)
 
 
-fn new_buffer(inout buf: Bytes) -> Buffer:
+fn new_buffer(owned buf: Bytes) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to
@@ -524,10 +541,10 @@ fn new_buffer(inout buf: Bytes) -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    return Buffer(buf)
+    return Buffer(buf ^)
 
 
-fn new_buffer_string(inout s: String) -> Buffer:
+fn new_buffer_string(owned s: String) -> Buffer:
     """Creates and initializes a new [Buffer] using string s as its
     initial contents. It is intended to prepare a buffer to read an existing
     string.
@@ -535,5 +552,5 @@ fn new_buffer_string(inout s: String) -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var s_buffer = to_bytes(s)
-    return Buffer(s_buffer)
+    var bytes_buffer = Bytes(s.as_bytes())
+    return Buffer(bytes_buffer ^)

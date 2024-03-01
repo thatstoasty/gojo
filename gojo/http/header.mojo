@@ -46,21 +46,21 @@
 #     var upper = True
 #     var i = 0
 #     while i < len(header_key):
-#         let char = header_key[i]
+#         var char = header_key[i]
 #         if not valid_header_field_byte(ord(char)):
 #             return header_key
-        
+
 #         if (upper) and (ord('a') <= ord(char)) and (ord(char) <= ord('z')):
 #             header_key = canonical_mime_header_key(header_key)
 #             return header_key
-        
+
 #         if (not upper) and (ord('A') <= ord(char)) and (ord(char) <= ord('Z')):
 #             header_key = canonical_mime_header_key(header_key)
 #             return header_key
-        
+
 #         upper = (char == '-')
 #         i += 1
-    
+
 #     return header_key
 
 # # A MIMEHeader represents a MIME-style header mapping
@@ -72,9 +72,9 @@
 #     # Add adds the key, value pair to the header.
 #     # It appends to any existing values associated with key.
 #     fn add(inout self, inout key: String, value: String) raises:
-#         let mime_key = canonical_mime_header_key(key)
+#         var mime_key = canonical_mime_header_key(key)
 #         self.value[mime_key].append(value)
-    
+
 
 #     # set sets the header entries associated with key to
 #     # the single element value. It replaces any existing
@@ -83,7 +83,7 @@
 #         var keys = DynamicVector[String]()
 #         keys.append(value)
 #         self.value[canonical_mime_header_key(key)] = keys
-    
+
 
 #     # Get gets the first value associated with the given key.
 #     # It is case insensitive; [canonical_mime_header_key] is used
@@ -93,13 +93,13 @@
 #     fn get(self, inout key: String) raises -> String:
 #         if len(self.value) == 0:
 #             return ""
-        
-#         let v = self.value[canonical_mime_header_key(key)]
+
+#         var v = self.value[canonical_mime_header_key(key)]
 #         if len(v) == 0:
 #             return ""
-        
+
 #         return v[0]
-    
+
 
 #     # Values returns all values associated with the given key.
 #     # It is case insensitive; [canonical_mime_header_key] is
@@ -109,14 +109,14 @@
 #     fn values(self, inout key: String) raises -> Optional[DynamicVector[String]]:
 #         if len(self.value) == 0:
 #             return None
-        
+
 #         return self.value[canonical_mime_header_key(key)]
-    
+
 
 #     # Del deletes the values associated with key.
 #     fn Del(inout self, inout key: String) raises:
 #         _ = self.value.pop(canonical_mime_header_key(key))
-    
+
 
 # @value
 # struct Header(CollectionElement):
@@ -160,10 +160,10 @@
 
 #     # get is like Get, but key must already be in CanonicalHeaderKey form.
 #     fn _get(self, key: String) raises -> String:
-#         let v = self.value[key]
+#         var v = self.value[key]
 #         if len(v) > 0:
 #             return v[0]
-        
+
 #         return ""
 
 #     # has reports whether h has the provided key defined, even if it's
@@ -171,13 +171,13 @@
 #     fn has(self, key: String) -> Bool:
 #         var default_value = DynamicVector[String]()
 #         default_value.append("default")
-#         let result = self.value.get(key, DynamicVector[String]())
+#         var result = self.value.get(key, DynamicVector[String]())
 
 #         if len(result) == 1 and result[0] == "default":
 #             return False
-        
+
 #         return True
-    
+
 #     # Del deletes the values associated with key.
 #     # The key is case insensitive; it is canonicalized by
 #     # [CanonicalHeaderKey].
@@ -188,23 +188,23 @@
 #     # Write writes a header in wire format.
 #     fn write[W: io.StringWriter](self, w: W):
 #         return self._write(w)
-    
+
 
 #     fn _write[W: io.StringWriter](self, w: W):
 #         return self.write_subset(w)
-    
+
 
 #     # # Clone returns a copy of h or nil if h is nil.
 #     # fn Clone() -> Header:
 #     #     if h == nil:
 #     #         return nil
-        
+
 
 #     #     # Find total number of values.
 #     #     nv := 0
 #     #     for _, vv := range h:
 #     #         nv += len(vv)
-        
+
 #     #     sv := make(DynamicVector[String], nv) # shared backing array for headers' values
 #     #     h2 := make(Header, len(h))
 #     #     for k, vv := range h:
@@ -213,13 +213,13 @@
 #     #             # between nil and zero-length header values.
 #     #             h2[k] = nil
 #     #             continue
-            
+
 #     #         n := copy(sv, vv)
 #     #         h2[k] = sv[:n:n]
 #     #         sv = sv[n:]
-        
+
 #     #     return h2
-    
+
 
 #     # # sortedKeyValues returns h's keys sorted in the returned kvs
 #     # # slice. The headerSorter used to sort is also returned, for possible
@@ -228,37 +228,37 @@
 #     #     hs = headerSorterPool.Get().(*headerSorter)
 #     #     if cap(hs.kvs) < len(h):
 #     #         hs.kvs = make([]keyValues, 0, len(h))
-        
+
 #     #     kvs = hs.kvs[:0]
 #     #     for k, vv := range h:
 #     #         if !exclude[k]:
 #     #             kvs = append(kvs, keyValues{k, vv)
-            
-        
+
+
 #     #     hs.kvs = kvs
 #     #     sort.Sort(hs)
 #     #     return kvs, hs
-    
+
 
 #     # # WriteSubset writes a header in wire format.
 #     # # If exclude is not nil, keys where exclude[key] == true are not written.
 #     # # Keys are not canonicalized before checking the exclude map.
 #     # fn WriteSubset(w io.Writer, exclude map[String]bool):
 #     #     return h.writeSubset(w, exclude, nil)
-    
+
 
 #     # TODO: Implement the key sorter stuff
 #     fn write_subset[W: io.StringWriter](self, w: W):
 #         for item in self.value.items():
-#             let values = item.value
+#             var values = item.value
 #             for i in range(len(values)):
-#                 let value = values[i]
+#                 var value = values[i]
 #                 _ = w.write_string(String(item.key) + ": " + value + "\r\n")
 
 #         # ws, ok := w.(io.StringWriter)
 #         # if !ok:
 #         #     ws = stringWriter{w
-        
+
 #         # kvs, sorter := h.sortedKeyValues(exclude)
 #         # var formattedVals DynamicVector[String]
 #         # for _, kv := range kvs:
@@ -268,7 +268,7 @@
 #         #         # way to provide the error back to the server
 #         #         # handler, so just drop invalid headers instead.
 #         #         continue
-            
+
 #         #     for _, v := range kv.values:
 #         #         v = headerNewlineToSpace.Replace(v)
 #         #         v = TrimString(v)
@@ -276,19 +276,19 @@
 #         #             if _, err := ws.WriteString(s); err != nil:
 #         #                 headerSorterPool.Put(sorter)
 #         #                 return err
-                    
-                
+
+
 #         #         if trace != nil && trace.WroteHeaderField != nil:
 #         #             formattedVals = append(formattedVals, v)
-                
-            
+
+
 #         #     if trace != nil && trace.WroteHeaderField != nil:
 #         #         trace.WroteHeaderField(kv.key, formattedVals)
 #         #         formattedVals = nil
-            
-        
+
+
 #         # headerSorterPool.Put(sorter)
-    
+
 
 # # # CanonicalHeaderKey returns the canonical format of the
 # # # header key s. The canonicalization converts the first
@@ -298,7 +298,7 @@
 # # # If s contains a space or invalid header field bytes, it is
 # # # returned without modifications.
 # # fn CanonicalHeaderKey(s: String) -> String:
-# #     return canonical_mime_header_key(s) 
+# #     return canonical_mime_header_key(s)
 
 # # # hasToken reports whether token appears with v, ASCII
 # # # case-insensitive, with space or comma boundaries.
@@ -307,10 +307,10 @@
 # # fn hasToken(v, token String) bool:
 # #     if len(token) > len(v) || token == "":
 # #         return false
-    
+
 # #     if v == token:
 # #         return true
-    
+
 # #     for sp := 0; sp <= len(v)-len(token); sp++:
 # #         # Check that first character is good.
 # #         # The token is ASCII, so checking only a single byte
@@ -320,19 +320,19 @@
 # #         # False positives ('^' => '~') are caught by EqualFold.
 # #         if b := v[sp]; b != token[0] && b|0x20 != token[0]:
 # #             continue
-        
+
 # #         # Check that start pos is on a valid token boundary.
 # #         if sp > 0 && !isTokenBoundary(v[sp-1]):
 # #             continue
-        
+
 # #         # Check that end pos is on a valid token boundary.
 # #         if endPos := sp + len(token); endPos != len(v) && !isTokenBoundary(v[endPos]):
 # #             continue
-        
+
 # #         if ascii.EqualFold(v[sp:sp+len(token)], token):
 # #             return true
-        
-    
+
+
 # #     return false
 
 
@@ -340,12 +340,11 @@
 # #     return b == ' ') || b == ',') || b == '\t'
 
 
-
 # # var timeFormats = DynamicVector[String]{
 # #         TimeFormat,
 # #         time.RFC850,
 # #         time.ANSIC,
-    
+
 
 # # # ParseTime parses a time header (such as the Date: header),
 # # # trying each of the three formats allowed by HTTP/1.1:
@@ -355,8 +354,8 @@
 # #         t, err = time.Parse(layout, text)
 # #         if err == nil:
 # #             return
-        
-    
+
+
 # #     return
 
 
@@ -383,10 +382,9 @@
 # #     kvs []keyValues
 
 
-# # fn (s *headerSorter) Len() int          : return len(s.kvs) 
-# # fn (s *headerSorter) Swap(i, j int)     : s.kvs[i], s.kvs[j] = s.kvs[j], s.kvs[i] 
-# # fn (s *headerSorter) Less(i, j int) bool: return s.kvs[i].key < s.kvs[j].key 
+# # fn (s *headerSorter) Len() int          : return len(s.kvs)
+# # fn (s *headerSorter) Swap(i, j int)     : s.kvs[i], s.kvs[j] = s.kvs[j], s.kvs[i]
+# # fn (s *headerSorter) Less(i, j int) bool: return s.kvs[i].key < s.kvs[j].key
 
 # # var headerSorterPool = sync.Pool{
 # #     New: fn() any: return new(headerSorter) ,
-
