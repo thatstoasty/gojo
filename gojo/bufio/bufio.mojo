@@ -1,7 +1,6 @@
 from math import max
 from ..io import traits as io
 from ..builtins import Bytes, copy
-from ..builtins._bytes import index_byte, to_bytes
 from ..bytes import buffer
 
 alias defaultBufSize = 4096
@@ -300,7 +299,7 @@ struct Reader[R: io.Reader](io.Reader):
         var line: Bytes = Bytes()
         while True:
             # Search buffer.
-            var i = index_byte(self.buf[self.read_pos + s : self.write_pos], delim)
+            var i = self.buf[self.read_pos + s : self.write_pos].index_byte(delim)
             if i >= 0:
                 i += s
                 line = self.buf[self.read_pos : self.read_pos + i + 1]
@@ -450,7 +449,7 @@ struct Reader[R: io.Reader](io.Reader):
             _ = buf.write(buffer)
 
         _ = buf.write(frag)
-        return buf.string()
+        return str(buf)
 
     # WriteTo implements io.WriterTo.
     # This may make multiple calls to the [Reader.Read] method of the underlying [Reader].
@@ -670,7 +669,7 @@ struct Writer[W: io.Writer]():
     # If the count is less than len(s), it also returns an error explaining
     # why the write is short.
     fn write_string(inout self, src: String) raises -> Int:
-        var src_bytes = to_bytes(src)
+        var src_bytes = Bytes(src)
         return self.write(src_bytes)
 
 

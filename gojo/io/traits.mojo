@@ -1,5 +1,5 @@
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, to_bytes
+from ..builtins._bytes import Bytes, Byte
 from collections.optional import Optional
 
 alias Rune = Int32
