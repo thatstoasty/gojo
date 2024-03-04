@@ -1,12 +1,5 @@
-import fmt
+import .fmt
 from memory.unsafe import bitcast, AddressSpace
-
-fn to_bytes(s: String) -> DynamicVector[UInt8]:
-    # TODO: Len of runes can be longer than one byte
-    var b = DynamicVector[UInt8](len(s))
-    for i in range(len(s)):
-        b.append(ord((s[i])))
-    return b
 
 
 fn test_printf(formatting_options: String, text: String) raises:

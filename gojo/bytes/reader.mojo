@@ -1,8 +1,7 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
 from ..builtins._bytes import Bytes, Byte
-import ..io.traits as io
-
+import ..io
 
 # A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
 # io.ByteScanner, and io.RuneScanner Interfaces by reading from

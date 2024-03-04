@@ -22,7 +22,7 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
 
     fn __init__(inout self, size: Int):
         self._vector = DynamicVector[Int8](capacity=size)
-    
+
     fn __init__(inout self, owned s: String):
         self._vector = s.as_bytes()
 
@@ -54,7 +54,7 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
 
     fn __setitem__(inout self, index: Int, value: Self):
         self._vector[index] = value[0]
-    
+
     fn __eq__(self, other: Self) -> Bool:
         if self.__len__() != other.__len__():
             return False
@@ -90,16 +90,16 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
 
     fn __repr__(self) raises -> String:
         return self.__str__()
-        
+
     fn append(inout self, value: Int8):
         self._vector.append(value)
-    
+
     fn extend(inout self, value: String):
         self += value
-    
+
     fn extend(inout self, value: DynamicVector[Int8]):
         self += value
-    
+
     fn index_byte(self, c: Byte) -> Int:
         var i = 0
         for i in range(self.__len__()):
@@ -107,7 +107,7 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
                 return i
 
         return -1
-    
+
     fn has_prefix(self, prefix: Self) raises -> Bool:
         """Reports whether the byte slice s begins with prefix."""
         var len_comparison = len(self._vector) >= len(prefix)
@@ -117,9 +117,11 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
     fn has_suffix(self, suffix: Self) raises -> Bool:
         """Reports whether the byte slice s ends with suffix."""
         var len_comparison = len(self._vector) >= len(suffix)
-        var suffix_comparison = self[self.__len__() - len(suffix) : self.__len__()] == suffix
+        var suffix_comparison = self[
+            self.__len__() - len(suffix) : self.__len__()
+        ] == suffix
         return len_comparison and suffix_comparison
-    
+
     fn capacity(self) -> Int:
         return self._vector.capacity
 

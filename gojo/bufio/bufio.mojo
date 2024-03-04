@@ -518,6 +518,7 @@ fn new_reader[R: io.Reader](rd: R) -> Reader[R]:
 
 # buffered output
 
+
 # Writer implements buffering for an [io.Writer] object.
 # If an error occurs writing to a [Writer], no more data will be
 # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -563,11 +564,11 @@ struct Writer[W: io.Writer]():
 
         var n: Int = 0
         try:
-            var n = self.writer.write(self.buf[0:self.n])
+            var n = self.writer.write(self.buf[0 : self.n])
         except e:
             if n > 0 and n < self.n:
-                var sl = self.buf[n:self.n]
-                _ = copy(sl, self.buf[n:self.n])
+                var sl = self.buf[n : self.n]
+                _ = copy(sl, self.buf[n : self.n])
 
             self.n -= n
             raise e
@@ -587,7 +588,7 @@ struct Writer[W: io.Writer]():
     # passed to an immediately succeeding [Writer.write] call.
     # The buffer is only valid until the next write operation on self.
     fn available_buffer(self) raises -> Bytes:
-        return self.buf[self.n:][:0]
+        return self.buf[self.n :][:0]
 
     # buffered returns the number of bytes that have been written: Into the current buffer.
     fn buffered(self) -> Int:
@@ -606,7 +607,7 @@ struct Writer[W: io.Writer]():
                 # write directly from p to avoid copy.
                 n = self.writer.write(src)
             else:
-                var sl = self.buf[self.n:]
+                var sl = self.buf[self.n :]
                 n = copy(sl, src)
                 self.n += n
                 self.flush()
@@ -617,7 +618,7 @@ struct Writer[W: io.Writer]():
         # if self.err != nil:
         #     return nn, self.err
 
-        var sl = self.buf[self.n:]
+        var sl = self.buf[self.n :]
         var n = copy(sl, src)
         self.n += n
         nn += n
@@ -658,11 +659,9 @@ struct Writer[W: io.Writer]():
     #             # Can only happen if buffer is silly small.
     #             return self.write_posriteString(string(r))
 
-
     #     size = utf8.EncodeRune(self.buf[self.n:], r)
     #     self.n += size
     #     return size, nil
-
 
     # write_string writes a string.
     # It returns the number of bytes written.
@@ -671,7 +670,6 @@ struct Writer[W: io.Writer]():
     fn write_string(inout self, src: String) raises -> Int:
         var src_bytes = Bytes(src)
         return self.write(src_bytes)
-
 
     # read_from implements [io.ReaderFrom]. If the underlying writer
     # supports the read_from method, this calls the underlying read_from.
@@ -692,7 +690,7 @@ struct Writer[W: io.Writer]():
             var nr = 0
             while nr < maxConsecutiveEmptyReads:
                 try:
-                    var sl = self.buf[self.n:]
+                    var sl = self.buf[self.n :]
                     m = reader.read(sl)
                     if m != 0:
                         break
@@ -705,7 +703,7 @@ struct Writer[W: io.Writer]():
                 if m != 0:
                     break
 
-                nr+= 1
+                nr += 1
 
             if nr == maxConsecutiveEmptyReads:
                 raise Error(io.ErrNoProgress)
@@ -742,16 +740,20 @@ fn new_writer_size[W: io.Writer](writer: W, size: Int) -> Writer[W]:
 fn new_writer[W: io.Writer](writer: W) -> Writer[W]:
     return new_writer_size[W](writer, defaultBufSize)
 
+
 # buffered input and output
+
 
 # ReadWriter stores pointers to a [Reader] and a [Writer].
 # It implements [io.ReadWriter].
 @value
 struct ReadWriter[R: io.Reader, W: io.Writer]():
-	var reader: R
-	var writer: W
+    var reader: R
+    var writer: W
 
 
 # new_read_writer allocates a new [ReadWriter] that dispatches to r and w.
-fn new_read_writer[R: io.Reader, W: io.Writer](reader: Reader, writer: Writer) -> ReadWriter[R, W]:
-	return ReadWriter[R, W](reader, writer)
+fn new_read_writer[
+    R: io.Reader, W: io.Writer
+](reader: Reader, writer: Writer) -> ReadWriter[R, W]:
+    return ReadWriter[R, W](reader, writer)
