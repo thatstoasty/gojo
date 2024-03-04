@@ -1,6 +1,6 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, to_bytes
+from ..builtins._bytes import Bytes, Byte
 from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 
 
@@ -8,8 +8,7 @@ from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 # If w implements [StringWriter], [StringWriter.WriteString] is invoked directly.
 # Otherwise, [Writer.Write] is called exactly once.
 fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
-    var s_buffer = to_bytes(s)
-    return w.write(s_buffer)
+    return w.write(s.as_bytes())
 
 
 fn write_string[T: StringWriter](inout w: T, s: String) raises -> Int:
