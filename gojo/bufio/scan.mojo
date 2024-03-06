@@ -1,23 +1,13 @@
-# # Copyright 2013 The Go Authors. All rights reserved.
-# # Use of this source code is governed by a BSD-style
-# # license that can be found in the LICENSE file.
+import ..io
+from ..builtins import Bytes
 
-# package bufio
-
-# import (
-# 	"bytes"
-# 	"errors"
-# 	"io"
-# 	"unicode/utf8"
-# )
-
-# # Scanner provides a convenient interface for reading data such as
+# # Scanner provides a convenient Interface for reading data such as
 # # a file of newline-delimited lines of text. Successive calls to
 # # the [Scanner.Scan] method will step through the 'tokens' of a file, skipping
 # # the bytes between the tokens. The specification of a token is
 # # defined by a split fntion of type [Splitfn]; the default split
-# # fntion breaks the input into lines with line termination stripped. [Scanner.Split]
-# # fntions are defined in this package for scanning a file into
+# # fntion breaks the input Into lines with line termination stripped. [Scanner.Split]
+# # fntions are defined in this package for scanning a file Into
 # # lines, bytes, UTF-8-encoded runes, and space-delimited words. The
 # # client may instead provide a custom split fntion.
 # #
@@ -26,23 +16,47 @@
 # # advanced arbitrarily far past the last token. Programs that need more
 # # control over error handling or large tokens, or must run sequential scans
 # # on a reader, should use [bufio.Reader] instead.
-# type Scanner struct:
-# 	r            io.Reader # The reader provided by the client.
-# 	split        Splitfn # The fntion to split the tokens.
-# 	maxTokenSize int       # Maximum size of a token; modified by tests.
-# 	token        []byte    # Last token returned by split.
-# 	buf          []byte    # Buffer used as argument to split.
-# 	start        int       # First non-processed byte in buf.
-# 	end          int       # End of data in buf.
-# 	err          error     # Sticky error.
-# 	empties      int       # Count of successive empty tokens.
-# 	scanCalled   bool      # Scan has been called; buffer is in use.
-# 	done         bool      # Scan has finished.
+@value
+struct Scanner[R: io.Reader]():
+    var reader: R # The reader provided by the client.
+    var split: split_fn # The fntion to split the tokens.
+    var max_token_size: Int       # Maximum size of a token; modified by tests.
+    var token: Bytes    # Last token returned by split.
+    var buf: Bytes    # Buffer used as argument to split.
+    var start: Int       # First non-processed byte in buf.
+    var end: Int       # End of data in buf.
+    var empties: Int       # Count of successive empty tokens.
+    var scan_called: Bool      # Scan has been called; buffer is in use.
+    var done: Bool      # Scan has finished.
+
+    fn __init__(
+        inout self,
+        reader: R,
+        split: split_fn = scan_lines,
+        max_token_size: Int = max_scan_token_size,
+        token: Bytes = Bytes(),
+        buf: Bytes = Bytes(),
+        start: Int = 0,
+        end: Int = 0,
+        empties: Int = 0,
+        scan_called: Bool = False,
+        done: Bool = False,
+    ):
+        self.reader = reader
+        self.split = split
+        self.max_token_size = max_token_size
+        self.token = token
+        self.buf = buf
+        self.start = start
+        self.end = end
+        self.empties = empties
+        self.scan_called = scan_called
+        self.done = done
 
 
 # # Splitfn is the signature of the split fntion used to tokenize the
 # # input. The arguments are an initial substring of the remaining unprocessed
-# # data and a flag, atEOF, that reports whether the [Reader] has no more data
+# # data and a flag, at_eof, that reports whether the [Reader] has no more data
 # # to give. The return values are the number of bytes to advance the input
 # # and the next token to return to the user, if any, plus an error, if any.
 # #
@@ -55,42 +69,37 @@
 # # Otherwise, the [Scanner] advances the input. If the token is not nil,
 # # the [Scanner] returns it to the user. If the token is nil, the
 # # Scanner reads more data and continues scanning; if there is no more
-# # data--if atEOF was true--the [Scanner] returns. If the data does not
+# # data--if at_eof was true--the [Scanner] returns. If the data does not
 # # yet hold a complete token, for instance if it has no newline while
 # # scanning lines, a [Splitfn] can return (0, nil, nil) to signal the
-# # [Scanner] to read more data into the slice and try again with a
-# # longer slice starting at the same point in the input.
+# # [Scanner] to read more data Into the slice and try again with a
+# # longer slice starting at the same poInt in the input.
 # #
-# # The fntion is never called with an empty data slice unless atEOF
-# # is true. If atEOF is true, however, data may be non-empty and,
+# # The fntion is never called with an empty data slice unless at_eof
+# # is true. If at_eof is true, however, data may be non-empty and,
 # # as always, holds unprocessed text.
-# type Splitfn fn(data []byte, atEOF bool) (advance int, token []byte, err error)
+alias split_fn = fn(data: Bytes, at_eof: Bool) raises -> (Int, Bytes)
 
 # # Errors returned by Scanner.
-# var (
-# 	ErrTooLong         = errors.New("bufio.Scanner: token too long")
-# 	ErrNegativeAdvance = errors.New("bufio.Scanner: Splitfn returns negative advance count")
-# 	ErrAdvanceTooFar   = errors.New("bufio.Scanner: Splitfn returns advance count beyond input")
-# 	ErrBadReadCount    = errors.New("bufio.Scanner: Read returned impossible count")
-# )
+alias ErrTooLong           = "bufio.Scanner: token too long"
+alias ErrNegativeAdvance = "bufio.Scanner: Splitfn returns negative advance count"
+alias ErrAdvanceTooFar   = "bufio.Scanner: Splitfn returns advance count beyond input"
+alias ErrBadReadCount    = "bufio.Scanner: Read returned impossible count"
 
-# alias (
-# 	# MaxScanTokenSize is the maximum size used to buffer a token
-# 	# unless the user provides an explicit buffer with [Scanner.Buffer].
-# 	# The actual maximum token size may be smaller as the buffer
-# 	# may need to include, for instance, a newline.
-# 	MaxScanTokenSize = 64 * 1024
 
-# 	startBufSize = 4096 # Size of initial allocation for buffer.
-# )
+# max_scan_token_size is the maximum size used to buffer a token
+# unless the user provides an explicit buffer with [Scanner.Buffer].
+# The actual maximum token size may be smaller as the buffer
+# may need to include, for instance, a newline.
+alias max_scan_token_size = 64 * 1024
 
-# # NewScanner returns a new [Scanner] to read from r.
-# # The split fntion defaults to [ScanLines].
-# fn NewScanner(r io.Reader) *Scanner:
-# 	return &Scanner{
-# 		r:            r,
-# 		split:        ScanLines,
-# 		maxTokenSize: MaxScanTokenSize,
+alias start_buf_size = 4096 # Size of initial allocation for buffer.
+
+
+# NewScanner returns a new [Scanner] to read from r.
+# The split fntion defaults to [scan_lines].
+fn NewScanner[R: io.Reader](reader: R) -> Scanner[R]:
+    return Scanner(reader)
 
 
 # # Err returns the first non-EOF error that was encountered by the [Scanner].
@@ -102,9 +111,9 @@
 
 
 # # Bytes returns the most recent token generated by a call to [Scanner.Scan].
-# # The underlying array may point to data that will be overwritten
+# # The underlying array may poInt to data that will be overwritten
 # # by a subsequent call to Scan. It does no allocation.
-# fn(s *Scanner) Bytes() []byte:
+# fn(s *Scanner) Bytes() Bytes:
 # 	return s.token
 
 
@@ -114,7 +123,7 @@
 # 	return string(s.token)
 
 
-# # ErrFinalToken is a special sentinel error value. It is intended to be
+# # ErrFinalToken is a special sentinel error value. It is Intended to be
 # # returned by a Split fntion to indicate that the scanning should stop
 # # with no error. If the token being delivered with this error is not nil,
 # # the token is the last token.
@@ -135,11 +144,11 @@
 # # Scan panics if the split fntion returns too many empty
 # # tokens without advancing the input. This is a common error mode for
 # # scanners.
-# fn(s *Scanner) Scan() bool:
+# fn(s *Scanner) Scan() Bool:
 # 	if s.done:
 # 		return false
 
-# 	s.scanCalled = true
+# 	s.scan_called = true
 # 	# Loop until we have a token.
 # 	for:
 # 		# See if we can get a token with what we already have.
@@ -195,17 +204,17 @@
 # 		# Is the buffer full? If so, resize.
 # 		if s.end == len(s.buf):
 # 			# Guarantee no overflow in the multiplication below.
-# 			alias maxInt = int(^uint(0) >> 1)
-# 			if len(s.buf) >= s.maxTokenSize or len(s.buf) > maxInt/2:
+# 			alias maxInt = Int(^uInt(0) >> 1)
+# 			if len(s.buf) >= s.max_token_size or len(s.buf) > maxInt/2:
 # 				s.setErr(ErrTooLong)
 # 				return false
 
 # 			newSize := len(s.buf) * 2
 # 			if newSize == 0:
-# 				newSize = startBufSize
+# 				newSize = start_buf_size
 
-# 			newSize = min(newSize, s.maxTokenSize)
-# 			newBuf := make([]byte, newSize)
+# 			newSize = min(newSize, s.max_token_size)
+# 			newBuf := make(Bytes, newSize)
 # 			copy(newBuf, s.buf[s.start:s.end])
 # 			s.buf = newBuf
 # 			s.end -= s.start
@@ -236,7 +245,7 @@
 
 
 # # advance consumes n bytes of the buffer. It reports whether the advance was legal.
-# fn(s *Scanner) advance(n int) bool:
+# fn(s *Scanner) advance(n Int) Bool:
 # 	if n < 0:
 # 		s.setErr(ErrNegativeAdvance)
 # 		return false
@@ -260,24 +269,24 @@
 # # The maximum token size must be less than the larger of max and cap(buf).
 # # If max <= cap(buf), [Scanner.Scan] will use this buffer only and do no allocation.
 # #
-# # By default, [Scanner.Scan] uses an internal buffer and sets the
-# # maximum token size to [MaxScanTokenSize].
+# # By default, [Scanner.Scan] uses an Internal buffer and sets the
+# # maximum token size to [max_scan_token_size].
 # #
 # # Buffer panics if it is called after scanning has started.
-# fn(s *Scanner) Buffer(buf []byte, max int):
-# 	if s.scanCalled:
+# fn(s *Scanner) Buffer(buf Bytes, max Int):
+# 	if s.scan_called:
 # 		panic("Buffer called after Scan")
 
 # 	s.buf = buf[0:cap(buf)]
-# 	s.maxTokenSize = max
+# 	s.max_token_size = max
 
 
 # # Split sets the split fntion for the [Scanner].
-# # The default split fntion is [ScanLines].
+# # The default split fntion is [scan_lines].
 # #
 # # Split panics if it is called after scanning has started.
 # fn(s *Scanner) Split(split Splitfn):
-# 	if s.scanCalled:
+# 	if s.scan_called:
 # 		panic("Split called after Scan")
 
 # 	s.split = split
@@ -286,23 +295,23 @@
 # # Split fntions
 
 # # ScanBytes is a split fntion for a [Scanner] that returns each byte as a token.
-# fn ScanBytes(data []byte, atEOF bool) (advance int, token []byte, err error):
-# 	if atEOF and len(data) == 0:
+# fn ScanBytes(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
+# 	if at_eof and len(data) == 0:
 # 		return 0, nil, nil
 
 # 	return 1, data[0:1], nil
 
 
-# var errorRune = []byte(string(utf8.RuneError))
+# var errorRune = Bytes(string(utf8.RuneError))
 
 # # ScanRunes is a split fntion for a [Scanner] that returns each
 # # UTF-8-encoded rune as a token. The sequence of runes returned is
 # # equivalent to that from a range loop over the input as a string, which
 # # means that erroneous UTF-8 encodings translate to U+FFFD = "\xef\xbf\xbd".
-# # Because of the Scan interface, this makes it impossible for the client to
+# # Because of the Scan Interface, this makes it impossible for the client to
 # # distinguish correctly encoded replacement runes from encoding errors.
-# fn ScanRunes(data []byte, atEOF bool) (advance int, token []byte, err error):
-# 	if atEOF and len(data) == 0:
+# fn ScanRunes(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
+# 	if at_eof and len(data) == 0:
 # 		return 0, nil, nil
 
 
@@ -322,7 +331,7 @@
 # 	# We know it's an error: we have width==1 and implicitly r==utf8.RuneError.
 # 	# Is the error because there wasn't a full rune to be decoded?
 # 	# FullRune distinguishes correctly between erroneous and incomplete encodings.
-# 	if !atEOF and !utf8.FullRune(data):
+# 	if !at_eof and !utf8.FullRune(data):
 # 		# Incomplete; get more bytes.
 # 		return 0, nil, nil
 
@@ -333,40 +342,42 @@
 # 	return 1, errorRune, nil
 
 
-# # dropCR drops a terminal \r from the data.
-# fn dropCR(data []byte) []byte:
-# 	if len(data) > 0 and data[len(data)-1] == '\r':
-# 		return data[0 : len(data)-1]
+# drop_carriage_return drops a terminal \r from the data.
+fn drop_carriage_return(data: Bytes) raises -> Bytes:
+	if len(data) > 0 and data[-1] == ord('\r'):
+		return data[0 : len(data)-1]
 
-# 	return data
+	return data
 
 
-# # ScanLines is a split fntion for a [Scanner] that returns each line of
+# # scan_lines is a split fntion for a [Scanner] that returns each line of
 # # text, stripped of any trailing end-of-line marker. The returned line may
 # # be empty. The end-of-line marker is one optional carriage return followed
 # # by one mandatory newline. In regular expression notation, it is `\r?\n`.
 # # The last non-empty line of input will be returned even if it has no
 # # newline.
-# fn ScanLines(data []byte, atEOF bool) (advance int, token []byte, err error):
-# 	if atEOF and len(data) == 0:
-# 		return 0, nil, nil
+fn scan_lines(data: Bytes, at_eof: Bool) raises -> (Int, Bytes):
+    var token = Bytes()
+    if at_eof and len(data) == 0:
+        return 0, token
+    
+    var i = data.index_byte(ord('\n'))
+    if i >= 0:
+        # We have a full newline-terminated line.
+        return i + 1, drop_carriage_return(data[0:i])
 
-# 	if i := bytes.IndexByte(data, '\n'); i >= 0:
-# 		# We have a full newline-terminated line.
-# 		return i + 1, dropCR(data[0:i]), nil
+    # If we're at EOF, we have a final, non-terminated line. Return it.
+    if at_eof:
+        return len(data), drop_carriage_return(data)
 
-# 	# If we're at EOF, we have a final, non-terminated line. Return it.
-# 	if atEOF:
-# 		return len(data), dropCR(data), nil
-
-# 	# Request more data.
-# 	return 0, nil, nil
+    # Request more data.
+    return 0, token
 
 
 # # isSpace reports whether the character is a Unicode white space character.
 # # We avoid dependency on the unicode package, but check validity of the implementation
 # # in the tests.
-# fn isSpace(r rune) bool:
+# fn isSpace(r rune) Bool:
 # 	if r <= '\u00FF':
 # 		# Obvious ASCII ones: \t through \r plus space. Plus two Latin-1 oddballs.
 # 		switch r:
@@ -392,7 +403,7 @@
 # # space-separated word of text, with surrounding spaces deleted. It will
 # # never return an empty string. The definition of space is set by
 # # unicode.IsSpace.
-# fn ScanWords(data []byte, atEOF bool) (advance int, token []byte, err error):
+# fn ScanWords(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
 # 	# Skip leading spaces.
 # 	start := 0
 # 	for width := 0; start < len(data); start += width:
@@ -411,7 +422,7 @@
 
 
 # 	# If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
-# 	if atEOF and len(data) > start:
+# 	if at_eof and len(data) > start:
 # 		return len(data), data[start:], nil
 
 # 	# Request more data.
