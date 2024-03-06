@@ -26,5 +26,5 @@ from .traits import (
     seek_start,
     seek_current,
     seek_end,
-    ErrShortWrite
+    ErrShortWrite,
 )

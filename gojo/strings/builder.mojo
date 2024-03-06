@@ -44,7 +44,7 @@ struct StringBuilder(Stringable, Sized):
         """
         # Don't need to add a null terminator because we can pass the length of the string.
         return StringRef(self._vector._vector.data.value, len(self._vector))
-      
+
     fn write(inout self, src: Bytes) -> Int:
         """
         Appends a byte array to the builder buffer.

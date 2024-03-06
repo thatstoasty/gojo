@@ -30,7 +30,8 @@
 #     _ = writer.write_string("")
 
 
-# fn io_tests() raises:
-#     test_file()
-#     test_reader()
-#     test_writer()
+fn main() raises:
+    pass
+    # test_file()
+    # test_reader()
+    # test_writer()
