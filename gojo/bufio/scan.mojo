@@ -193,6 +193,7 @@ struct Scanner[R: io.Reader]():
                         self.set_err(Err(Error(ErrBadReadCount)))
                         break
                 except e:
+                    # TODO: For some reason the reader isn't throwing eof for scan lines
                     err = Err(e)
 
                 self.end += n
@@ -311,20 +312,20 @@ alias max_scan_token_size = 64 * 1024
 alias start_buf_size = 4096 # Size of initial allocation for buffer.
 
 
-# NewScanner returns a new [Scanner] to read from r.
+# new_scanner returns a new [Scanner] to read from r.
 # The split fntion defaults to [scan_lines].
-fn NewScanner[R: io.Reader](reader: R) -> Scanner[R]:
+fn new_scanner[R: io.Reader](reader: R) -> Scanner[R]:
     return Scanner(reader)
 
 
-# # split fntions
+###### split functions ######
+# scan_bytes is a split fntion for a [Scanner] that returns each byte as a token.
+fn scan_bytes(data: Bytes, at_eof: Bool, inout token: Bytes, inout err: Err) raises -> Int:
+    if at_eof and len(data) == 0:
+        return 0
 
-# # ScanBytes is a split fntion for a [Scanner] that returns each byte as a token.
-# fn ScanBytes(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
-# 	if at_eof and len(data) == 0:
-# 		return 0, nil, nil
-
-# 	return 1, data[0:1], nil
+    token = data[0:1]
+    return 1
 
 
 # var errorRune = Bytes(string(utf8.RuneError))
@@ -394,36 +395,11 @@ fn scan_lines(data: Bytes, at_eof: Bool, inout token: Bytes, inout err: Err) rai
 
     # If we're at EOF, we have a final, non-terminated line. Return it.
     token = drop_carriage_return(data)
-    if at_eof:
-        return len(data)
+    # if at_eof:
+    return len(data)
 
     # Request more data.
-    return 0
-
-
-# is_space reports whether the character is a Unicode white space character.
-# We avoid dependency on the unicode package, but check validity of the implementation
-# in the tests.
-# fn is_space(r: String) -> Bool:
-# 	if r <= '\u00FF':
-# 		# Obvious ASCII ones: \t through \r plus space. Plus two Latin-1 oddballs.
-# 		switch r:
-# 		case ' ', '\t', '\n', '\v', '\f', '\r':
-# 			return True
-# 		case '\u0085', '\u00A0':
-# 			return True
-
-# 		return False
-
-# 	# High-valued ones.
-# 	if '\u2000' <= r and r <= '\u200a':
-# 		return True
-
-# 	switch r:
-# 	case '\u1680', '\u2028', '\u2029', '\u202f', '\u205f', '\u3000':
-# 		return True
-
-# 	return False
+    # return 0
 
 
 fn is_space(r: Int8) -> Bool:

@@ -375,7 +375,6 @@ struct Buffer(
             self.reset()
             if len(dest) == 0:
                 return 0
-
             raise Error(io.EOF)
 
         var bytebuffer = self.buf[self.off :]
