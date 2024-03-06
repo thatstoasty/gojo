@@ -27,4 +27,6 @@ from .traits import (
     seek_current,
     seek_end,
     ErrShortWrite,
+    ErrNoProgress,
+    EOF
 )

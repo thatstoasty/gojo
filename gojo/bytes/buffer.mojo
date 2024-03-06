@@ -376,7 +376,7 @@ struct Buffer(
             if len(dest) == 0:
                 return 0
 
-            return 0
+            raise Error(io.EOF)
 
         var bytebuffer = self.buf[self.off :]
         var index = copy(dest, bytebuffer)
