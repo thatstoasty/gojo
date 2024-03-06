@@ -90,7 +90,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
 
     fn __repr__(self) raises -> String:
         return self.__str__()
-
+    
     fn append(inout self, value: Int8):
         self._vector.append(value)
 

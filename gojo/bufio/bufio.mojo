@@ -3,14 +3,16 @@ from ..io import traits as io
 from ..builtins import Bytes, copy
 from ..bytes import buffer
 
-alias defaultBufSize = 4096
+alias MIN_READ_BUFFER_SIZE = 16
+alias MAX_CONSECUTIVE_EMPTY_READS = 100
+alias DEFAULT_BUF_SIZE = 4096
 
 alias ErrInvalidUnreadByte = "bufio: invalid use of UnreadByte"
 alias ErrInvalidUnreadRune = "bufio: invalid use of UnreadRune"
 alias ErrBufferFull = "bufio: buffer full"
 alias ErrNegativeCount = "bufio: negative count"
-alias err_negative_read = "bufio: reader returned negative count from Read"
-alias errNegativeWrite = "bufio: writer returned negative count from write"
+alias ErrNegativeRead = "bufio: reader returned negative count from Read"
+alias ErrNegativeWrite = "bufio: writer returned negative count from write"
 
 # buffered input.
 
@@ -58,7 +60,7 @@ struct Reader[R: io.Reader](io.Reader):
     #         return
 
     #     # if self.buf == nil:
-    #     #     self.buf = make(Bytes, defaultBufSize)
+    #     #     self.buf = make(Bytes, DEFAULT_BUF_SIZE)
 
     #     self.reset(self.buf, r)
 
@@ -87,7 +89,7 @@ struct Reader[R: io.Reader](io.Reader):
             var sl = self.buf[self.write_pos :]
             var n = self.rd.read(sl)
             if n < 0:
-                raise Error(err_negative_read)
+                raise Error(ErrNegativeRead)
 
             self.write_pos += n
 
@@ -187,7 +189,7 @@ struct Reader[R: io.Reader](io.Reader):
                 # Read directly into p to avoid copy.
                 n = self.rd.read(dest)
                 if n < 0:
-                    raise Error(err_negative_read)
+                    raise Error(ErrNegativeRead)
 
                 if n > 0:
                     self.last_byte = int(dest[n - 1])
@@ -201,7 +203,7 @@ struct Reader[R: io.Reader](io.Reader):
             self.write_pos = 0
             n = self.rd.read(self.buf)
             if n < 0:
-                raise Error(err_negative_read)
+                raise Error(ErrNegativeRead)
 
             if n == 0:
                 raise Error("bufio: reader returned 0 bytes from Read")
@@ -489,14 +491,10 @@ struct Reader[R: io.Reader](io.Reader):
     fn write_buf[W: io.Writer](inout self, inout writer: W) raises -> Int64:
         var n = writer.write(self.buf[self.read_pos : self.write_pos])
         if n < 0:
-            raise Error(errNegativeWrite)
+            raise Error(ErrNegativeWrite)
 
         self.read_pos += n
         return Int64(n)
-
-
-alias minReadBufferSize = 16
-alias maxConsecutiveEmptyReads = 100
 
 
 # new_reader_size returns a new [Reader] whose buffer has at least the specified
@@ -509,13 +507,13 @@ fn new_reader_size[R: io.Reader](rd: R, size: Int) -> Reader[R]:
     # 	return b
 
     var r = Reader(rd)
-    r.reset(Bytes(max(size, minReadBufferSize)), rd)
+    r.reset(Bytes(max(size, MIN_READ_BUFFER_SIZE)), rd)
     return r
 
 
 # new_reader returns a new [Reader] whose buffer has the default size.
 fn new_reader[R: io.Reader](rd: R) -> Reader[R]:
-    return new_reader_size(rd, defaultBufSize)
+    return new_reader_size(rd, DEFAULT_BUF_SIZE)
 
 
 # buffered output
@@ -550,7 +548,7 @@ struct Writer[W: io.Writer]():
         #     return
 
         # if self.buf == nil:
-        #     self.buf = make(Bytes, defaultBufSize)
+        #     self.buf = make(Bytes, DEFAULT_BUF_SIZE)
 
         # self.err = nil
         self.n = 0
@@ -690,7 +688,7 @@ struct Writer[W: io.Writer]():
                 return n
 
             var nr = 0
-            while nr < maxConsecutiveEmptyReads:
+            while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 try:
                     var sl = self.buf[self.n :]
                     m = reader.read(sl)
@@ -707,7 +705,7 @@ struct Writer[W: io.Writer]():
 
                 nr += 1
 
-            if nr == maxConsecutiveEmptyReads:
+            if nr == MAX_CONSECUTIVE_EMPTY_READS:
                 raise Error(io.ErrNoProgress)
 
             self.n += m
@@ -727,7 +725,7 @@ fn new_writer_size[W: io.Writer](writer: W, size: Int) -> Writer[W]:
 
     var buf_size = size
     if buf_size <= 0:
-        buf_size = defaultBufSize
+        buf_size = DEFAULT_BUF_SIZE
 
     return Writer[W](
         buf=Bytes(size),
@@ -740,7 +738,7 @@ fn new_writer_size[W: io.Writer](writer: W, size: Int) -> Writer[W]:
 # If the argument io.Writer is already a [Writer] with large enough buffer size,
 # it returns the underlying [Writer].
 fn new_writer[W: io.Writer](writer: W) -> Writer[W]:
-    return new_writer_size[W](writer, defaultBufSize)
+    return new_writer_size[W](writer, DEFAULT_BUF_SIZE)
 
 
 # buffered input and output
