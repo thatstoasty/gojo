@@ -1,9 +1,9 @@
-from testing import testing
+from tests.wrapper import MojoTest
 from gojo.fmt import sprintf
 
 
 fn test_sprintf() raises:
-    print("testing sprintf")
+    var test = MojoTest("Testing sprintf")
     var s = sprintf(
         (
             "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t"
@@ -14,7 +14,7 @@ fn test_sprintf() raises:
         Float64(29.5),
         True,
     )
-    testing.assert_equal(
+    test.assert_equal(
         s,
         (
             "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It"
@@ -23,5 +23,5 @@ fn test_sprintf() raises:
     )
 
 
-fn fmt_tests() raises:
+fn main() raises:
     test_sprintf()

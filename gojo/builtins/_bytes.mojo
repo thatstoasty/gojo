@@ -2,7 +2,7 @@ alias Byte = Int8
 
 
 @value
-struct Bytes(StringableRaising, Sized, CollectionElement):
+struct Bytes(Stringable, Sized, CollectionElement):
     """A mutable sequence of Bytes. Behaves like the python version.
 
     Note that some_bytes[i] returns an Int8.
@@ -81,7 +81,7 @@ struct Bytes(StringableRaising, Sized, CollectionElement):
         self._vector.reserve(self.__len__() + other.__len__())
         self._vector.extend(other._vector)
 
-    fn __str__(self) raises -> String:
+    fn __str__(self) -> String:
         # Copy vector and add null terminator
         var s = self._vector
         s.append(0)

@@ -1,19 +1,24 @@
-from testing import testing
+from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins._bytes import Bytes
 from gojo.bufio import Reader
 
 
 fn test_reader() raises:
-    print("Testing reader")
-    var s: String = "Hello World!"
+    var test = MojoTest("Testing reader")
+
+    # Create a reader from a string buffer
+    var s: String = "Hello"
     var buf = buffer.new_buffer_string(s)
     var r = Reader(buf)
+
+    # Read the buffer into Bytes and then add more to Bytes
     var dest = Bytes(256)
     _ = r.read(dest)
+    dest.extend(" World!")
 
-    testing.assert_equal(str(dest), s)
+    test.assert_equal(dest, "Hello World!")
 
 
-fn bufio_reader_tests() raises:
+fn main() raises:
     test_reader()

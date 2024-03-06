@@ -164,20 +164,22 @@ struct Reader[R: io.Reader](io.Reader):
             if remain == 0:
                 return n
 
-    # Read reads data into p.
-    # It returns the number of bytes read into p.
+    # Read reads data into dest.
+    # It returns the number of bytes read into dest.
     # The bytes are taken from at most one Read on the underlying [Reader],
     # hence n may be less than len(src).
     # To read exactly len(src) bytes, use io.ReadFull(b, src).
     # If the underlying [Reader] can return a non-zero count with io.EOF,
     # then this Read method can do so as well; see the [io.Reader] docs.
     fn read(inout self, inout dest: Bytes) raises -> Int:
-        var n = len(dest)
-        if n == 0:
-            if self.buffered() > 0:
-                return 0
+        # TODO: Using dynamic resizing for Bytes internal vector anyway, no need to check for size.
+        var n: Int = 0
+        # var n = len(dest)
+        # if n == 0:
+        #     if self.buffered() > 0:
+        #         return 0
 
-            return 0
+        #     return 0
 
         if self.read_pos == self.write_pos:
             if len(dest) >= len(self.buf):

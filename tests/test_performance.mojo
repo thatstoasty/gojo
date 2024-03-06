@@ -9,7 +9,15 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var builder = StringBuilder()
     for i in range(100):
-        builder.write_string("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+        builder.write_string(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+            " mollit anim id est laborum."
+        )
 
     var builder_start_time = now()
     var output = str(builder)
@@ -18,7 +26,15 @@ fn test_string_builder() raises:
     # Create a string using the + operator
     var vec = DynamicVector[String]()
     for i in range(100):
-        vec.push_back("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+        vec.push_back(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+            " mollit anim id est laborum."
+        )
 
     var concat_start_time = now()
     var concat_output: String = ""
@@ -29,7 +45,15 @@ fn test_string_builder() raises:
     # Create a string using a bytes buffer
     var buf = buffer.new_buffer()
     for i in range(100):
-        _ = buf.write_string("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+        _ = buf.write_string(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+            " mollit anim id est laborum."
+        )
 
     var buffer_start_time = now()
     var buffer_output = str(buf)
@@ -38,7 +62,14 @@ fn test_string_builder() raises:
     print("StringBuilder: ", "(", builder_execution_time, "ns)")
     print("String +: ", "(", concat_execution_time, "ns)")
     print("Bytes Buffer: ", "(", buffer_execution_time, "ns)")
-    print("Performance difference: ", str(concat_execution_time - builder_execution_time) + "ns", ": StringBuilder is ", str(concat_execution_time // builder_execution_time) + "x faster", ": Bytes Buffer is ", str(concat_execution_time // buffer_execution_time) + "x faster")
+    print(
+        "Performance difference: ",
+        str(concat_execution_time - builder_execution_time) + "ns",
+        ": StringBuilder is ",
+        str(concat_execution_time // builder_execution_time) + "x faster",
+        ": Bytes Buffer is ",
+        str(concat_execution_time // buffer_execution_time) + "x faster",
+    )
 
 
 fn test_std_writer_speed() raises:
@@ -60,6 +91,6 @@ fn test_std_writer_speed() raises:
     print("Writer is ", str(print_execution_time // writer_execution_time) + "x faster")
 
 
-fn performance_tests() raises:
+fn main() raises:
     # test_std_writer_speed()
     test_string_builder()
