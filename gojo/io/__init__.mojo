@@ -28,8 +28,8 @@ from .traits import (
     SEEK_END,
     ERR_SHORT_WRITE,
     ERR_NO_PROGRESS,
+    ERR_SHORT_BUFFER,
     EOF,
 )
-from .io import write_string, read_at_least, read_full, read_all
-from .file import File, FileWrapper
-from .reader import BUFFER_SIZE
+from .io import write_string, read_at_least, read_full, read_all, BUFFER_SIZE
+from .file import FileWrapper

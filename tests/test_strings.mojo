@@ -1,12 +1,13 @@
-from time import now
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder, Reader, new_reader
 from gojo.builtins import Bytes
 import gojo.io
 
+
 fn test_string_builder() raises:
     var test = MojoTest("Testing strings.StringBuilder")
-    # Create a string from the buffer
+
+    # Create a string from the builder by writing strings to it.
     var builder = StringBuilder()
 
     for i in range(3):
@@ -19,6 +20,12 @@ fn test_string_builder() raises:
             " sit amet "
         ),
     )
+
+    # Create a string from the builder by writing bytes to it.
+    builder = StringBuilder()
+    _ = builder.write(Bytes("Hello"))
+    _ = builder.write_byte(32)
+    test.assert_equal(str(builder), "Hello ")
 
 
 fn test_string_reader() raises:
