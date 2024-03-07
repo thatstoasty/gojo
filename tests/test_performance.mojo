@@ -9,7 +9,7 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var builder = StringBuilder()
     for i in range(100):
-        builder.write_string(
+        _ = builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
             " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"

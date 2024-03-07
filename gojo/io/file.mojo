@@ -1,7 +1,7 @@
 from ..external.libc import fopen, fread, fclose, fwrite, strnlen
 from ..builtins._bytes import Bytes, Byte
 from ..builtins import copy
-from .traits import Writer, Reader, ReadSeekCloser, ByteWriter
+from .traits import Writer, Reader, ReadSeekCloser, ByteWriter, ReadWriter
 
 
 alias c_char = UInt8
@@ -19,7 +19,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 
 @value
-struct File(Reader, Writer, ByteWriter):
+struct File(ReadWriter, ByteWriter):
     var handle: Pointer[UInt64]
     var fname: Pointer[c_char]
     var mode: Pointer[c_char]
@@ -89,7 +89,7 @@ struct File(Reader, Writer, ByteWriter):
         return 1
 
 
-struct FileWrapper:
+struct FileWrapper(io.ReadWriteSeeker):
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:

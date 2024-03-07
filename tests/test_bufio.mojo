@@ -29,7 +29,7 @@ fn test_scan_words() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
     scanner.split = scan_words
 
     var expected_results = DynamicVector[String]()
@@ -52,7 +52,7 @@ fn test_scan_lines() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
 
     var expected_results = DynamicVector[String]()
     expected_results.append("Testing")
@@ -74,7 +74,7 @@ fn test_scan_bytes() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
     scanner.split = scan_bytes
 
     var expected_results = DynamicVector[String]()

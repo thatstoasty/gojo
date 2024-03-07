@@ -2,6 +2,7 @@ from tensor import Tensor
 from ..io import (
     Reader,
     Writer,
+    ReadWriter,
     ByteReader,
     ByteWriter,
     WriterTo,
@@ -50,15 +51,15 @@ alias ERR_SHORT_WRITE = "short write"
 
 @value
 struct Buffer(
-    Writer,
+    Copyable,
+    StringableRaising,
+    Sized,
+    ReadWriter,
     StringWriter,
-    Reader,
     ByteReader,
     ByteWriter,
     WriterTo,
     ReaderFrom,
-    StringableRaising,
-    Sized,
 ):
     """A Buffer is a variable-sized buffer of bytes with [Buffer.read] and [Buffer.write] methods.
     The zero value for Buffer is an empty buffer ready to use.

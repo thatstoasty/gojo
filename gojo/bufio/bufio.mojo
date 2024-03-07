@@ -16,12 +16,11 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 
 # buffered input
-@value
 struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object."""
 
     var buf: Bytes
-    var rd: R  # reader provided by the client
+    var reader: R  # reader provided by the client
     var read_pos: Int
     var write_pos: Int  # buf read and write positions
     var last_byte: Int  # last byte read for unread_byte; -1 means invalid
@@ -29,7 +28,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
 
     fn __init__(
         inout self,
-        rd: R,
+        owned reader: R,
         buf: Bytes = Bytes(),
         read_pos: Int = 0,
         write_pos: Int = 0,
@@ -37,11 +36,19 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
         last_rune_size: Int = -1,
     ):
         self.buf = buf
-        self.rd = rd
+        self.reader = reader ^
         self.read_pos = read_pos
         self.write_pos = write_pos
         self.last_byte = last_byte
         self.last_rune_size = last_rune_size
+    
+    fn __moveinit__(inout self, owned existing: Self):
+        self.buf = existing.buf
+        self.reader = existing.reader ^
+        self.read_pos = existing.read_pos
+        self.write_pos = existing.write_pos
+        self.last_byte = existing.last_byte
+        self.last_rune_size = existing.last_rune_size
 
     # size returns the size of the underlying buffer in bytes.
     fn size(self) -> Int:
@@ -64,10 +71,10 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
 
     #     self.reset(self.buf, r)
 
-    fn reset[R: io.Reader](inout self, buf: Bytes, reader: R):
+    fn reset[R: io.Reader](inout self, buf: Bytes, owned reader: R):
         self = Reader[R](
             buf=buf,
-            rd=reader,
+            reader=reader ^,
             last_byte=-1,
             last_rune_size=-1,
         )
@@ -87,7 +94,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
         var i: Int = 0
         while i > 0:
             var sl = self.buf[self.write_pos :]
-            var bytes_read = self.rd.read(sl)
+            var bytes_read = self.reader.read(sl)
             if bytes_read < 0:
                 raise Error(ERR_NEGATIVE_READ)
 
@@ -193,7 +200,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
             if len(dest) >= len(self.buf):
                 # Large read, empty buffer.
                 # Read directly into p to avoid copy.
-                n = self.rd.read(dest)
+                n = self.reader.read(dest)
                 if n < 0:
                     raise Error(ERR_NEGATIVE_READ)
 
@@ -207,7 +214,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
             # Do not use self.fill, which will loop.
             self.read_pos = 0
             self.write_pos = 0
-            n = self.rd.read(self.buf)
+            n = self.reader.read(self.buf)
             if n < 0:
                 raise Error(ERR_NEGATIVE_READ)
 
@@ -507,13 +514,13 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
 
         var bytes_written = self.write_buf(writer)
 
-        # if r, ok := self.rd.(io.WriterTo); ok:
+        # if r, ok := self.reader.(io.WriterTo); ok:
         #     m, err := r.WriteTo(w)
         #     n += m
         #     return n, err
 
         # if w, ok := w.(io.ReaderFrom); ok:
-        #     m, err := w.read_from(self.rd)
+        #     m, err := w.read_from(self.reader)
         #     n += m
         #     return n, err
 
@@ -546,42 +553,41 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
         return Int64(bytes_written)
 
 
-fn new_reader_size[R: io.Reader](reader: R, size: Int) -> Reader[R]:
-    """Returns a new [Reader] whose buffer has at least the specified
-    size. If the argument io.Reader is already a [Reader] with large enough
-    size, it returns the underlying [Reader].
+# fn new_reader_size[R: io.Reader](owned reader: R, size: Int) -> Reader[R]:
+#     """Returns a new [Reader] whose buffer has at least the specified
+#     size. If the argument io.Reader is already a [Reader] with large enough
+#     size, it returns the underlying [Reader].
 
-    Args:
-        reader: The reader to read from.
-        size: The size of the buffer.
+#     Args:
+#         reader: The reader to read from.
+#         size: The size of the buffer.
 
-    Returns:
-        The new [Reader].
-    """
-    # # Is it already a Reader?
-    # b, ok := rd.(*Reader)
-    # if ok and len(self.buf) >= size:
-    # 	return b
+#     Returns:
+#         The new [Reader].
+#     """
+#     # # Is it already a Reader?
+#     # b, ok := rd.(*Reader)
+#     # if ok and len(self.buf) >= size:
+#     # 	return b
 
-    var r = Reader(reader)
-    r.reset(Bytes(max(size, MIN_READ_BUFFER_SIZE)), reader)
-    return r
+#     var r = Reader(reader ^)
+#     r.reset(Bytes(max(size, MIN_READ_BUFFER_SIZE)), reader ^)
+#     return r
 
 
-fn new_reader[R: io.Reader](reader: R) -> Reader[R]:
-    """Returns a new [Reader] whose buffer has the default size.
+# fn new_reader[R: io.Reader](reader: R) -> Reader[R]:
+#     """Returns a new [Reader] whose buffer has the default size.
 
-    Args:
-        reader: The reader to read from.
+#     Args:
+#         reader: The reader to read from.
 
-    Returns:
-        The new [Reader].
-    """
-    return new_reader_size(reader, DEFAULT_BUF_SIZE)
+#     Returns:
+#         The new [Reader].
+#     """
+#     return new_reader_size(reader, DEFAULT_BUF_SIZE)
 
 
 # buffered output
-@value
 struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
@@ -594,11 +600,21 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
     var bytes_written: Int
     var writer: W
 
+    fn __init__(inout self, buf: Bytes, owned writer: W, bytes_written: Int = 0):
+        self.buf = buf
+        self.bytes_written = bytes_written
+        self.writer = writer ^
+    
+    fn __moveinit__(inout self, owned existing: Self):
+        self.buf = existing.buf
+        self.bytes_written = existing.bytes_written
+        self.writer = existing.writer ^
+
     fn size(self) -> Int:
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
-    fn reset[W: io.Writer](inout self, writer: W):
+    fn reset[W: io.Writer](inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
         resets b to write its output to w.
         Calling reset on the zero value of [Writer] initializes the internal buffer
@@ -619,7 +635,7 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
 
         # self.err = nil
         self.bytes_written = 0
-        self.writer = writer
+        self.writer = writer ^
 
     fn flush(inout self) raises:
         """Writes any buffered data to the underlying [io.Writer]."""
@@ -817,7 +833,7 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
         return total_bytes_written
 
 
-fn new_writer_size[W: io.Writer](writer: W, size: Int) -> Writer[W]:
+fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:
     """Returns a new [Writer] whose buffer has at least the specified
     size. If the argument io.Writer is already a [Writer] with large enough
     size, it returns the underlying [Writer]."""
@@ -832,20 +848,19 @@ fn new_writer_size[W: io.Writer](writer: W, size: Int) -> Writer[W]:
 
     return Writer[W](
         buf=Bytes(size),
-        writer=writer,
+        writer=writer ^,
         bytes_written=0,
     )
 
 
-fn new_writer[W: io.Writer](writer: W) -> Writer[W]:
+fn new_writer[W: io.Writer](owned writer: W) -> Writer[W]:
     """Returns a new [Writer] whose buffer has the default size.
     # If the argument io.Writer is already a [Writer] with large enough buffer size,
     # it returns the underlying [Writer]."""
-    return new_writer_size[W](writer, DEFAULT_BUF_SIZE)
+    return new_writer_size[W](writer ^, DEFAULT_BUF_SIZE)
 
 
 # buffered input and output
-@value
 struct ReadWriter[R: io.Reader, W: io.Writer]():
     """ReadWriter stores pointers to a [Reader] and a [Writer].
     It implements [io.ReadWriter]."""
@@ -853,10 +868,14 @@ struct ReadWriter[R: io.Reader, W: io.Writer]():
     var reader: R
     var writer: W
 
+    fn __init__(inout self, owned reader: R, owned writer: W):
+        self.reader = reader ^
+        self.writer = writer ^
+
 
 # new_read_writer
 fn new_read_writer[
     R: io.Reader, W: io.Writer
-](reader: Reader, writer: Writer) -> ReadWriter[R, W]:
+](owned reader: Reader, owned writer: Writer) -> ReadWriter[R, W]:
     """Allocates a new [ReadWriter] that dispatches to r and w."""
-    return ReadWriter[R, W](reader, writer)
+    return ReadWriter[R, W](reader ^, writer ^)
