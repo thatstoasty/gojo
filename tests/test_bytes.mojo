@@ -1,10 +1,10 @@
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes.buffer import new_buffer_string, new_buffer, Buffer
+from gojo.bytes import new_buffer_string, new_buffer, new_reader
 
 
-fn test_read() raises:
-    var test = MojoTest("Testing read")
+fn test_buffer_read() raises:
+    var test = MojoTest("Testing bytes.Buffer read")
     var s: String = "Hello World!"
     var buf = new_buffer_string(s)
     var dest = Bytes(256)
@@ -12,8 +12,8 @@ fn test_read() raises:
     test.assert_equal(str(dest), s)
 
 
-fn test_write() raises:
-    var test = MojoTest("Testing write")
+fn test_buffer_write() raises:
+    var test = MojoTest("Testing bytes.Buffer write")
     var b = Bytes(256)
     var buf = new_buffer(b ^)
     _ = buf.write(Bytes("Hello World!"))
@@ -28,6 +28,20 @@ fn test_write() raises:
     test.assert_equal(str(buf), String("Hello World!\nGoodbye World!A"))
 
 
+fn test_reader() raises:
+    var test = MojoTest("Testing bytes.Reader")
+
+    # Create a new reader from string s. It is converted to Bytes upon init.
+    var s: String = "Hello World!"
+    var buf = new_reader(s)
+
+    # Read the contents of reader into dest
+    var dest = Bytes()
+    _ = buf.read(dest)
+    test.assert_equal(str(dest), s)
+
+
 fn main() raises:
-    test_write()
-    test_read()
+    test_buffer_read()
+    test_buffer_write()
+    test_reader()

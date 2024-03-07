@@ -1,7 +1,9 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
 from ..builtins._bytes import Bytes, Byte
-from .traits import Reader, Writer, StringWriter, ERR_SHORT_BUFFER, EOF
+
+
+alias BUFFER_SIZE = 4096
 
 
 fn write_string[W: Writer](inout writer: W, string: String) raises -> Int:
@@ -51,7 +53,7 @@ fn read_at_least[R: Reader](inout reader: R, dest: Bytes, min: Int) raises -> In
     Returns:
         The number of bytes read."""
     if len(dest) < min:
-        raise Error(ERR_SHORT_BUFFER)
+        raise Error(io.ERR_SHORT_BUFFER)
 
     var n: Int = 0
     while n < min:
