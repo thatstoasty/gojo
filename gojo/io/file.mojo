@@ -1,7 +1,7 @@
 from ..external.libc import fopen, fread, fclose, fwrite, strnlen
 from ..builtins._bytes import Bytes, Byte
 from ..builtins import copy
-from .traits import Writer, Reader, ReadSeekCloser
+from .traits import Writer, Reader, ReadSeekCloser, ByteWriter
 
 
 alias c_char = UInt8
@@ -19,7 +19,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 
 @value
-struct File(Reader, Writer):
+struct File(Reader, Writer, ByteWriter):
     var handle: Pointer[UInt64]
     var fname: Pointer[c_char]
     var mode: Pointer[c_char]
@@ -62,12 +62,18 @@ struct File(Reader, Writer):
 
     fn read(inout self, inout dest: Bytes) raises -> Int:
         return fread(
-            dest._vector.data.bitcast[UInt8]().value, sizeof[UInt8](), BUF_SIZE, self.handle
+            dest._vector.data.bitcast[UInt8]().value,
+            sizeof[UInt8](),
+            BUF_SIZE,
+            self.handle,
         ).to_int()
 
     fn write(inout self, src: Bytes) raises -> Int:
         return fwrite(
-            src._vector.data.bitcast[UInt8]().value, sizeof[UInt8](), len(src), self.handle
+            src._vector.data.bitcast[UInt8]().value,
+            sizeof[UInt8](),
+            len(src),
+            self.handle,
         ).to_int()
 
     fn write_all(inout self, src: Bytes) raises:
@@ -75,12 +81,15 @@ struct File(Reader, Writer):
         while index != len(src):
             index += self.write(src)
 
-    fn write_byte(inout self, byte: Int8) raises:
+    fn write_byte(inout self, byte: Int8) raises -> Int:
         var buf = Bytes()
         buf.append(byte)
         self.write_all(buf)
 
-struct FileWrapper():
+        return 1
+
+
+struct FileWrapper:
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:
@@ -106,8 +115,8 @@ struct FileWrapper():
     fn read_bytes(inout self) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes()
 
-    fn seek(inout self, offset: Int64, whence: Int = 0) raises -> Int:
-        return int(self.handle.seek(offset.cast[DType.uint64]()))
+    fn seek(inout self, offset: Int64, whence: Int = 0) raises -> Int64:
+        return self.handle.seek(offset.cast[DType.uint64]()).cast[DType.int64]()
 
     fn write(inout self, src: Bytes) raises -> Int:
         self.handle.write(String(src))
