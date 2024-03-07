@@ -4,7 +4,7 @@ from .traits import Writer, StringWriter, ReaderFrom
 
 
 @value
-struct STDWriter(Writer, StringWriter, ReaderFrom):
+struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
     """A writer for POSIX file descriptors."""
 
     var fd: Int

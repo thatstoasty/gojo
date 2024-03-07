@@ -58,8 +58,8 @@ struct Scanner[R: io.Reader]():
         owned reader: R,
         split: SplitFunction = scan_lines,
         max_token_size: Int = MAX_SCAN_TOKEN_SIZE,
-        token: Bytes = Bytes(),
-        buf: Bytes = Bytes(),
+        token: Bytes = Bytes(size=io.BUFFER_SIZE),
+        buf: Bytes = Bytes(size=io.BUFFER_SIZE),
         start: Int = 0,
         end: Int = 0,
         empties: Int = 0,
@@ -111,7 +111,7 @@ struct Scanner[R: io.Reader]():
             # a chance to recover any remaining, possibly empty token.
             if (self.end > self.start) or self.err:
                 var advance: Int
-                var token = Bytes()
+                var token = Bytes(size=io.BUFFER_SIZE)
                 var err = Err()
                 var at_eof = False
                 if self.err:
@@ -190,27 +190,28 @@ struct Scanner[R: io.Reader]():
             # be extra careful: Scanner is for safe, simple jobs.
             var loop = 0
             while True:
-                var n: Int = 0
+                var bytes_read: Int = 0
                 var sl = self.buf[self.end : len(self.buf)]
                 var err = Err()
 
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
                 try:
-                    n = self.reader.read(sl)
+                    bytes_read = self.reader.read(sl)
+                    print("bytes read", bytes_read)
                     _ = copy(self.buf, sl, self.end)
-                    if n < 0 or len(self.buf) - self.end < n:
+                    if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
                         self.set_err(Err(Error(ERR_BAD_READ_COUNT)))
                         break
                 except e:
                     # TODO: For some reason the reader isn't throwing eof for scan lines
                     err = Err(e)
 
-                self.end += n
+                self.end += bytes_read
                 if err:
                     self.set_err(err)
                     break
 
-                if n > 0:
+                if bytes_read > 0:
                     self.empties = 0
                     break
 

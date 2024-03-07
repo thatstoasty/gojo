@@ -2,6 +2,7 @@ from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins._bytes import Bytes
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
+from gojo.io import FileWrapper
 
 
 fn test_reader() raises:
@@ -29,7 +30,7 @@ fn test_scan_words() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
     scanner.split = scan_words
 
     var expected_results = DynamicVector[String]()
@@ -52,7 +53,7 @@ fn test_scan_lines() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
 
     var expected_results = DynamicVector[String]()
     expected_results.append("Testing")
@@ -74,7 +75,7 @@ fn test_scan_bytes() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r)
+    var scanner = Scanner(r ^)
     scanner.split = scan_bytes
 
     var expected_results = DynamicVector[String]()
@@ -88,8 +89,28 @@ fn test_scan_bytes() raises:
         i += 1
 
 
+fn test_file_wrapper_scanner() raises:
+    var test = MojoTest("testing io.FileWrapper and bufio.Scanner")
+    var file = FileWrapper("test_multiple_lines.txt", "r")
+
+    # Create a scanner from the reader
+    var scanner = Scanner(file ^)
+    var expected_results = DynamicVector[String]()
+    expected_results.append("11111")
+    expected_results.append("22222")
+    expected_results.append("33333")
+    expected_results.append("44444")
+    expected_results.append("55555")
+    var i = 0
+
+    while scanner.scan():
+        test.assert_equal(scanner.current_token(), expected_results[i])
+        i += 1
+
+
 fn main() raises:
     test_reader()
     test_scan_words()
     test_scan_lines()
     test_scan_bytes()
+    test_file_wrapper_scanner()

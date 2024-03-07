@@ -6,7 +6,7 @@ import ..io
 
 @value
 struct Reader(
-    Sized, io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteReader, io.ByteScanner
+    Copyable, Sized, io.Reader, io.ReaderAt, io.WriterTo, io.Seeker, io.ByteReader, io.ByteScanner
 ):
     """A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
     io.ByteScanner, and io.RuneScanner Interfaces by reading from

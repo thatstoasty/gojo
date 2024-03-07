@@ -44,7 +44,7 @@ alias ERR_UNEXPECTED_EOF = "unexpected EOF"
 alias ERR_NO_PROGRESS = "multiple Read calls return no data or error"
 
 
-trait Reader(Copyable, Movable):
+trait Reader(Movable):
     """Reader is the trait that wraps the basic Read method.
 
     Read reads up to len(p) bytes into p. It returns the number of bytes
@@ -81,7 +81,7 @@ trait Reader(Copyable, Movable):
         ...
 
 
-trait Writer(Copyable, Movable):
+trait Writer(Movable):
     """Writer is the trait that wraps the basic Write method.
 
     Write writes len(p) bytes from p to the underlying data stream.
@@ -97,7 +97,7 @@ trait Writer(Copyable, Movable):
         ...
 
 
-trait Closer(Copyable, Movable):
+trait Closer(Movable):
     """
     Closer is the trait that wraps the basic Close method.
 
@@ -109,7 +109,7 @@ trait Closer(Copyable, Movable):
         ...
 
 
-trait Seeker(Copyable, Movable):
+trait Seeker(Movable):
     """
     Seeker is the trait that wraps the basic Seek method.
 
@@ -164,7 +164,7 @@ trait ReadWriteSeeker(Reader, Writer, Seeker):
     ...
 
 
-trait ReaderFrom:
+trait ReaderFrom():
     """ReaderFrom is the trait that wraps the ReadFrom method.
 
     ReadFrom reads data from r until EOF or error.
@@ -198,7 +198,7 @@ trait ReaderWriteTo(Reader, WriterTo):
     ...
 
 
-trait ReaderAt:
+trait ReaderAt():
     """ReaderAt is the trait that wraps the basic ReadAt method.
 
     ReadAt reads len(p) bytes into p starting at offset off in the
@@ -230,7 +230,7 @@ trait ReaderAt:
         ...
 
 
-trait WriterAt:
+trait WriterAt():
     """WriterAt is the trait that wraps the basic WriteAt method.
 
     WriteAt writes len(p) bytes from p to the underlying data stream
@@ -251,7 +251,7 @@ trait WriterAt:
         ...
 
 
-trait ByteReader:
+trait ByteReader():
     """ByteReader is the trait that wraps the read_byte method.
 
     read_byte reads and returns the next byte from the input or
@@ -266,7 +266,7 @@ trait ByteReader:
         ...
 
 
-trait ByteScanner:
+trait ByteScanner():
     """ByteScanner is the trait that adds the unread_byte method to the
     basic read_byte method.
 
@@ -280,14 +280,14 @@ trait ByteScanner:
         ...
 
 
-trait ByteWriter:
+trait ByteWriter():
     """ByteWriter is the trait that wraps the write_byte method."""
 
     fn write_byte(inout self, byte: Byte) raises -> Int:
         ...
 
 
-trait RuneReader:
+trait RuneReader():
     """RuneReader is the trait that wraps the read_rune method.
 
     read_rune reads a single encoded Unicode character
@@ -312,7 +312,7 @@ trait RuneScanner(RuneReader):
         ...
 
 
-trait StringWriter:
+trait StringWriter():
     """StringWriter is the trait that wraps the WriteString method."""
 
     fn write_string(inout self, src: String) raises -> Int:

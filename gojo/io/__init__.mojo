@@ -31,3 +31,5 @@ from .traits import (
     EOF,
 )
 from .io import write_string, read_at_least, read_full, read_all
+from .file import File, FileWrapper
+from .reader import BUFFER_SIZE
