@@ -1,8 +1,7 @@
 from ._bytes import Bytes, Byte
 
 
-# TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
-# TODO: It appends additional values if the source is longer than the target, if not then it overwrites the target.
+
 fn copy(
     inout target: DynamicVector[Int], source: DynamicVector[Int], start: Int = 0
 ) -> Int:
@@ -20,12 +19,11 @@ fn copy(
     var count = 0
 
     for i in range(len(source)):
-        if source[i] != 0:
-            if len(target) <= i + start:
-                target.append(source[i])
-            else:
-                target[i + start] = source[i]
-            count += 1
+        if len(target) <= i + start:
+            target.append(source[i])
+        else:
+            target[i + start] = source[i]
+        count += 1
 
     return count
 
@@ -47,12 +45,11 @@ fn copy(
     var count = 0
 
     for i in range(len(source)):
-        if source[i] != 0:
-            if len(target) <= i + start:
-                target.append(source[i])
-            else:
-                target[i + start] = source[i]
-            count += 1
+        if len(target) <= i + start:
+            target.append(source[i])
+        else:
+            target[i + start] = source[i]
+        count += 1
 
     return count
 
@@ -72,12 +69,11 @@ fn copy(inout target: Bytes, source: Bytes, start: Int = 0) -> Int:
     var count = 0
 
     for i in range(len(source)):
-        if source[i] != 0:
-            if len(target) <= i + start:
-                target.append(source[i])
-            else:
-                target[i + start] = source[i]
-            count += 1
+        if len(target) <= i + start:
+            target.append(source[i])
+        else:
+            target[i + start] = source[i]
+        count += 1
 
     return count
 
