@@ -52,7 +52,7 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
             raise Error(io.EOF)
         
         self.prev_rune = -1
-        var bytes_written = copy(dest, self.string[self.read_pos:])
+        var bytes_written = copy(dest, self.string[int(self.read_pos):])
         self.read_pos += Int64(bytes_written)
         return bytes_written
 
@@ -137,6 +137,13 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
     fn seek(inout self, offset: Int64, whence: Int) raises -> Int64:
         """Seeks to a new position in the underlying string. The next read will start from that position.
         Implements the [io.Seeker] trait.
+
+        Args:
+            offset: The offset to seek to.
+            whence: The seek mode. It can be one of [io.seek_start], [io.seek_current], or [io.seek_end].
+        
+        Returns:
+            The new position in the string.
         """
         self.prev_rune = -1
         var position: Int64 = 0
@@ -170,7 +177,7 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
         if self.read_pos >= Int64(len(self.string)):
             return 0
         
-        var chunk_to_write = self.string[self.read_pos:]
+        var chunk_to_write = self.string[int(self.read_pos):]
         var bytes_written = io.write_string(writer, chunk_to_write)
         if bytes_written > len(chunk_to_write):
             raise Error("strings.Reader.write_to: invalid write_string count")
@@ -181,30 +188,31 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
         
         return Int64(bytes_written)
     
-    fn write_to[W: io.StringWriter](inout self, inout writer: W) raises -> Int64:
-        """Writes the remaining portion of the underlying string to the provided writer.
-        Implements the [io.WriterTo] trait.
+    # TODO: How can I differentiate between the two write_to methods when the writer implements both traits?
+    # fn write_to[W: io.StringWriter](inout self, inout writer: W) raises -> Int64:
+    #     """Writes the remaining portion of the underlying string to the provided writer.
+    #     Implements the [io.WriterTo] trait.
 
-        Args:
-            writer: The writer to write the remaining portion of the string to.
+    #     Args:
+    #         writer: The writer to write the remaining portion of the string to.
 
-        Returns:
-            The number of bytes written to the writer.
-        """
-        self.prev_rune = -1
-        if self.read_pos >= Int64(len(self.string)):
-            return 0
+    #     Returns:
+    #         The number of bytes written to the writer.
+    #     """
+    #     self.prev_rune = -1
+    #     if self.read_pos >= Int64(len(self.string)):
+    #         return 0
         
-        var chunk_to_write = self.string[self.read_pos:]
-        var bytes_written = io.write_string(writer, chunk_to_write)
-        if bytes_written > len(chunk_to_write):
-            raise Error("strings.Reader.write_to: invalid write_string count")
+    #     var chunk_to_write = self.string[self.read_pos:]
+    #     var bytes_written = io.write_string(writer, chunk_to_write)
+    #     if bytes_written > len(chunk_to_write):
+    #         raise Error("strings.Reader.write_to: invalid write_string count")
         
-        self.read_pos += Int64(bytes_written)
-        if bytes_written != len(chunk_to_write):
-            raise Error(io.ErrShortWrite)
+    #     self.read_pos += Int64(bytes_written)
+    #     if bytes_written != len(chunk_to_write):
+    #         raise Error(io.ErrShortWrite)
         
-        return Int64(bytes_written)
+    #     return Int64(bytes_written)
 
     fn reset(inout self, string: String):
         """Resets the [Reader] to be reading from the beginning of the provided string.

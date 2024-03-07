@@ -7,12 +7,12 @@ from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 # WriteString writes the contents of the string s to w, which accepts a slice of bytes.
 # If w implements [StringWriter], [StringWriter.WriteString] is invoked directly.
 # Otherwise, [Writer.Write] is called exactly once.
-fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
-    return w.write(s.as_bytes())
+fn write_string[W: Writer](inout writer: W, string: String) raises -> Int:
+    return writer.write(string.as_bytes())
 
 
-fn write_string[T: StringWriter](inout w: T, s: String) raises -> Int:
-    return w.write_string(s)
+fn write_string[W: StringWriter](inout writer: W, string: String) raises -> Int:
+    return writer.write_string(string)
 
 
 # read_at_least reads from r into buf until it has read at least min bytes.

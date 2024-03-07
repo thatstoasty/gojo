@@ -37,7 +37,6 @@ alias Err = Optional[WrappedError]
 # # advanced arbitrarily far past the last token. Programs that need more
 # # control over error handling or large tokens, or must run sequential scans
 # # on a reader, should use [bufio.Reader] instead.
-@value
 struct Scanner[R: io.Reader]():
     var reader: R # The reader provided by the client.
     var split: split_fn # The function to split the tokens.
@@ -53,7 +52,7 @@ struct Scanner[R: io.Reader]():
 
     fn __init__(
         inout self,
-        reader: R,
+        owned reader: R,
         split: split_fn = scan_lines,
         max_token_size: Int = max_scan_token_size,
         token: Bytes = Bytes(),
@@ -64,7 +63,7 @@ struct Scanner[R: io.Reader]():
         scan_called: Bool = False,
         done: Bool = False,
     ):
-        self.reader = reader
+        self.reader = reader ^
         self.split = split
         self.max_token_size = max_token_size
         self.token = token
@@ -314,8 +313,8 @@ alias start_buf_size = 4096 # Size of initial allocation for buffer.
 
 # new_scanner returns a new [Scanner] to read from r.
 # The split fntion defaults to [scan_lines].
-fn new_scanner[R: io.Reader](reader: R) -> Scanner[R]:
-    return Scanner(reader)
+fn new_scanner[R: io.Reader](owned reader: R) -> Scanner[R]:
+    return Scanner(reader ^)
 
 
 ###### split functions ######

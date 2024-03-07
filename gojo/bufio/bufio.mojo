@@ -396,7 +396,6 @@ struct Reader[R: io.Reader](io.Reader):
             except e:
                 if str(e) == ErrBufferFull:  # unexpected error
                     raise
-                    break
 
             # Make a copy of the buffer.
             var buf = frag  # FIXME: Dunno if this will make a copy or just reference frag.

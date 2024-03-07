@@ -2,10 +2,12 @@
 # Modified to use DynamicVector[Int8] instead of DynamicVector[String]
 
 from collections.vector import DynamicVector
+import ..io
 from ..builtins._bytes import Bytes
 
 
-struct StringBuilder(Stringable, Sized):
+@value
+struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWriter):
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
@@ -45,7 +47,7 @@ struct StringBuilder(Stringable, Sized):
         # Don't need to add a null terminator because we can pass the length of the string.
         return StringRef(self._vector._vector.data.value, len(self._vector))
 
-    fn write(inout self, src: Bytes) -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         """
         Appends a byte array to the builder buffer.
 
@@ -55,7 +57,7 @@ struct StringBuilder(Stringable, Sized):
         self._vector += src
         return len(src)
 
-    fn write_byte(inout self, byte: Int8):
+    fn write_byte(inout self, byte: Int8) raises -> Int:
         """
         Appends a byte array to the builder buffer.
 
@@ -63,15 +65,18 @@ struct StringBuilder(Stringable, Sized):
             byte: The byte array to append.
         """
         self._vector.append(byte)
+        return 1
 
-    fn write_string(inout self, string: String):
+    fn write_string(inout self, src: String) raises -> Int:
         """
         Appends a string to the builder buffer.
 
         Args:
-          string: The string to append.
+          src: The string to append.
         """
-        self._vector.extend(string.as_bytes())
+        var string_buffer = src.as_bytes()
+        self._vector.extend(string_buffer)
+        return len(string_buffer)
 
     fn __len__(self) -> Int:
         """
