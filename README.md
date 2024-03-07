@@ -16,7 +16,6 @@ All of these packages are partially implemented.
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
   - `STDOUT/STDERR` Writer (leveraging `libc`).
-  - `File`: Reader/Writer (leveraging `libc`).
   - `FileWrapper`: `FileHandle` Wrapper Reader/Writer
 - `strings`
   - `StringBuilder`: String builder for fast string concatenation.
