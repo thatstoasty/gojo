@@ -90,7 +90,7 @@ struct File(ReadWriter, ByteWriter):
         return 1
 
 
-struct FileWrapper(io.ReadWriteSeeker):
+struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:
@@ -123,12 +123,23 @@ struct FileWrapper(io.ReadWriteSeeker):
         var elements_copied = copy(dest, Bytes(result))
         dest = dest[:elements_copied]
         return elements_copied
+    
+    fn read_byte(inout self) raises -> Byte:
+        return self.read_bytes(1)[0]
 
     fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes(size)
 
     fn read_bytes(inout self) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes()
+    
+    fn stream_until_delimiter(inout self, inout dest: Bytes, delimiter: Int8, max_size: Int) raises:
+        for i in range(max_size):
+            var byte = self.read_byte()
+            if byte == delimiter:
+                return
+            dest.append(byte)
+        raise Error("Stream too long")
 
     fn seek(inout self, offset: Int64, whence: Int = 0) raises -> Int64:
         return self.handle.seek(offset.cast[DType.uint64]()).cast[DType.int64]()
