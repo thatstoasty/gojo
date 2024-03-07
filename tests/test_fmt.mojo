@@ -1,5 +1,5 @@
 from tests.wrapper import MojoTest
-from gojo.fmt import sprintf
+from gojo.fmt import sprintf, printf
 
 
 fn test_sprintf() raises:
@@ -23,5 +23,20 @@ fn test_sprintf() raises:
     )
 
 
+fn test_printf() raises:
+    var test = MojoTest("Testing printf")
+    printf(
+        (
+            "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t"
+            " that I like Mojo!"
+        ),
+        String("world"),
+        29,
+        Float64(29.5),
+        True,
+    )
+
+
 fn main() raises:
     test_sprintf()
+    # test_printf()
