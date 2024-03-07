@@ -32,7 +32,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
     fn __getitem__(self, index: Int) -> Int8:
         return self._vector[index]
 
-    fn __getitem__(self: Self, limits: Slice) raises -> Self:
+    fn __getitem__(self, limits: Slice) raises -> Self:
         # TODO: Specifying no end to the span sets span end to this super large int for some reason.
         # Set it to len of the vector if that happens. Otherwise, if end is just too large in general, throw OOB error.
         var end = limits.end
