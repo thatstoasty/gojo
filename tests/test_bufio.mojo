@@ -39,7 +39,7 @@ fn test_scan_words() raises:
     var i = 0
 
     while scanner.scan():
-        test.assert_equal(scanner.text(), expected_results[i])
+        test.assert_equal(scanner.current_token(), expected_results[i])
         i += 1
 
 
@@ -61,7 +61,7 @@ fn test_scan_lines() raises:
     var i = 0
 
     while scanner.scan():
-        test.assert_equal(scanner.text(), expected_results[i])
+        test.assert_equal(scanner.current_token(), expected_results[i])
         i += 1
 
 
@@ -84,7 +84,7 @@ fn test_scan_bytes() raises:
     var i = 0
 
     while scanner.scan():
-        test.assert_equal(scanner.bytes(), Bytes(expected_results[i]))
+        test.assert_equal(scanner.current_token_as_bytes(), Bytes(expected_results[i]))
         i += 1
 
 

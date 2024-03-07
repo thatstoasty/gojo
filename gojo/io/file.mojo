@@ -62,12 +62,18 @@ struct File(Reader, Writer, ByteWriter):
 
     fn read(inout self, inout dest: Bytes) raises -> Int:
         return fread(
-            dest._vector.data.bitcast[UInt8]().value, sizeof[UInt8](), BUF_SIZE, self.handle
+            dest._vector.data.bitcast[UInt8]().value,
+            sizeof[UInt8](),
+            BUF_SIZE,
+            self.handle,
         ).to_int()
 
     fn write(inout self, src: Bytes) raises -> Int:
         return fwrite(
-            src._vector.data.bitcast[UInt8]().value, sizeof[UInt8](), len(src), self.handle
+            src._vector.data.bitcast[UInt8]().value,
+            sizeof[UInt8](),
+            len(src),
+            self.handle,
         ).to_int()
 
     fn write_all(inout self, src: Bytes) raises:
@@ -83,7 +89,7 @@ struct File(Reader, Writer, ByteWriter):
         return 1
 
 
-struct FileWrapper():
+struct FileWrapper:
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: StringLiteral) raises:

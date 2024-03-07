@@ -34,7 +34,9 @@ struct Reader(traits.Reader):
         while dest_index < len(dest) + 1:
             var written = min(len(dest) - dest_index, end - start)
             var dest_ptr: Pointer[UInt8] = dest._vector.data.bitcast[UInt8]().value
-            var src_ptr: Pointer[UInt8] = self.buffer._vector.data.bitcast[UInt8]().value
+            var src_ptr: Pointer[UInt8] = self.buffer._vector.data.bitcast[
+                UInt8
+            ]().value
             memcpy(dest_ptr.offset(dest_index), src_ptr.offset(start), written)
             if written == 0:
                 # buf empty, fill it
@@ -65,6 +67,6 @@ struct Reader(traits.Reader):
     #     #     raise Error("std.Reader.write_to: invalid Write count")
 
     #     # if write_count != len(self.buffer.buf):
-    #     #     raise Error(io.ErrShortWrite)
+    #     #     raise Error(io.ERR_SHORT_WRITE)
 
     #     return write_count

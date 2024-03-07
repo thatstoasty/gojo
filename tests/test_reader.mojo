@@ -29,7 +29,7 @@ fn test_read_at() raises:
 fn test_seek() raises:
     var test = MojoTest("Testing seek")
     var r = reader.new_reader(Bytes("0123456789"))
-    var pos = r.seek(5, io.seek_start)
+    var pos = r.seek(5, io.SEEK_START)
 
     var b = Bytes()
     _ = r.read(b)

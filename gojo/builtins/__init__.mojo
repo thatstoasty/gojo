@@ -1,5 +1,6 @@
 from ._bytes import Bytes, Byte
 
+
 # TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
 # TODO: It appends additional values if the source is longer than the target, if not then it overwrites the target.
 fn copy(
@@ -92,7 +93,7 @@ fn cap(buffer: Bytes) -> Int:
 
 fn cap[T: CollectionElement](iterable: DynamicVector[T]) -> Int:
     """Returns the capacity of the DynamicVector.
-    
+
     Args:
         iterable: The DynamicVector to get the capacity of.
     """

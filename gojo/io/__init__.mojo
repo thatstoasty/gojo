@@ -23,16 +23,11 @@ from .traits import (
     RuneReader,
     RuneScanner,
     StringWriter,
-    seek_start,
-    seek_current,
-    seek_end,
-    ErrShortWrite,
-    ErrNoProgress,
-    EOF
+    SEEK_START,
+    SEEK_CURRENT,
+    SEEK_END,
+    ERR_SHORT_WRITE,
+    ERR_NO_PROGRESS,
+    EOF,
 )
-from .io import (
-    write_string,
-    read_at_least,
-    read_full,
-    read_all
-)
+from .io import write_string, read_at_least, read_full, read_all

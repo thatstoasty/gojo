@@ -34,7 +34,7 @@ fn test_string_reader() raises:
     test.assert_equal(str(buffer), "Hello, World!")
 
     # Seek to the beginning of the reader.
-    var position = reader.seek(0, io.seek_start)
+    var position = reader.seek(0, io.SEEK_START)
     test.assert_equal(position, 0)
 
     # Read the first byte from the reader.

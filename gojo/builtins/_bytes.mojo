@@ -82,7 +82,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         self._vector.extend(other._vector)
 
     fn __str__(self) -> String:
-        # Copy vector and add null terminator
+        # copy vector and add null terminator
         var s = self._vector
         s.append(0)
 
@@ -90,17 +90,40 @@ struct Bytes(Stringable, Sized, CollectionElement):
 
     fn __repr__(self) raises -> String:
         return self.__str__()
-    
-    fn append(inout self, value: Int8):
+
+    fn append(inout self, value: Byte):
+        """Appends the value to the end of the Bytes.
+
+        Args:
+            value: The value to append.
+        """
         self._vector.append(value)
 
     fn extend(inout self, value: String):
+        """Appends the values to the end of the Bytes.
+
+        Args:
+            value: The value to append.
+        """
         self += value
 
     fn extend(inout self, value: DynamicVector[Int8]):
+        """Appends the values to the end of the Bytes.
+
+        Args:
+            value: The value to append.
+        """
         self += value
 
     fn index_byte(self, c: Byte) -> Int:
+        """Return the index of the first occurrence of the byte c.
+
+        Args:
+            c: The byte to search for.
+
+        Returns:
+            The index of the first occurrence of the byte c.
+        """
         var i = 0
         for i in range(self.__len__()):
             if self[i] == c:
@@ -109,13 +132,27 @@ struct Bytes(Stringable, Sized, CollectionElement):
         return -1
 
     fn has_prefix(self, prefix: Self) raises -> Bool:
-        """Reports whether the byte slice s begins with prefix."""
+        """Reports whether the Bytes struct begins with prefix.
+
+        Args:
+            prefix: The prefix to search for.
+
+        Returns:
+            True if the Bytes struct begins with prefix; otherwise, False.
+        """
         var len_comparison = len(self._vector) >= len(prefix)
         var prefix_comparison = self[0 : len(prefix)] == prefix
         return len_comparison and prefix_comparison
 
     fn has_suffix(self, suffix: Self) raises -> Bool:
-        """Reports whether the byte slice s ends with suffix."""
+        """Reports whether the Bytes struct ends with suffix.
+
+        Args:
+            prefix: The prefix to search for.
+
+        Returns:
+            True if the Bytes struct ends with suffix; otherwise, False.
+        """
         var len_comparison = len(self._vector) >= len(suffix)
         var suffix_comparison = self[
             self.__len__() - len(suffix) : self.__len__()
@@ -123,11 +160,18 @@ struct Bytes(Stringable, Sized, CollectionElement):
         return len_comparison and suffix_comparison
 
     fn capacity(self) -> Int:
+        """Returns the capacity of the Bytes struct."""
         return self._vector.capacity
 
 
 fn trim_null_characters(b: Bytes) -> Bytes:
     """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters.
+
+    Args:
+        b: The Bytes struct to trim.
+
+    Returns:
+        The trimmed Bytes struct.
     """
     var new_b = Bytes(len(b))
     for i in range(len(b)):
