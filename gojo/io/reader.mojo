@@ -1,4 +1,5 @@
 from math import min
+from memory.memory import memcpy
 from ..external.libc import Str, c_ssize_t, c_size_t, c_int, char_pointer
 from ..builtins._bytes import Bytes, Byte
 from .file import File
@@ -6,23 +7,22 @@ import .traits
 
 
 alias O_RDWR = 0o2
+alias BUFFER_SIZE: Int = 4096
 
 
-# This is a simple wrapper around POSIX-style fcntl.h functions.
-# thanks to https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ for the original read implementation!
+# TODO: Doesn't work ATM
 @value
 struct Reader(traits.Reader):
     var file: File
     var buffer: Bytes
 
     fn __init__(inout self, owned file: File):
-        alias buffer_size: Int = 4096
-        self.buffer = Bytes(buffer_size)
+        self.buffer = Bytes(size=BUFFER_SIZE)
         self.file = file
 
     # This takes ownership of a POSIX file descriptor.
     fn __moveinit__(inout self, owned existing: Self):
-        self.file = existing.file
+        self.file = existing.file ^
         self.buffer = existing.buffer
 
     fn read(inout self, inout dest: Bytes) raises -> Int:
@@ -30,12 +30,16 @@ struct Reader(traits.Reader):
         var start = 0
         var end = 0
 
-        # while dest_index < len(dest):
-        while dest_index < dest._vector.capacity:
+        print(dest_index, len(dest))
+        while dest_index < len(dest) + 1:
             var written = min(len(dest) - dest_index, end - start)
+            var dest_ptr: Pointer[UInt8] = dest._vector.data.bitcast[UInt8]().value
+            var src_ptr: Pointer[UInt8] = self.buffer._vector.data.bitcast[UInt8]().value
+            memcpy(dest_ptr.offset(dest_index), src_ptr.offset(start), written)
             if written == 0:
                 # buf empty, fill it
                 var n = self.file.read(self.buffer)
+                print(self.buffer)
                 if n == 0:
                     # reading from the unbuffered stream returned nothing
                     # so we have nothing left to read.
@@ -45,39 +49,6 @@ struct Reader(traits.Reader):
             start += written
             dest_index += written
         return len(dest)
-
-    # fn read(inout self, inout dest: Bytes) raises -> Int:
-    #     var buf_size = self.buffer.buf._vector.capacity
-    #     var fd = int(self.file.handle.load())
-    #     var read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](fd, self.buffer.buf._vector.data, buf_size)
-    #     if read_count == -1:
-    #         raise Error("Failed to read file descriptor " + fd.__str__())
-
-    #     if read_count == self.buffer.buf._vector.capacity:
-    #         raise Error(
-    #             "You can only read up to "
-    #             + String(buf_size)
-    #             + " bytes at a time. Adjust the buffer size or handle larger data"
-    #             " in segments."
-    #         )
-
-    #     return read_count
-
-    # fn read(inout self) raises -> Int:
-    #     var buf_size = self.buffer.buf._vector.capacity
-    #     var read_count: c_ssize_t = external_call["read", c_ssize_t, c_int, char_pointer, c_size_t](self.fd, self.buffer.buf._vector.data, buf_size)
-    #     if read_count == -1:
-    #         raise Error("Failed to read file descriptor " + self.fd.__str__())
-
-    #     if read_count == self.buffer.buf._vector.capacity:
-    #         raise Error(
-    #             "You can only read up to "
-    #             + String(buf_size)
-    #             + " bytes at a time. Adjust the buffer size or handle larger data"
-    #             " in segments."
-    #         )
-
-    #     return read_count
 
     fn __str__(inout self) raises -> String:
         var position = self.read(self.buffer)

@@ -25,11 +25,6 @@ fn test_read_at() raises:
     pos = r.read_at(b, 1)
     test.assert_equal(str(b[:pos]), "123456789")
 
-    # TODO: This test case returns the full bytes instead of empty.
-    # b = bytes(0)
-    # pos = r.read_at(b, 0)
-    # testing.assert_equal(b[:pos], Bytes(""))
-
 
 fn test_seek() raises:
     var test = MojoTest("Testing seek")

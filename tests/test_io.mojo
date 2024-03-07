@@ -14,14 +14,14 @@ fn test_file() raises:
     testing.assert_equal(String(dest), String(Bytes("12345")))
 
 
+# TODO: Doesn't work
 fn test_reader() raises:
     print("testing Reader")
-    # FIXME: Reader.read is not working atm. No data gets loaded to the bytes buffer
     # var file = File("test.txt", "r")
     # var reader = Reader(file ^)
     # var dest = Bytes()
     # _ = reader.read(dest)
-    # testing.assert_equal(dest.__str__(), Bytes("12345"))
+    # testing.assert_equal(String(dest), String(Bytes("12345")))
 
 
 fn test_writer() raises:

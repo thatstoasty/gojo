@@ -75,26 +75,10 @@ struct File(Reader, Writer):
         while index != len(src):
             index += self.write(src)
 
-    # fn write_byte(self, byte: UInt8) raises:
-    #     var buf = Buffer[1, DType.uint8]().stack_allocation()
-    #     buf[0] = byte
-    #     self.write_all(buf)
-
-    # fn write_byte_n_times(self, byte: UInt8, n: Int) raises:
-    #     var bytes = StaticTuple[256, UInt8]()
-    #     var bytes_ptr = DTypePointer[DType.uint8](
-    #         Pointer.address_of(bytes).bitcast[UInt8]()
-    #     )
-    #     memset[DType.uint8](
-    #         bytes_ptr,
-    #         byte,
-    #         256,
-    #     )
-    #     var remaining = n
-    #     while remaining > 0:
-    #         var to_write = min(remaining, bytes.__len__())
-    #         self.write_all(Buffer[Dim(), DType.uint8](bytes_ptr, to_write))
-    #         remaining -= to_write
+    fn write_byte(inout self, byte: Int8) raises:
+        var buf = Bytes()
+        buf.append(byte)
+        self.write_all(buf)
 
 struct FileWrapper():
     var handle: FileHandle
