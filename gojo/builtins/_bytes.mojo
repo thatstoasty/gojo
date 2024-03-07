@@ -44,7 +44,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
             ) + " but the length is " + str((len(self._vector)))
             raise Error(error)
 
-        var new_bytes = Self()
+        var new_bytes = Self(size=self.capacity())
         for i in range(limits.start, end, limits.step):
             new_bytes.append(self._vector[i])
         return new_bytes

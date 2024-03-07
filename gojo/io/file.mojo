@@ -2,6 +2,7 @@ from ..external.libc import fopen, fread, fclose, fwrite, strnlen
 from ..builtins._bytes import Bytes, Byte
 from ..builtins import copy
 from .traits import Writer, Reader, ReadSeekCloser, ByteWriter, ReadWriter
+from .io import EOF
 
 
 alias c_char = UInt8
@@ -104,8 +105,22 @@ struct FileWrapper(io.ReadWriteSeeker):
     fn read(inout self, inout dest: Bytes) raises -> Int:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
-        var result_bytes = Bytes(self.handle.read(dest._vector.capacity))
-        var elements_copied = copy(dest, result_bytes)
+        var result = self.handle.read()
+        if len(result) == 0:
+            raise Error(EOF)
+
+        var elements_copied = copy(dest, Bytes(result))
+        dest = dest[:elements_copied]
+        return elements_copied
+    
+    fn read(inout self, inout dest: Bytes, size: Int64) raises -> Int:
+        # Pretty hacky way to force the filehandle read into the defined trait.
+        # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
+        var result = self.handle.read(size)
+        if len(result) == 0:
+            raise Error(EOF)
+
+        var elements_copied = copy(dest, Bytes(result))
         dest = dest[:elements_copied]
         return elements_copied
 
