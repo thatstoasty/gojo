@@ -2,7 +2,7 @@
 Experiments in porting over Golang stdlib into Mojo. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
 ## Usage
-...
+TODO: Add usage instructions. For now, check out the tests for usage of the various packages.
 
 ## What this includes
 All of these packages are partially implemented.
@@ -20,8 +20,5 @@ All of these packages are partially implemented.
 - `strings`
   - `StringBuilder`: String builder for fast string concatenation.
   - `Reader`: String reader.
-
-WIP packages:
-
-- `http`
 - `fmt`
+  - Basic `sprintf` function.
