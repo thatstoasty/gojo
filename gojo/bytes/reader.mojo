@@ -105,24 +105,24 @@ struct Reader(
     #     return nil
 
     # Seek implements the [io.Seeker] Interface.
-    fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
+    fn seek(inout self, offset: Int64, whence: Int) raises -> Int64:
         self.prev_rune = -1
-        var abs: Int64 = 0
+        var position: Int64 = 0
 
         if whence == io.seek_start:
-            abs = offset
+            position = offset
         elif whence == io.seek_current:
-            abs = self.index + offset
+            position = self.index + offset
         elif whence == io.seek_end:
-            abs = len(self.s) + offset
+            position = len(self.s) + offset
         else:
             raise Error("bytes.Readeself.seek: invalid whence")
 
-        if abs < 0:
+        if position < 0:
             raise Error("bytes.Readeself.seek: negative position")
 
-        self.index = abs
-        return int(abs)
+        self.index = position
+        return position
 
     # WriteTo implements the [io.WriterTo] Interface.
     fn write_to[W: io.Writer](inout self, inout w: W) raises -> Int64:

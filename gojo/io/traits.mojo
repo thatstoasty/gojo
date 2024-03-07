@@ -121,7 +121,7 @@ trait Closer(Copyable, Movable):
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
 trait Seeker(Copyable, Movable):
-    fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
+    fn seek(inout self, offset: Int64, whence: Int) raises -> Int64:
         ...
 
 
