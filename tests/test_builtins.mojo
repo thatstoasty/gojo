@@ -58,9 +58,16 @@ fn test_slice_out_of_bounds() raises:
     test.assert_true(successful)
 
 
+fn test_index_byte() raises:
+    var test = MojoTest("Testing builtins.Bytes slice")
+    var bytes = Bytes("hello\n")
+    test.assert_equal(bytes.index_byte(ord("\n")), 5)
+
+
 fn main() raises:
     test_bytes_extend_append_and_iadd()
     test_bytes_from_strings()
     test_bytes_from_dynamic_vector()
     test_slice()
     test_slice_out_of_bounds()
+    test_index_byte()
