@@ -28,12 +28,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
     fn __init__(inout self, *strs: String):
         self._vector = DynamicVector[Int8]()
         for string in strs:
-            self._vector = string[].as_bytes()
-    
-    fn __init__(inout self, *ints: Int8):
-        self._vector = DynamicVector[Int8]()
-        for byte in ints:
-            self._vector.append(byte)
+            self._vector.extend(string[].as_bytes())
 
     fn __len__(self) -> Int:
         return len(self._vector)
@@ -171,19 +166,3 @@ struct Bytes(Stringable, Sized, CollectionElement):
     fn capacity(self) -> Int:
         """Returns the capacity of the Bytes struct."""
         return self._vector.capacity
-
-
-fn trim_null_characters(b: Bytes) -> Bytes:
-    """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters.
-
-    Args:
-        b: The Bytes struct to trim.
-
-    Returns:
-        The trimmed Bytes struct.
-    """
-    var new_b = Bytes(len(b))
-    for i in range(len(b)):
-        if b[i] > 0 and b[i] < 127:
-            new_b[i] = b[i]
-    return new_b
