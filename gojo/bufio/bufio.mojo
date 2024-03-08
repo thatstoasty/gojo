@@ -16,7 +16,7 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 
 # buffered input
-struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
+struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object."""
 
     var buf: Bytes
@@ -51,7 +51,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
         self.last_rune_size = existing.last_rune_size
 
     # size returns the size of the underlying buffer in bytes.
-    fn size(self) -> Int:
+    fn __len__(self) -> Int:
         return len(self.buf)
 
     # reset discards any buffered data, resets all state, and switches
@@ -588,7 +588,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
 
 
 # buffered output
-struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
+struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
     # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -610,7 +610,7 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
         self.bytes_written = existing.bytes_written
         self.writer = existing.writer ^
 
-    fn size(self) -> Int:
+    fn __len__(self) -> Int:
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
@@ -660,7 +660,6 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
             raise Error(io.ERR_SHORT_WRITE)
 
         self.bytes_written = 0
-        # return nil
 
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""

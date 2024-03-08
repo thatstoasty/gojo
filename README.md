@@ -362,3 +362,7 @@ fn test_string_builder() raises:
     _ = builder.write_byte(32)
     test.assert_equal(str(builder), "Hello ")
 ```
+
+## Sharp Edges & Bugs
+
+- TODO: `bufio.Reader.read_line` is broken until Mojo support unpacking Memory only types from return Tuples.
