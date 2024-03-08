@@ -1,12 +1,12 @@
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes import new_buffer_string, new_buffer, new_reader
+from gojo.bytes import new_buffer, new_reader
 
 
 fn test_buffer_read() raises:
     var test = MojoTest("Testing bytes.Buffer read")
     var s: String = "Hello World!"
-    var buf = new_buffer_string(s)
+    var buf = new_buffer(s)
     var dest = Bytes(256)
     _ = buf.read(dest)
     test.assert_equal(str(dest), s)

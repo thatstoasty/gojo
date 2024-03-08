@@ -10,7 +10,7 @@ fn test_reader() raises:
 
     # Create a reader from a string buffer
     var s: String = "Hello"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Read the buffer into Bytes and then add more to Bytes
@@ -26,7 +26,7 @@ fn test_scan_words() raises:
 
     # Create a reader from a string buffer
     var s: String = "Testing this string!"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Create a scanner from the reader
@@ -49,7 +49,7 @@ fn test_scan_lines() raises:
 
     # Create a reader from a string buffer
     var s: String = "Testing\nthis\nstring!"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Create a scanner from the reader
@@ -69,24 +69,27 @@ fn test_scan_lines() raises:
 fn test_scan_bytes() raises:
     var test = MojoTest("Testing scan_bytes")
 
-    # Create a reader from a string buffer
-    var s: String = "abc"
-    var buf = buffer.new_buffer_string(s)
-    var r = Reader(buf)
+    var test_cases = DynamicVector[Bytes]()
+    test_cases.append(Bytes(""))
+    test_cases.append(Bytes("a"))
+    test_cases.append(Bytes("abc"))
+    test_cases.append(Bytes("abc def\n\t\tgh    "))
+    
+    for i in range(len(test_cases)):
+        var test_case = test_cases[i]
+        # Create a reader from a string buffer
+        var buf = buffer.new_buffer(test_case)
+        var reader = Reader(buf)
 
-    # Create a scanner from the reader
-    var scanner = Scanner(r ^)
-    scanner.split = scan_bytes
+        # Create a scanner from the reader
+        var scanner = Scanner(reader ^)
+        scanner.split = scan_bytes
 
-    var expected_results = DynamicVector[String]()
-    expected_results.append("a")
-    expected_results.append("b")
-    expected_results.append("c")
-    var i = 0
+        var j = 0
 
-    while scanner.scan():
-        test.assert_equal(scanner.current_token_as_bytes(), Bytes(expected_results[i]))
-        i += 1
+        while scanner.scan():
+            test.assert_equal(scanner.current_token_as_bytes(), Bytes(test_case[j]))
+            j += 1
 
 
 fn test_file_wrapper_scanner() raises:

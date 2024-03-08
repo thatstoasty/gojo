@@ -51,7 +51,7 @@ fn test_write_to() raises:
 
     # Create a new writer containing the content "Hello World"
     var test_string: String = "Hello World"
-    var w = buffer.new_buffer_string(test_string)
+    var w = buffer.new_buffer(test_string)
 
     # Write the content of the reader to the writer
     _ = r.write_to(w)

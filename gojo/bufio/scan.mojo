@@ -197,7 +197,6 @@ struct Scanner[R: io.Reader]():
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
                 try:
                     bytes_read = self.reader.read(sl)
-                    print("bytes read", bytes_read)
                     _ = copy(self.buf, sl, self.end)
                     if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
                         self.set_err(Err(Error(ERR_BAD_READ_COUNT)))

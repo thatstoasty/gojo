@@ -229,7 +229,7 @@ struct Reader(
 
 fn new_reader(string: String) -> Reader:
     """Returns a new [Reader] reading from the provided string.
-    It is similar to [bytes.new_buffer_string] but more efficient and non-writable.
+    It is similar to [bytes.new_buffer] but more efficient and non-writable.
 
     Args:
         string: The string to read from.
@@ -239,6 +239,6 @@ fn new_reader(string: String) -> Reader:
 
 fn new_default_reader() -> Reader:
     """Returns a new [Reader] reading from the provided string.
-    It is similar to [bytes.new_buffer_string] but more efficient and non-writable.
+    It is similar to [bytes.new_buffer] but more efficient and non-writable.
     """
     return new_reader("")

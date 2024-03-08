@@ -615,7 +615,7 @@ fn new_buffer(owned buf: Bytes) -> Buffer:
     return Buffer(buf ^)
 
 
-fn new_buffer_string(owned s: String) -> Buffer:
+fn new_buffer(owned s: String) -> Buffer:
     """Creates and initializes a new [Buffer] using string s as its
     initial contents. It is intended to prepare a buffer to read an existing
     string.

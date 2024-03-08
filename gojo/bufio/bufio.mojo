@@ -830,7 +830,7 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
             self.bytes_written += bytes_read
             total_bytes_written += Int64(bytes_read)
 
-        return total_bytes_written
+        # return total_bytes_written
 
 
 fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:

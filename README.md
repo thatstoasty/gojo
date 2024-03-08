@@ -62,7 +62,7 @@ fn test_scan_words() raises:
 
     # Create a reader from a string buffer
     var s: String = "Testing this string!"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Create a scanner from the reader
@@ -85,7 +85,7 @@ fn test_scan_lines() raises:
 
     # Create a reader from a string buffer
     var s: String = "Testing\nthis\nstring!"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Create a scanner from the reader
@@ -107,7 +107,7 @@ fn test_scan_bytes() raises:
 
     # Create a reader from a string buffer
     var s: String = "abc"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Create a scanner from the reader
@@ -158,7 +158,7 @@ fn test_reader() raises:
 
     # Create a reader from a string buffer
     var s: String = "Hello"
-    var buf = buffer.new_buffer_string(s)
+    var buf = buffer.new_buffer(s)
     var r = Reader(buf)
 
     # Read the buffer into Bytes and then add more to Bytes
@@ -173,13 +173,13 @@ fn test_reader() raises:
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes.buffer import new_buffer_string, new_buffer, Buffer
+from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
 
 
 fn test_read() raises:
     var test = MojoTest("Testing read")
     var s: String = "Hello World!"
-    var buf = new_buffer_string(s)
+    var buf = new_buffer(s)
     var dest = Bytes(256)
     _ = buf.read(dest)
     test.assert_equal(str(dest), s)
@@ -205,7 +205,7 @@ fn test_write() raises:
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes.buffer import new_buffer_string, new_buffer, Buffer
+from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
 
 
 fn test_reader() raises:
