@@ -1,7 +1,6 @@
 from ._bytes import Bytes, Byte
 
 
-
 fn copy(
     inout target: DynamicVector[Int], source: DynamicVector[Int], start: Int = 0
 ) -> Int:
