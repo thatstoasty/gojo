@@ -21,7 +21,7 @@ struct MojoTest:
                 testing.assert_true(cond, message)
         except e:
             print(e)
-    
+
     fn assert_false(self, cond: Bool, message: String = ""):
         try:
             if message == "":

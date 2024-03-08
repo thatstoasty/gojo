@@ -50,7 +50,9 @@ fn test_scan_lines() raises:
         i += 1
 
 
-fn scan_no_newline_test(test_case: String, result_lines: DynamicVector[String], test: MojoTest) raises:
+fn scan_no_newline_test(
+    test_case: String, result_lines: DynamicVector[String], test: MojoTest
+) raises:
     # Create a reader from a string buffer
     var buf = buffer.new_buffer(test_case)
     var r = Reader(buf)
@@ -74,7 +76,9 @@ fn test_scan_lines_no_newline() raises:
 
 
 fn test_scan_lines_cr_no_newline() raises:
-    var test = MojoTest("Testing bufio.scan_lines with no final newline but carriage return")
+    var test = MojoTest(
+        "Testing bufio.scan_lines with no final newline but carriage return"
+    )
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\r"
     var result_lines = DynamicVector[String]()
     result_lines.append("abcdefghijklmn")
@@ -95,7 +99,9 @@ fn test_scan_lines_empty_final_line() raises:
 
 
 fn test_scan_lines_cr_empty_final_line() raises:
-    var test = MojoTest("Testing bufio.scan_lines with an empty final line and carriage return")
+    var test = MojoTest(
+        "Testing bufio.scan_lines with an empty final line and carriage return"
+    )
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\r"
     var result_lines = DynamicVector[String]()
     result_lines.append("abcdefghijklmn")
@@ -113,7 +119,7 @@ fn test_scan_bytes() raises:
     test_cases.append("a")
     test_cases.append("abc")
     test_cases.append("abc def\n\t\tgh    ")
-    
+
     for i in range(len(test_cases)):
         var test_case = test_cases[i]
         # Create a reader from a string buffer
