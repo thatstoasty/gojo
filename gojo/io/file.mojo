@@ -24,7 +24,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         var elements_copied = copy(dest, Bytes(result))
         dest = dest[:elements_copied]
         return elements_copied
-    
+
     fn read(inout self, inout dest: Bytes, size: Int64) raises -> Int:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
@@ -35,7 +35,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         var elements_copied = copy(dest, Bytes(result))
         dest = dest[:elements_copied]
         return elements_copied
-    
+
     fn read_byte(inout self) raises -> Byte:
         return self.read_bytes(1)[0]
 
@@ -44,8 +44,10 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
     fn read_bytes(inout self) raises -> Tensor[DType.int8]:
         return self.handle.read_bytes()
-    
-    fn stream_until_delimiter(inout self, inout dest: Bytes, delimiter: Int8, max_size: Int) raises:
+
+    fn stream_until_delimiter(
+        inout self, inout dest: Bytes, delimiter: Int8, max_size: Int
+    ) raises:
         for i in range(max_size):
             var byte = self.read_byte()
             if byte == delimiter:

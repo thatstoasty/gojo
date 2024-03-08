@@ -423,8 +423,7 @@ fn scan_lines(
     """Split function for a [Scanner] that returns each line of
     text, stripped of any trailing end-of-line marker. The returned line may
     be empty. The end-of-line marker is one optional carriage return followed
-    by one mandatory newline. In regular expression notation, it is `\r?\n`.
-    The last non-empty line of input will be returned even if it has no
+    by one mandatory newline. The last non-empty line of input will be returned even if it has no
     newline.
 
     Args:
@@ -432,7 +431,6 @@ fn scan_lines(
         at_eof: Whether the data is at the end of the file.
         token: The token to return.
         err: The error to return.
-
     Returns:
         The number of bytes to advance the input.
     """

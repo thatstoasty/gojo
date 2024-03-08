@@ -41,7 +41,7 @@ struct Reader[R: io.Reader](io.Reader, io.ByteReader, io.ByteScanner, io.WriterT
         self.write_pos = write_pos
         self.last_byte = last_byte
         self.last_rune_size = last_rune_size
-    
+
     fn __moveinit__(inout self, owned existing: Self):
         self.buf = existing.buf
         self.reader = existing.reader ^
@@ -604,7 +604,7 @@ struct Writer[W: io.Writer](io.Writer, io.ByteWriter, io.StringWriter, io.Reader
         self.buf = buf
         self.bytes_written = bytes_written
         self.writer = writer ^
-    
+
     fn __moveinit__(inout self, owned existing: Self):
         self.buf = existing.buf
         self.bytes_written = existing.bytes_written

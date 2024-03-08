@@ -148,7 +148,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         """Reports whether the Bytes struct ends with suffix.
 
         Args:
-            prefix: The prefix to search for.
+            suffix: The prefix to search for.
 
         Returns:
             True if the Bytes struct ends with suffix; otherwise, False.
