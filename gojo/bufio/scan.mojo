@@ -409,7 +409,8 @@ fn drop_carriage_return(data: Bytes) raises -> Bytes:
     Returns:
         The stripped data.
     """
-    if len(data) > 0 and data[-1] == ord("\r"):
+    # In the case of a \r ending without a \n, indexing on -1 doesn't work as it finds a null terminator instead of \r.
+    if len(data) > 0 and data[len(data) - 1] == ord("\r"):
         return data[0 : len(data) - 1]
 
     return data

@@ -1,7 +1,9 @@
 # gojo
+
 Experiments in porting over Golang stdlib into Mojo. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
 ## What this includes
+
 All of these packages are partially implemented.
 
 - `builtins`
@@ -24,9 +26,11 @@ All of these packages are partially implemented.
   - Basic `sprintf` function.
 
 ## Usage
+
 Some basic usage examples. For now, check out the tests for usage of the various packages!
 
 `builtins.Bytes`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
@@ -50,6 +54,7 @@ fn test_bytes() raises:
 ```
 
 `bufio.Scanner`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
@@ -145,6 +150,7 @@ fn test_file_wrapper_scanner() raises:
 ```
 
 `bufio.Reader`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
@@ -170,10 +176,11 @@ fn test_reader() raises:
 ```
 
 `bytes.Buffer`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
+from gojo.bytes.buffer import new_buffer, Buffer
 
 
 fn test_read() raises:
@@ -202,6 +209,7 @@ fn test_write() raises:
 ```
 
 `bytes.Reader`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
@@ -222,6 +230,7 @@ fn test_reader() raises:
 ```
 
 `io.FileWrapper`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.io.file import File, FileWrapper
@@ -240,6 +249,7 @@ fn test_file_wrapper() raises:
 ```
 
 `io.STDWriter`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.io.file import File, FileWrapper
@@ -255,6 +265,7 @@ fn test_writer() raises:
 ```
 
 `fmt.sprintf`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.fmt import sprintf
@@ -282,6 +293,7 @@ fn test_sprintf() raises:
 ```
 
 `strings.Reader`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder, Reader, new_reader
@@ -320,6 +332,7 @@ fn test_string_reader() raises:
 ```
 
 `strings.StringBuilder`
+
 ```py
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder, Reader, new_reader
@@ -349,3 +362,7 @@ fn test_string_builder() raises:
     _ = builder.write_byte(32)
     test.assert_equal(str(builder), "Hello ")
 ```
+
+## Sharp Edges & Bugs
+
+- TODO: `bufio.Reader.read_line` is broken until Mojo support unpacking Memory only types from return Tuples.

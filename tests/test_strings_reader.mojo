@@ -4,30 +4,6 @@ from gojo.builtins import Bytes
 import gojo.io
 
 
-fn test_string_builder() raises:
-    var test = MojoTest("Testing strings.StringBuilder")
-
-    # Create a string from the builder by writing strings to it.
-    var builder = StringBuilder()
-
-    for i in range(3):
-        _ = builder.write_string("Lorem ipsum dolor sit amet ")
-
-    test.assert_equal(
-        str(builder),
-        (
-            "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor"
-            " sit amet "
-        ),
-    )
-
-    # Create a string from the builder by writing bytes to it.
-    builder = StringBuilder()
-    _ = builder.write(Bytes("Hello"))
-    _ = builder.write_byte(32)
-    test.assert_equal(str(builder), "Hello ")
-
-
 fn test_string_reader() raises:
     var test = MojoTest("Testing strings.Reader")
     var example: String = "Hello, World!"
@@ -60,5 +36,4 @@ fn test_string_reader() raises:
 
 
 fn main() raises:
-    test_string_builder()
     test_string_reader()

@@ -13,12 +13,21 @@ struct MojoTest:
         self.test_name = test_name
         print("# " + test_name)
 
-    fn assert_true(self, cond: Bool, message: String):
-        """
-        Wraps testing.assert_true.
-        """
+    fn assert_true(self, cond: Bool, message: String = ""):
         try:
-            testing.assert_true(cond, message)
+            if message == "":
+                testing.assert_true(cond)
+            else:
+                testing.assert_true(cond, message)
+        except e:
+            print(e)
+
+    fn assert_false(self, cond: Bool, message: String = ""):
+        try:
+            if message == "":
+                testing.assert_false(cond)
+            else:
+                testing.assert_false(cond, message)
         except e:
             print(e)
 
