@@ -1,7 +1,7 @@
 from tests.wrapper import MojoTest
+from external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.io.file import FileWrapper
 from gojo.io.std_writer import STDWriter
-from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.builtins._bytes import Bytes
 
 
