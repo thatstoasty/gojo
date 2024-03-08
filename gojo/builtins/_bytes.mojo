@@ -39,6 +39,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         return len(self._vector)
 
     fn __getitem__(self, index: Int) -> Int8:
+        # print("Getting index: " + str(index) + " from Bytes", self._vector[index], StringRef(self._vector.data.value, len(self._vector)))
         return self._vector[index]
 
     fn __getitem__(self, limits: Slice) raises -> Self:

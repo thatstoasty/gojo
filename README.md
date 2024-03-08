@@ -173,7 +173,7 @@ fn test_reader() raises:
 ```py
 from tests.wrapper import MojoTest
 from gojo.builtins._bytes import Bytes
-from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
+from gojo.bytes.buffer import new_buffer, Buffer
 
 
 fn test_read() raises:
