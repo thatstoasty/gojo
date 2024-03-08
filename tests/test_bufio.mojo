@@ -48,7 +48,6 @@ fn test_write_to() raises:
     test.assert_equal(str(writer), String("Hello World0123456789"))
 
 
-# TODO: Failing with  bufio: tried to fill full buffer even though the buffer size is dynamic
 fn test_read_and_unread_byte() raises:
     var test = MojoTest("Testing bufio.Reader.read_byte and bufio.Reader.unread_byte")
 
@@ -72,7 +71,7 @@ fn test_read_slice() raises:
     var buf = buffer.new_buffer("0123456789")
     var reader = Reader(buf)
 
-    test.assert_equal(reader.read_slice(5), "01234")
+    test.assert_equal(reader.read_slice(ord(5)), "012345")
 
 
 fn test_read_bytes() raises:
@@ -95,7 +94,7 @@ fn test_read_line() raises:
     # test.assert_equal(line, "01234")
 
 
-# TODO: Failing with bufio: buffer full
+# TODO: Failing with bufio: buffer full or index OOB
 fn test_peek() raises:
     var test = MojoTest("Testing bufio.Reader.peek")
     var buf = buffer.new_buffer("01234\n56789")
@@ -115,7 +114,7 @@ fn test_writer():
 fn main() raises:
     test_read()
     test_read_all()
-    test_write_to()
-    # test_read_and_unread_byte()
-    # test_read_slice()
+    # test_write_to()
+    test_read_and_unread_byte()
+    test_read_slice()
     # test_peek()
