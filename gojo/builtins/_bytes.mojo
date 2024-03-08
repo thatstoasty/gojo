@@ -1,3 +1,5 @@
+from time import now
+
 alias Byte = Int8
 
 
@@ -14,17 +16,24 @@ struct Bytes(Stringable, Sized, CollectionElement):
 
     var _vector: DynamicVector[Int8]
 
-    fn __init__(inout self):
-        self._vector = DynamicVector[Int8]()
+    fn __init__(inout self, size: Int = 0):
+        if size != 0:
+            self._vector = DynamicVector[Int8](capacity=size)
+        else:
+            self._vector = DynamicVector[Int8]()
 
     fn __init__(inout self, owned vector: DynamicVector[Int8]):
         self._vector = vector
 
-    fn __init__(inout self, size: Int):
-        self._vector = DynamicVector[Int8](capacity=size)
-
-    fn __init__(inout self, owned s: String):
-        self._vector = s.as_bytes()
+    fn __init__(inout self, *strs: String):
+        self._vector = DynamicVector[Int8]()
+        for string in strs:
+            self._vector = string[].as_bytes()
+    
+    fn __init__(inout self, *ints: Int8):
+        self._vector = DynamicVector[Int8]()
+        for byte in ints:
+            self._vector.append(byte)
 
     fn __len__(self) -> Int:
         return len(self._vector)
@@ -82,13 +91,12 @@ struct Bytes(Stringable, Sized, CollectionElement):
         self._vector.extend(other._vector)
 
     fn __str__(self) -> String:
-        # copy vector and add null terminator
-        var s = self._vector
-        s.append(0)
+        # Don't need to add a null terminator becasue we know the exact length of the string.
+        # It seems like this works even with unicode characters because len() does return 1-4 depending on the character.
+        # If Bytes has funky output for this function, go back to copying the internal vector and null terminating it.
+        return StringRef(self._vector.data.value, len(self._vector))
 
-        return String(s)
-
-    fn __repr__(self) raises -> String:
+    fn __repr__(self) -> String:
         return self.__str__()
 
     fn append(inout self, value: Byte):

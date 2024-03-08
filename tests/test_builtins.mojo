@@ -4,7 +4,7 @@ from gojo.builtins._bytes import Bytes
 
 fn test_bytes() raises:
     var test = MojoTest("Testing bytes")
-    var bytes = Bytes(s="hello")
+    var bytes = Bytes("hello")
     test.assert_equal(str(bytes), "hello")
 
     bytes.append(102)

@@ -11,6 +11,13 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn __moveinit__(inout self, owned existing: Self):
         self.handle = existing.handle ^
 
+    fn __del__(owned self):
+        try:
+            self.close()
+        except Error:
+            # TODO: __del__ can't raise, but there should be some fallback.
+            print("Failed to close the file.")
+
     fn close(inout self) raises:
         self.handle.close()
 
