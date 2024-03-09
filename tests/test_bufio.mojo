@@ -56,7 +56,7 @@ fn test_read_and_unread_byte() raises:
     var example: String = "Hello, World!"
     var buf = buffer.new_buffer(example ^)
     var reader = Reader(buf)
-    var buffer = Bytes()
+    var buffer = Bytes(512)
     var byte = reader.read_byte()
     test.assert_equal(byte, 72)
     var post_read_position = reader.read_pos
@@ -109,9 +109,9 @@ fn test_writer():
 
 
 fn main() raises:
-    # test_read()
-    # test_read_all()
+    test_read()
+    test_read_all()
     test_write_to()
-    # test_read_and_unread_byte()
-    # test_read_slice()
-    # test_peek()
+    test_read_and_unread_byte()
+    test_read_slice()
+    test_peek()

@@ -66,7 +66,8 @@ struct Bytes(Stringable, Sized, CollectionElement):
 
         var new_bytes = Self(size=self.capacity())
         for i in range(limits.start, end, limits.step):
-            new_bytes[i] = self._vector[i]
+            new_bytes.append(self._vector[i])
+
         return new_bytes
 
     fn __setitem__(inout self, index: Int, value: Int8):

@@ -126,7 +126,7 @@ struct Scanner[R: io.Reader]():
                         # When token is not nil, it means the scanning stops
                         # with a trailing token, and thus the return value
                         # should be True to indicate the existence of the token.
-                        return len(token) != 0
+                        return token.size() != 0
 
                     self.set_err(err.value())
                     return False
@@ -135,7 +135,7 @@ struct Scanner[R: io.Reader]():
                     return False
 
                 self.token = token
-                if len(token) != 0:
+                if token.size() != 0:
                     if not self.err or advance > 0:
                         self.empties = 0
                     else:
@@ -160,30 +160,30 @@ struct Scanner[R: io.Reader]():
             # First, shift data to beginning of buffer if there's lots of empty space
             # or space is needed.
             if self.start > 0 and (
-                self.end == len(self.buf) or self.start > int(len(self.buf) / 2)
+                self.end == self.buf.size() or self.start > int(self.buf.size() / 2)
             ):
                 _ = copy(self.buf, self.buf[self.start : self.end])
                 self.end -= self.start
                 self.start = 0
 
-            # TODO: Just use dynamic resizing for now, don't do it manually.
-            # # Is the buffer full? If so, resize.
-            # if self.end == len(self.buf):
-            #     # Guarantee no overflow in the multiplication below.
-            #     if len(self.buf) >= self.max_token_size or len(self.buf) > int(MAX_INT/2):
-            #         self.set_err(Err(ERR_TOO_LONG))
-            #         return False
+            # Is the buffer full? If so, resize.
+            if self.end == self.buf.size():
+                # Guarantee no overflow in the multiplication below.
+                if self.buf.size() >= self.max_token_size or self.buf.size() > int(MAX_INT/2):
+                    self.set_err(Err(Error(ERR_TOO_LONG)))
+                    return False
 
-            #     var new_size = len(self.buf) * 2
-            #     if new_size == 0:
-            #         new_size = START_BUF_SIZE
+                var new_size = self.buf.size() * 2
+                if new_size == 0:
+                    new_size = START_BUF_SIZE
 
-            #     new_size = min(new_size, self.max_token_size)
-            #     newBuf := make(Bytes, new_size)
-            #     copy(newBuf, self.buf[self.start:self.end])
-            #     self.buf = newBuf
-            #     self.end -= self.start
-            #     self.start = 0
+                # Make a new Bytes buffer and copy the elements in
+                new_size = math.min(new_size, self.max_token_size)
+                var new_buf = Bytes(new_size)
+                _ = copy(new_buf, self.buf[self.start:self.end])
+                self.buf = new_buf
+                self.end -= self.start
+                self.start = 0
 
             # Finally we can read some input. Make sure we don't get stuck with
             # a misbehaving Reader. Officially we don't need to do this, but let's
@@ -191,14 +191,14 @@ struct Scanner[R: io.Reader]():
             var loop = 0
             while True:
                 var bytes_read: Int = 0
-                var sl = self.buf[self.end : len(self.buf)]
+                var sl = self.buf[self.end : self.buf.size()]
                 var err = Err()
 
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
                 try:
                     bytes_read = self.reader.read(sl)
                     _ = copy(self.buf, sl, self.end)
-                    if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
+                    if bytes_read < 0 or self.buf.size() - self.end < bytes_read:
                         self.set_err(Err(Error(ERR_BAD_READ_COUNT)))
                         break
                 except e:

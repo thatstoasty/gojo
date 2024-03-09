@@ -10,7 +10,7 @@ fn test_string_reader() raises:
     var reader = new_reader("Hello, World!")
 
     # Test reading from the reader.
-    var buffer = Bytes()
+    var buffer = Bytes(512)
     var bytes_read = reader.read(buffer)
 
     test.assert_equal(bytes_read, len(example))
@@ -21,7 +21,7 @@ fn test_string_reader() raises:
     test.assert_equal(position, 0)
 
     # Read the first byte from the reader.
-    buffer = Bytes()
+    buffer = Bytes(512)
     var byte = reader.read_byte()
     test.assert_equal(byte, 72)
 

@@ -97,7 +97,15 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
             var sl = self.buf[self.write_pos :]
-            var bytes_read = self.reader.read(sl)
+            var bytes_read = 0
+            
+            try:
+                bytes_read = self.reader.read(sl)
+            except e:
+                if str(e) != io.EOF:
+                    raise
+                return
+
             self.buf = sl
             if bytes_read < 0:
                 raise Error(ERR_NEGATIVE_READ)

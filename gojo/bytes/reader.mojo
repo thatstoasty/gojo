@@ -29,16 +29,16 @@ struct Reader(
     fn __len__(self) -> Int:
         """len returns the number of bytes of the unread portion of the
         slice."""
-        if self.index >= len(self.buffer):
+        if self.index >= self.buffer.size():
             return 0
 
-        return int(len(self.buffer) - self.index)
+        return int(self.buffer.size() - self.index)
 
     fn size(self) -> Int:
         """Returns the original length of the underlying byte slice.
         Size is the number of bytes available for reading via [Reader.ReadAt].
         The result is unaffected by any method calls except [Reader.Reset]."""
-        return len(self.buffer)
+        return self.buffer.size()
 
     fn read(inout self, inout dest: Bytes) raises -> Int:
         """Reads from the internal buffer into the dest Bytes struct.
@@ -49,7 +49,7 @@ struct Reader(
 
         Returns:
             Int: The number of bytes read into dest."""
-        if self.index >= len(self.buffer):
+        if self.index >= self.buffer.size():
             raise Error(io.EOF)
 
         self.prev_rune = -1
@@ -74,12 +74,12 @@ struct Reader(
         if off < 0:
             raise Error("bytes.Reader.read_at: negative offset")
 
-        if off >= Int64(len(self.buffer)):
+        if off >= Int64(self.buffer.size()):
             raise Error(io.EOF)
 
-        var unread_bytes = self.buffer[int(off) :]
+        var unread_bytes = self.buffer[int(off):self.buffer.size()]
         var bytes_written = copy(dest, unread_bytes)
-        if bytes_written < len(dest):
+        if bytes_written < dest.size():
             raise Error(io.EOF)
 
         return bytes_written
@@ -88,7 +88,7 @@ struct Reader(
         """Reads and returns a single byte from the internal buffer. Implements the [io.ByteReader] Interface.
         """
         self.prev_rune = -1
-        if self.index >= len(self.buffer):
+        if self.index >= self.buffer.size():
             raise Error(io.EOF)
 
         var byte = self.buffer[int(self.index)]
@@ -107,7 +107,7 @@ struct Reader(
 
     # # read_rune implements the [io.RuneReader] Interface.
     # fn read_rune(self) (ch rune, size Int, err error):
-    #     if self.index >= Int64(len(self.buffer)):
+    #     if self.index >= Int64(self.buffer.size()):
     #         self.prev_rune = -1
     #         return 0, 0, io.EOF
 
@@ -151,7 +151,7 @@ struct Reader(
         elif whence == io.SEEK_CURRENT:
             position = self.index + offset
         elif whence == io.SEEK_END:
-            position = len(self.buffer) + offset
+            position = self.buffer.size() + offset
         else:
             raise Error("bytes.Reader.seek: invalid whence")
 
@@ -169,7 +169,7 @@ struct Reader(
             writer: The writer to write to.
         """
         self.prev_rune = -1
-        if self.index >= len(self.buffer):
+        if self.index >= self.buffer.size():
             return 0
 
         var b = self.buffer[int(self.index) :]

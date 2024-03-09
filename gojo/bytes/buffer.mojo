@@ -81,7 +81,7 @@ struct Buffer(
         The slice aliases the buffer content at least until the next buffer modification,
         so immediate changes to the slice will affect the result of future reads.
         """
-        return self.buf[self.off :]
+        return self.buf[self.off:self.buf.size()]
 
     fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.Available() capacity.
@@ -89,7 +89,7 @@ struct Buffer(
         passed to an immediately succeeding [Buffer.write] call.
         The buffer is only valid until the next write operation on self.
         """
-        return self.buf[self.buf.size() :]
+        return self.buf[self.buf.size():]
 
     fn __str__(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
@@ -97,7 +97,7 @@ struct Buffer(
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        return str(self.buf[self.off :])
+        return str(self.buf[self.off:self.buf.size()])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -230,16 +230,16 @@ struct Buffer(
             The number of bytes written to the buffer.
         """
         self.last_read = OP_INVALID
-        # var m: Int
-        # var ok: Bool
-        # # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
-        # # IDK why, but for now we can var the dynamicvector grow on its own and not try to mess w the capacity and growing it.
-        # m, ok = self.try_grow_by_reslice(len(src))
-        # if not ok:
-        #     m = self.grow(len(src))
+        var m: Int
+        var ok: Bool
+        # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
+        # IDK why, but for now we can var the dynamicvector grow on its own and not try to mess w the capacity and growing it.
+        m, ok = self.try_grow_by_reslice(len(src))
+        if not ok:
+            m = self.grow(len(src))
         # var b = self.buf[m:]
         # TODO: Assess whether or not copying elements like this is actually needed. It seems expensive to do a bunch of copying each time something is written to the buffer.
-        return copy(self.buf, src, self.buf.size())
+        return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
