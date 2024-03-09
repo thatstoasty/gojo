@@ -81,7 +81,7 @@ struct Buffer(
         The slice aliases the buffer content at least until the next buffer modification,
         so immediate changes to the slice will affect the result of future reads.
         """
-        return self.buf[self.off :]
+        return self.buf[self.off:self.buf.size()]
 
     fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.Available() capacity.
@@ -89,7 +89,7 @@ struct Buffer(
         passed to an immediately succeeding [Buffer.write] call.
         The buffer is only valid until the next write operation on self.
         """
-        return self.buf[self.buf.size() :]
+        return self.buf[self.buf.size():]
 
     fn __str__(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
@@ -97,7 +97,7 @@ struct Buffer(
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        return str(self.buf[self.off :])
+        return str(self.buf[self.off:self.buf.size()])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -174,13 +174,9 @@ struct Buffer(
         if ok:
             return i
 
-        # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
         if len(self.buf) == 0 and n <= SMALL_BUFFER_SIZE:
             self.buf = Bytes(SMALL_BUFFER_SIZE)
-            # self.buf._vector.reserve(SMALL_BUFFER_SIZE)
-            # Returning 0 messed things up by inserting on the first index twice, but why?
-            # return 0
-            pass
+            return 0
 
         var c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
@@ -230,16 +226,12 @@ struct Buffer(
             The number of bytes written to the buffer.
         """
         self.last_read = OP_INVALID
-        # var m: Int
-        # var ok: Bool
-        # # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
-        # # IDK why, but for now we can var the dynamicvector grow on its own and not try to mess w the capacity and growing it.
-        # m, ok = self.try_grow_by_reslice(len(src))
-        # if not ok:
-        #     m = self.grow(len(src))
-        # var b = self.buf[m:]
-        # TODO: Assess whether or not copying elements like this is actually needed. It seems expensive to do a bunch of copying each time something is written to the buffer.
-        return copy(self.buf, src, self.buf.size())
+        var m: Int
+        var ok: Bool
+        m, ok = self.try_grow_by_reslice(len(src))
+        if not ok:
+            m = self.grow(len(src))
+        return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -359,8 +351,6 @@ struct Buffer(
         Returns:
             The number of bytes written to the buffer.
         """
-        # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
-        # not working correctly and the 0s remaining in the empty dynamic vector indices.
         self.last_read = OP_INVALID
         var m: Int
         var ok: Bool
@@ -533,9 +523,9 @@ struct Buffer(
         var sl = self.read_slice(delim)
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
-        var lines = Bytes()
-        for i in range(len(sl)):
-            lines[i] = sl[i]
+        var lines = Bytes(4096)
+        for i in range(sl.size()):
+            lines.append(sl[i])
         return lines
 
     fn read_slice(inout self, delim: Byte) raises -> Bytes:
@@ -547,10 +537,10 @@ struct Buffer(
         Returns:
             A Bytes struct containing the data up to and including the delimiter.
         """
-        var i = self.buf[self.off :].index_byte(delim)
+        var i = self.buf[self.off:self.buf.size()].index_byte(delim)
         var end = self.off + i + 1
         if i < 0:
-            end = len(self.buf)
+            end = self.buf.size()
 
         var line = self.buf[self.off : end]
         self.off = end

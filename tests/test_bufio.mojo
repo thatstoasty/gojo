@@ -31,7 +31,6 @@ fn test_read_all() raises:
     test.assert_equal(str(result), "0123456789")
 
 
-# TODO: Running into EOF on final fill before returning results
 fn test_write_to() raises:
     var test = MojoTest("Testing bufio.Reader.write_to")
 
@@ -44,9 +43,10 @@ fn test_write_to() raises:
 
     # Write the content of the reader to the writer
     _ = reader.write_to(writer)
+    print(str(writer), str(buf))
 
     # Check if the content of the writer is "Hello World0123456789"
-    test.assert_equal(str(writer), String("Hello World0123456789"))
+    test.assert_equal(str(writer), "Hello World0123456789")
 
 
 fn test_read_and_unread_byte() raises:
@@ -56,7 +56,7 @@ fn test_read_and_unread_byte() raises:
     var example: String = "Hello, World!"
     var buf = buffer.new_buffer(example ^)
     var reader = Reader(buf)
-    var buffer = Bytes()
+    var buffer = Bytes(512)
     var byte = reader.read_byte()
     test.assert_equal(byte, 72)
     var post_read_position = reader.read_pos

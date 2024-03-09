@@ -8,7 +8,7 @@ import gojo.io.traits as io
 fn test_read() raises:
     var test = MojoTest("Testing read")
     var r = reader.new_reader(Bytes("0123456789"))
-    var b = Bytes()
+    var b = Bytes(128)
     _ = r.read(b)
     test.assert_equal(str(b), "0123456789")
 
@@ -17,13 +17,13 @@ fn test_read_at() raises:
     var test = MojoTest("Testing read_at")
     var r = reader.new_reader(Bytes("0123456789"))
 
-    var b = Bytes()
+    var b = Bytes(128)
     var pos = r.read_at(b, 0)
-    test.assert_equal(str(b[:pos]), "0123456789")
+    test.assert_equal(str(b), "0123456789")
 
-    b = Bytes()
+    b = Bytes(128)
     pos = r.read_at(b, 1)
-    test.assert_equal(str(b[:pos]), "123456789")
+    test.assert_equal(str(b), "123456789")
 
 
 fn test_seek() raises:
@@ -31,7 +31,7 @@ fn test_seek() raises:
     var r = reader.new_reader(Bytes("0123456789"))
     var pos = r.seek(5, io.SEEK_START)
 
-    var b = Bytes()
+    var b = Bytes(128)
     _ = r.read(b)
     test.assert_equal(str(b), "56789")
 

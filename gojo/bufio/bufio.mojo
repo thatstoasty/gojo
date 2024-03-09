@@ -15,7 +15,6 @@ alias ERR_NEGATIVE_READ = "bufio: reader returned negative count from Read"
 alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 
-# TODO: Refactor this to use an internal Mojo Buffer instead of Bytes
 # buffered input
 struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object."""
@@ -97,7 +96,15 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
             var sl = self.buf[self.write_pos :]
-            var bytes_read = self.reader.read(sl)
+            var bytes_read = 0
+            
+            try:
+                bytes_read = self.reader.read(sl)
+            except e:
+                if str(e) != io.EOF:
+                    raise
+                return
+
             self.buf = sl
             if bytes_read < 0:
                 raise Error(ERR_NEGATIVE_READ)
@@ -141,7 +148,6 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         ):
             self.fill()  # self.write_pos-self.read_pos < len(self.buf) => buffer is not full
 
-        # TODO: Using dynamically sized buffer for now. Will switch to static buffer later.
         if number_of_bytes > len(self.buf):
             raise Error(ERR_BUFFER_FULL)
 
@@ -339,7 +345,6 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
                 self.read_pos += i + 1
                 break
 
-            # TODO: Using dynamically sized buffer for now. Will switch to static buffer later.
             # # Buffer full?
             if self.buffered() >= len(self.buf):
                 self.read_pos = self.write_pos
@@ -551,14 +556,16 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         Returns:
             The number of bytes written.
         """
-        print("writing buf", self.buf)
         var bytes_written = 0
+
+        # Nothing to write
+        if self.buf[self.read_pos : self.write_pos].size() == 0:
+            return bytes_written
 
         # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
         try:
             bytes_written = writer.write(self.buf[self.read_pos : self.write_pos])
         except e:
-            print(str(e))
             if str(e) != io.EOF:
                 raise
                     

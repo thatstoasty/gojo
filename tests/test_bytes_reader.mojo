@@ -11,7 +11,7 @@ fn test_reader() raises:
     var buf = new_reader(s)
 
     # Read the contents of reader into dest
-    var dest = Bytes()
+    var dest = Bytes(512)
     _ = buf.read(dest)
     test.assert_equal(str(dest), s)
 
