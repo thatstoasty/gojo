@@ -529,8 +529,9 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         #     n += m
         #     return n, err
 
-        # if self.write_pos-self.read_pos < len(self.buf):
-        #     self.fill() # buffer not full
+        # internal buffer not full, fill before writing to writer
+        if (self.write_pos - self.read_pos) < len(self.buf):
+            self.fill()
 
         while self.read_pos < self.write_pos:
             # self.read_pos < self.write_pos => buffer is not empty
@@ -550,12 +551,22 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         Returns:
             The number of bytes written.
         """
-        print(self.buf)
-        var bytes_written = writer.write(self.buf[self.read_pos : self.write_pos])
+        print("writing buf", self.buf)
+        var bytes_written = 0
+
+        # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
+        try:
+            bytes_written = writer.write(self.buf[self.read_pos : self.write_pos])
+        except e:
+            print(str(e))
+            if str(e) != io.EOF:
+                raise
+                    
         if bytes_written < 0:
             raise Error(ERR_NEGATIVE_WRITE)
-
+        
         self.read_pos += bytes_written
+        print("bytes written", bytes_written)
         return Int64(bytes_written)
 
 

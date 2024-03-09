@@ -47,19 +47,17 @@ struct Bytes(Stringable, Sized, CollectionElement):
         return len(self._vector)
 
     fn __getitem__(self, index: Int) -> Int8:
-        # print("Getting index: " + str(index) + " from Bytes", self._vector[index], StringRef(self._vector.data.value, len(self._vector)))
         return self._vector[index]
 
     fn __getitem__(self, limits: Slice) raises -> Self:
         # TODO: Specifying no end to the span sets span end to this super large int for some reason.
         # Set it to len of the vector if that happens. Otherwise, if end is just too large in general, throw OOB error.
 
-        # TODO: If no end was given, then it defaults to that large int. I'm assuming the wanted to slice up to write position, not to the end of the 0 initialized internal vector.
-        # You can however slice up to the end of the internal vector by explicitly providing the end index.
+        # TODO: If no end was given, then it defaults to that large int. 
         # Accidentally including the 0 (null) characters will mess up strings due to null termination. __str__ expects the exact length of the string from self.write_position.
         var end = limits.end
         if limits.end == 9223372036854775807:
-            end = self.size()
+            end = len(self)
         elif limits.end > len(self._vector):
             var error = "Bytes: Index out of range for limits.end. Received: " + str(
                 limits.end

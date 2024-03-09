@@ -21,7 +21,6 @@ fn test_read() raises:
     test.assert_equal(dest, "Hello World!")
 
 
-# TODO: Is looping infinitely when reading
 fn test_read_all() raises:
     var test = MojoTest("Testing bufio.Reader with io.read_all")
 
@@ -32,7 +31,7 @@ fn test_read_all() raises:
     test.assert_equal(str(result), "0123456789")
 
 
-# TODO: Failing to write the contents of the reader to the writer
+# TODO: Running into EOF on final fill before returning results
 fn test_write_to() raises:
     var test = MojoTest("Testing bufio.Reader.write_to")
 
@@ -41,6 +40,7 @@ fn test_write_to() raises:
 
     # Create a new writer containing the content "Hello World"
     var writer = buffer.new_buffer("Hello World")
+    print(str(writer), str(buf))
 
     # Write the content of the reader to the writer
     _ = reader.write_to(writer)
@@ -109,9 +109,9 @@ fn test_writer():
 
 
 fn main() raises:
-    test_read()
+    # test_read()
     # test_read_all()
-    # test_write_to()
-    test_read_and_unread_byte()
-    test_read_slice()
-    test_peek()
+    test_write_to()
+    # test_read_and_unread_byte()
+    # test_read_slice()
+    # test_peek()

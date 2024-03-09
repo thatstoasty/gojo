@@ -411,7 +411,7 @@ fn read_all[R: Reader](inout reader: R) raises -> Bytes:
 
     Returns:
         The data read."""
-    var dest = Bytes()
+    var dest = Bytes(BUFFER_SIZE)
     var index: Int = 0
 
     while True:
