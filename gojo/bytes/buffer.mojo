@@ -174,13 +174,9 @@ struct Buffer(
         if ok:
             return i
 
-        # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
         if len(self.buf) == 0 and n <= SMALL_BUFFER_SIZE:
             self.buf = Bytes(SMALL_BUFFER_SIZE)
-            # self.buf._vector.reserve(SMALL_BUFFER_SIZE)
-            # Returning 0 messed things up by inserting on the first index twice, but why?
-            # return 0
-            pass
+            return 0
 
         var c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
@@ -232,8 +228,6 @@ struct Buffer(
         self.last_read = OP_INVALID
         var m: Int
         var ok: Bool
-        # TODO: This logic explodes when using write_to. for some reason it ends up trying to take a slice of an empty buffer and gets an OOB error.
-        # IDK why, but for now we can var the dynamicvector grow on its own and not try to mess w the capacity and growing it.
         m, ok = self.try_grow_by_reslice(len(src))
         if not ok:
             m = self.grow(len(src))
