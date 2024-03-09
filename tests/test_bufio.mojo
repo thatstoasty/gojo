@@ -31,7 +31,6 @@ fn test_read_all() raises:
     test.assert_equal(str(result), "0123456789")
 
 
-# TODO: Running into EOF on final fill before returning results
 fn test_write_to() raises:
     var test = MojoTest("Testing bufio.Reader.write_to")
 
