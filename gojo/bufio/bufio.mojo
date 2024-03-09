@@ -30,7 +30,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
     fn __init__(
         inout self,
         owned reader: R,
-        buf: Bytes = Bytes(),
+        buf: Bytes = Bytes(size=DEFAULT_BUF_SIZE),
         read_pos: Int = 0,
         write_pos: Int = 0,
         last_byte: Int = -1,
@@ -88,9 +88,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             self.write_pos -= self.read_pos
             self.read_pos = 0
 
-        # TODO: Using dynamic resizing for Bytes internal vector anyway, no need to check for size.
-        # if self.write_pos > len(self.buf):
-        #     raise Error("bufio: tried to fill full buffer")
+        # Compares to the length of the entire Bytes object, including 0 initialized positions.
+        # IE. var b = Bytes(4096), then trying to write at b[4096] and onwards will fail.
+        if self.write_pos >= len(self.buf):
+            raise Error("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
@@ -141,14 +142,14 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             self.fill()  # self.write_pos-self.read_pos < len(self.buf) => buffer is not full
 
         # TODO: Using dynamically sized buffer for now. Will switch to static buffer later.
-        # if number_of_bytes > len(self.buf):
-        #     raise Error(ERR_BUFFER_FULL)
+        if number_of_bytes > len(self.buf):
+            raise Error(ERR_BUFFER_FULL)
 
         # 0 <= n <= len(self.buf)
-        # var available_space = self.write_pos - self.read_pos
-        # if available_space < number_of_bytes:
-        #     # not enough data in buffer
-        #     raise Error(ERR_BUFFER_FULL)
+        var available_space = self.write_pos - self.read_pos
+        if available_space < number_of_bytes:
+            # not enough data in buffer
+            raise Error(ERR_BUFFER_FULL)
 
         return self.buf[self.read_pos : self.read_pos + number_of_bytes]
 
@@ -191,19 +192,18 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
     # If the underlying [Reader] can return a non-zero count with io.EOF,
     # then this Read method can do so as well; see the [io.Reader] docs.
     fn read(inout self, inout dest: Bytes) raises -> Int:
-        # TODO: Using dynamic resizing for Bytes internal vector anyway, no need to check for size.
-        var n: Int = 0
-        # var n = len(dest)
-        # if n == 0:
-        #     if self.buffered() > 0:
-        #         return 0
+        # var n: Int = 0
+        var n = len(dest)
+        if n == 0:
+            if self.buffered() > 0:
+                return 0
 
-        #     return 0
+            return 0
 
         if self.read_pos == self.write_pos:
             if len(dest) >= len(self.buf):
                 # Large read, empty buffer.
-                # Read directly into p to avoid copy.
+                # Read directly into dest to avoid copy.
                 n = self.reader.read(dest)
                 if n < 0:
                     raise Error(ERR_NEGATIVE_READ)
@@ -329,7 +329,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             The Bytes from the internal buffer.
         """
         var s = 0  # search start index
-        var line: Bytes = Bytes()
+        var line: Bytes = Bytes(DEFAULT_BUF_SIZE)
         while True:
             # Search buffer.
             var i = self.buf[self.read_pos + s : self.write_pos].index_byte(delim)
@@ -341,14 +341,13 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
 
             # TODO: Using dynamically sized buffer for now. Will switch to static buffer later.
             # # Buffer full?
-            # if self.buffered() >= len(self.buf):
-            #     self.read_pos = self.write_pos
-            #     raise Error(ERR_BUFFER_FULL)
+            if self.buffered() >= len(self.buf):
+                self.read_pos = self.write_pos
+                raise Error(ERR_BUFFER_FULL)
 
             s = self.write_pos - self.read_pos  # do not rescan area we scanned before
 
             self.fill()  # buffer is not full
-            print(self.buf, self.read_pos, self.write_pos)
 
         # Handle last byte, if any.
         var i = len(line) - 1

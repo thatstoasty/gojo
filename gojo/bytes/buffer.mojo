@@ -361,21 +361,16 @@ struct Buffer(
         """
         # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
         # not working correctly and the 0s remaining in the empty dynamic vector indices.
-        # if byte != 0:
-        #     self.last_read = OP_INVALID
-        #     var m: Int
-        #     var ok: Bool
-        #     m, ok = self.try_grow_by_reslice(1)
-        #     if not ok:
-        #         m = self.grow(1)
-
-        #     # why is m 0 twice in a row?
-        #     self.buf[m] = byte
-        #     return m
-        # return 0
         self.last_read = OP_INVALID
-        self.buf.append(byte)
-        return 1
+        var m: Int
+        var ok: Bool
+        m, ok = self.try_grow_by_reslice(1)
+        if not ok:
+            m = self.grow(1)
+
+        # why is m 0 twice in a row?
+        self.buf[m] = byte
+        return m
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the
