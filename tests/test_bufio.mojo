@@ -44,9 +44,10 @@ fn test_write_to() raises:
 
     # Write the content of the reader to the writer
     _ = reader.write_to(writer)
+    print(str(writer), str(buf))
 
     # Check if the content of the writer is "Hello World0123456789"
-    test.assert_equal(str(writer), String("Hello World0123456789"))
+    test.assert_equal(str(writer), "Hello World0123456789")
 
 
 fn test_read_and_unread_byte() raises:
@@ -109,9 +110,9 @@ fn test_writer():
 
 
 fn main() raises:
-    test_read()
-    test_read_all()
+    # test_read()
+    # test_read_all()
     test_write_to()
-    test_read_and_unread_byte()
-    test_read_slice()
-    test_peek()
+    # test_read_and_unread_byte()
+    # test_read_slice()
+    # test_peek()

@@ -237,8 +237,6 @@ struct Buffer(
         m, ok = self.try_grow_by_reslice(len(src))
         if not ok:
             m = self.grow(len(src))
-        # var b = self.buf[m:]
-        # TODO: Assess whether or not copying elements like this is actually needed. It seems expensive to do a bunch of copying each time something is written to the buffer.
         return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
@@ -359,8 +357,6 @@ struct Buffer(
         Returns:
             The number of bytes written to the buffer.
         """
-        # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
-        # not working correctly and the 0s remaining in the empty dynamic vector indices.
         self.last_read = OP_INVALID
         var m: Int
         var ok: Bool
@@ -533,9 +529,9 @@ struct Buffer(
         var sl = self.read_slice(delim)
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
-        var lines = Bytes()
-        for i in range(len(sl)):
-            lines[i] = sl[i]
+        var lines = Bytes(4096)
+        for i in range(sl.size()):
+            lines.append(sl[i])
         return lines
 
     fn read_slice(inout self, delim: Byte) raises -> Bytes:
@@ -547,10 +543,10 @@ struct Buffer(
         Returns:
             A Bytes struct containing the data up to and including the delimiter.
         """
-        var i = self.buf[self.off :].index_byte(delim)
+        var i = self.buf[self.off:self.buf.size()].index_byte(delim)
         var end = self.off + i + 1
         if i < 0:
-            end = len(self.buf)
+            end = self.buf.size()
 
         var line = self.buf[self.off : end]
         self.off = end
