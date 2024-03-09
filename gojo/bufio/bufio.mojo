@@ -576,6 +576,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             raise Error(ERR_NEGATIVE_WRITE)
         
         self.read_pos += bytes_written
+        print("bytes written", bytes_written)
         return Int64(bytes_written)
 
 
