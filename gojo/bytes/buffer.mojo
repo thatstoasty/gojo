@@ -89,7 +89,7 @@ struct Buffer(
         passed to an immediately succeeding [Buffer.write] call.
         The buffer is only valid until the next write operation on self.
         """
-        return self.buf[len(self.buf) :]
+        return self.buf[self.buf.size() :]
 
     fn __str__(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
@@ -101,12 +101,12 @@ struct Buffer(
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
-        return len(self.buf) <= self.off
+        return self.buf.size() <= self.off
 
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the buffer;
         self.__len__() == len(self.Bytes())."""
-        return len(self.buf) - self.off
+        return self.buf.size() - self.off
 
     fn cap(self) -> Int:
         """Cap returns the capacity of the buffer's underlying byte slice, that is, the
@@ -115,7 +115,7 @@ struct Buffer(
 
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""
-        return cap(self.buf) - len(self.buf)
+        return cap(self.buf) - self.buf.size()
 
     fn truncate(inout self, position: Int) raises:
         """Discards all but the first n unread bytes from the buffer
@@ -239,7 +239,7 @@ struct Buffer(
         #     m = self.grow(len(src))
         # var b = self.buf[m:]
         # TODO: Assess whether or not copying elements like this is actually needed. It seems expensive to do a bunch of copying each time something is written to the buffer.
-        return copy(self.buf, src, len(self.buf))
+        return copy(self.buf, src, self.buf.size())
 
     fn write_string(inout self, src: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -361,21 +361,16 @@ struct Buffer(
         """
         # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
         # not working correctly and the 0s remaining in the empty dynamic vector indices.
-        # if byte != 0:
-        #     self.last_read = OP_INVALID
-        #     var m: Int
-        #     var ok: Bool
-        #     m, ok = self.try_grow_by_reslice(1)
-        #     if not ok:
-        #         m = self.grow(1)
-
-        #     # why is m 0 twice in a row?
-        #     self.buf[m] = byte
-        #     return m
-        # return 0
         self.last_read = OP_INVALID
-        self.buf.append(byte)
-        return 1
+        var m: Int
+        var ok: Bool
+        m, ok = self.try_grow_by_reslice(1)
+        if not ok:
+            m = self.grow(1)
+
+        # why is m 0 twice in a row?
+        self.buf[m] = byte
+        return m
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the

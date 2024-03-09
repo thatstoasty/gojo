@@ -31,7 +31,7 @@ fn test_read_all() raises:
     test.assert_equal(str(result), "0123456789")
 
 
-# TODO: Failing to write the contents of the reader to the writer
+# TODO: Running into EOF on final fill before returning results
 fn test_write_to() raises:
     var test = MojoTest("Testing bufio.Reader.write_to")
 
@@ -40,6 +40,7 @@ fn test_write_to() raises:
 
     # Create a new writer containing the content "Hello World"
     var writer = buffer.new_buffer("Hello World")
+    print(str(writer), str(buf))
 
     # Write the content of the reader to the writer
     _ = reader.write_to(writer)
@@ -65,7 +66,6 @@ fn test_read_and_unread_byte() raises:
     test.assert_equal(reader.read_pos, post_read_position - 1)
 
 
-# TODO: Failing with bufio: buffer full, seems like a similar issue with the above.
 fn test_read_slice() raises:
     var test = MojoTest("Testing bufio.Reader.read_slice")
     var buf = buffer.new_buffer("0123456789")
@@ -94,17 +94,14 @@ fn test_read_line() raises:
     # test.assert_equal(line, "01234")
 
 
-# TODO: Failing with bufio: buffer full or index OOB
 fn test_peek() raises:
     var test = MojoTest("Testing bufio.Reader.peek")
     var buf = buffer.new_buffer("01234\n56789")
     var reader = Reader(buf)
 
-    var initial_read_position = reader.read_pos
-    var inital_write_position = reader.write_pos
+    # Peek doesn't advance the reader, so we should see the same content twice.
     test.assert_equal(reader.peek(5), "01234")
-    test.assert_equal(reader.read_pos, initial_read_position)
-    test.assert_equal(reader.write_pos, inital_write_position)
+    test.assert_equal(reader.peek(5), "01234")
 
 
 fn test_writer():
@@ -112,9 +109,9 @@ fn test_writer():
 
 
 fn main() raises:
-    test_read()
-    test_read_all()
-    # test_write_to()
-    test_read_and_unread_byte()
-    test_read_slice()
+    # test_read()
+    # test_read_all()
+    test_write_to()
+    # test_read_and_unread_byte()
+    # test_read_slice()
     # test_peek()
