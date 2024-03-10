@@ -1,7 +1,7 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins._bytes import Bytes
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
 from gojo.io import FileWrapper, read_all
 
 
@@ -104,14 +104,91 @@ fn test_peek() raises:
     test.assert_equal(reader.peek(5), "01234")
 
 
-fn test_writer():
-    var test = MojoTest("Testing bufio.Writer")
+fn test_discard() raises:
+    var test = MojoTest("Testing bufio.Reader.discard")
+    var buf = buffer.new_buffer("0123456789")
+    var reader = Reader(buf)
+
+    var bytes_discarded = reader.discard(5)
+    test.assert_equal(bytes_discarded, 5)
+
+    # Peek doesn't advance the reader, so we should see the same content twice.
+    test.assert_equal(reader.peek(5), "56789")
+
+
+fn test_write() raises:
+    var test = MojoTest("Testing bufio.Writer.write and flush")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer()
+    var writer = Writer(buf)
+
+    # Write the content from src to the buffered writer's internal buffer and flush it to the Bytes Buffer Writer.
+    var src = Bytes("0123456789")
+    var bytes_written = writer.write(src)
+    writer.flush()
+
+    test.assert_equal(bytes_written, 10)
+    test.assert_equal(str(writer.writer), "0123456789")
+
+
+fn test_write_byte() raises:
+    var test = MojoTest("Testing bufio.Writer.write_byte")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer("Hello")
+    var writer = Writer(buf)
+
+    # Write a byte with the value of 32 to the writer's internal buffer and flush it to the Bytes Buffer Writer.
+    var bytes_written = writer.write_byte(32)
+    writer.flush()
+
+    test.assert_equal(bytes_written, 1)
+    test.assert_equal(str(writer.writer), "Hello ")
+
+
+fn test_write_string() raises:
+    var test = MojoTest("Testing bufio.Writer.write_string")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer("Hello")
+    var writer = Writer(buf)
+
+    # Write a string to the writer's internal buffer and flush it to the Bytes Buffer Writer.
+    var bytes_written = writer.write_string(" World!")
+    writer.flush()
+
+    test.assert_equal(bytes_written, 7)
+    test.assert_equal(str(writer.writer), "Hello World!")
+
+
+# TODO: Loops for awhile without reading anything. Need to fix.
+fn test_read_from() raises:
+    var test = MojoTest("Testing bufio.Writer.read_from")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer("Hello")
+    var writer = Writer(buf)
+
+    # Read from a ReaderFrom struct into the Buffered Writer's internal buffer and flush it to the Bytes Buffer Writer.
+    var src = Bytes(" World!")
+    var reader_from = buffer.new_buffer(src)
+    var bytes_written = writer.read_from(reader_from)
+    writer.flush()
+
+    test.assert_equal(bytes_written, 7)
+    test.assert_equal(str(writer.writer), "Hello World!")
 
 
 fn main() raises:
-    # test_read()
-    # test_read_all()
+    test_read()
+    test_read_all()
     test_write_to()
-    # test_read_and_unread_byte()
-    # test_read_slice()
-    # test_peek()
+    test_read_and_unread_byte()
+    test_read_slice()
+    test_peek()
+    test_discard()
+    test_write()
+    test_write_byte()
+    test_write_string()
+    test_read_from()

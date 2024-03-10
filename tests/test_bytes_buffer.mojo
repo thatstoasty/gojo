@@ -29,5 +29,5 @@ fn test_buffer_write() raises:
 
 
 fn main() raises:
-    # test_buffer_read()
+    test_buffer_read()
     test_buffer_write()

@@ -459,7 +459,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             The Bytes from the internal buffer.
         """
         var full = DynamicVector[Bytes]()
-        var frag = Bytes()
+        var frag = Bytes(4096)
         var n: Int = 0
         self.collect_fragments(delim, frag, full, n)
         # Allocate new buffer to hold the full pieces and the fragment.
@@ -573,7 +573,6 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             raise Error(ERR_NEGATIVE_WRITE)
         
         self.read_pos += bytes_written
-        print("bytes written", bytes_written)
         return Int64(bytes_written)
 
 
@@ -612,6 +611,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
 
 
 # buffered output
+# TODO: Reader and Writer maybe should not take ownership of the underlying reader/writer? Seems okay for now.
 struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
@@ -624,7 +624,12 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
     var bytes_written: Int
     var writer: W
 
-    fn __init__(inout self, buf: Bytes, owned writer: W, bytes_written: Int = 0):
+    fn __init__(
+        inout self, 
+        owned writer: W,
+        buf: Bytes = Bytes(size=DEFAULT_BUF_SIZE),
+        bytes_written: Int = 0
+    ):
         self.buf = buf
         self.bytes_written = bytes_written
         self.writer = writer ^
@@ -671,11 +676,12 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
 
         var n: Int = 0
         try:
-            var n = self.writer.write(self.buf[0 : self.bytes_written])
+            n = self.writer.write(self.buf[0 : self.bytes_written])
         except e:
+            # TODO: Can't recover from a partial write because we're not returning an error as a value.
+            # Leaving the logic here for now, but n is going to be 0 if write fails.
             if n > 0 and n < self.bytes_written:
-                var sl = self.buf[n : self.bytes_written]
-                _ = copy(sl, self.buf[n : self.bytes_written])
+                _ = copy(self.buf, self.buf[n : self.bytes_written])
 
             self.bytes_written -= n
             raise e
@@ -729,19 +735,14 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                 # write directly from p to avoid copy.
                 bytes_written = self.writer.write(src)
             else:
-                var sl = self.buf[self.bytes_written :]
-                bytes_written = copy(sl, src)
+                bytes_written = copy(self.buf, src, self.bytes_written)
                 self.bytes_written += bytes_written
                 self.flush()
 
             total_bytes_written += bytes_written
-            src_copy = src_copy[bytes_written:]
+            src_copy = src[bytes_written:]
 
-        # if self.err != nil:
-        #     return nn, self.err
-
-        var sl = self.buf[self.bytes_written :]
-        var n = copy(sl, src_copy)
+        var n = copy(self.buf, src_copy, self.bytes_written)
         self.bytes_written += n
         total_bytes_written += n
         return total_bytes_written
@@ -752,13 +753,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         Args:
             src: The byte to write.
         """
-        # if self.err != nil:
-        #     return self.err
-
-        # if self.available() <= 0:
-        #     return self.err
-
-        self.buf[self.bytes_written] = src
+        self.buf.append(src)
         self.bytes_written += 1
 
         return 1
@@ -832,6 +827,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 try:
+                    # TODO: should really be using a slice that returns refs and not a copy.
                     var sl = self.buf[self.bytes_written :]
                     bytes_read = reader.read(sl)
                     if bytes_read != 0:
