@@ -8,6 +8,7 @@ from ..io import (
     WriterTo,
     StringWriter,
     ReaderFrom,
+    BUFFER_SIZE
 )
 from ..builtins import cap, copy
 from ..builtins._bytes import (
@@ -576,7 +577,7 @@ fn new_buffer() -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var b = Bytes()
+    var b = Bytes(BUFFER_SIZE)
     return Buffer(b ^)
 
 
