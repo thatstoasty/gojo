@@ -94,3 +94,28 @@ fn sprintf(formatting: String, *args: Args) raises -> String:
             raise Error("Unknown for argument #" + String(i))
 
     return text
+
+
+fn printf(formatting: String, *args: Args) raises:
+    var text = formatting
+    var formatter_count = formatting.count("%")
+
+    if formatter_count > len(args):
+        raise Error("Not enough arguments for format string")
+    elif formatter_count < len(args):
+        raise Error("Too many arguments for format string")
+
+    for i in range(len(args)):
+        var argument = args[i]
+        if argument.isa[String]():
+            text = format_string(text, argument.get[String]()[])
+        elif argument.isa[Int]():
+            text = format_integer(text, argument.get[Int]()[])
+        elif argument.isa[Float64]():
+            text = format_float(text, argument.get[Float64]()[])
+        elif argument.isa[Bool]():
+            text = format_boolean(text, argument.get[Bool]()[])
+        else:
+            raise Error("Unknown for argument #" + String(i))
+
+    print(text)

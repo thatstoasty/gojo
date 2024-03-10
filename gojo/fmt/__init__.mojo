@@ -1,1 +1,1 @@
-from .fmt import sprintf
+from .fmt import sprintf, printf
