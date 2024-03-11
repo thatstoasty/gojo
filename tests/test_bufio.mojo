@@ -39,11 +39,9 @@ fn test_write_to() raises:
 
     # Create a new writer containing the content "Hello World"
     var writer = buffer.new_buffer("Hello World")
-    print(str(writer), str(buf))
 
     # Write the content of the reader to the writer
     _ = reader.write_to(writer)
-    print(str(writer), str(buf))
 
     # Check if the content of the writer is "Hello World0123456789"
     test.assert_equal(str(writer), "Hello World0123456789")

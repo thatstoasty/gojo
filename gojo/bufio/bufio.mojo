@@ -753,6 +753,10 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         Args:
             src: The byte to write.
         """
+        # If buffer is full, flush to the underlying writer.
+        if self.available() <= 0:
+            self.flush()
+
         self.buf.append(src)
         self.bytes_written += 1
 
@@ -819,6 +823,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         # readerFrom, readerFromOK := self.writer.(io.ReaderFrom)
         var bytes_read: Int = 0
         var total_bytes_written: Int64 = 0
+        var at_eof = False
         while True:
             if self.available() == 0:
                 self.flush()
@@ -830,6 +835,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                     # TODO: should really be using a slice that returns refs and not a copy.
                     var sl = self.buf[self.bytes_written :]
                     bytes_read = reader.read(sl)
+                    _ = copy(self.buf, sl, self.bytes_written)
                     if bytes_read != 0:
                         break
                 except e:
@@ -837,19 +843,21 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                         # If we filled the buffer exactly, flush preemptively.
                         if self.available() == 0:
                             self.flush()
-
+                        at_eof = True
                 if bytes_read != 0:
                     break
-
                 nr += 1
+            
+            if at_eof:
+                break
 
             if nr == MAX_CONSECUTIVE_EMPTY_READS:
                 raise Error(io.ERR_NO_PROGRESS)
-
+            
             self.bytes_written += bytes_read
             total_bytes_written += Int64(bytes_read)
 
-        # return total_bytes_written
+        return total_bytes_written
 
 
 fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:

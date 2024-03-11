@@ -229,9 +229,9 @@ struct Buffer(
         self.last_read = OP_INVALID
         var m: Int
         var ok: Bool
-        m, ok = self.try_grow_by_reslice(len(src))
+        m, ok = self.try_grow_by_reslice(src.size())
         if not ok:
-            m = self.grow(len(src))
+            m = self.grow(src.size())
         return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
@@ -409,7 +409,7 @@ struct Buffer(
         self.off += index
         if index > 0:
             self.last_read = OP_READ
-
+        
         return index
 
     fn next(inout self, inout number_of_bytes: Int) raises -> Bytes:

@@ -58,10 +58,10 @@ struct Bytes(Stringable, Sized, CollectionElement):
         var end = limits.end
         if limits.end == 9223372036854775807:
             end = len(self)
-        elif limits.end > len(self._vector):
+        elif limits.end > len(self) + 1:
             var error = "Bytes: Index out of range for limits.end. Received: " + str(
                 limits.end
-            ) + " but the length is " + str((len(self._vector)))
+            ) + " but the length is " + str((len(self)))
             raise Error(error)
 
         var new_bytes = Self(size=self.capacity())
