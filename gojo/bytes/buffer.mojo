@@ -323,7 +323,7 @@ struct Buffer(
         var n_bytes: Int = self.__len__()
         var n: Int64 = 0
         if n_bytes > 0:
-            var sl = self.buf[self.off :]
+            var sl = self.buf[self.off:self.buf.size()]
             var bytes_written = writer.write(sl)
             if bytes_written > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")
