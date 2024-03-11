@@ -2,6 +2,13 @@
 
 Experiments in porting over Golang stdlib into Mojo. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
+## Projects that use Gojo
+
+### My projects
+
+- `weave`: A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. [Link to the project.](https://github.com/thatstoasty/weave)
+- `mog`: Terminal text styling library. [Link to the project.](https://github.com/thatstoasty/mog)
+
 ## What this includes
 
 All of these packages are partially implemented.
