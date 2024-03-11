@@ -43,6 +43,17 @@ struct Bytes(Stringable, Sized, CollectionElement):
         """Returns the position of the last byte written to Bytes since it is 0 initialized."""
         return self.write_position
     
+    fn resize(inout self, new_size: Int):
+        """Resizes the Bytes to the new size. If the new size is larger than the current size, the new bytes are 0 initialized."""
+        self._vector.resize(new_size, 0)
+
+        # If the internal vector was resized to a smaller size than what was already written, the write position should be moved back.
+        if new_size < self.write_position:
+            self.write_position = new_size
+    
+    fn available(self) -> Int:
+        return len(self._vector) - self.write_position - 1
+    
     fn __len__(self) -> Int:
         return len(self._vector)
 

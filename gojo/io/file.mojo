@@ -42,6 +42,26 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         var elements_copied = copy(dest, Bytes(result))
         dest = dest[:elements_copied]
         return elements_copied
+    
+    fn read_all(inout self) raises -> Bytes:
+        var result = Bytes(4096)
+        while True:
+            try:
+                var temp = Bytes(4096)
+                _ = self.read(temp, 4096)
+
+                # If new bytes will overflow the result, resize it.
+                if result.size() + temp.size() > len(result):
+                    result.resize(len(result) * 2)
+                result += temp
+
+                if temp.size() < 4096:
+                    raise Error(io.EOF)
+            except e:
+                if str(e) == "EOF":
+                    break
+                raise
+        return result
 
     fn read_byte(inout self) raises -> Byte:
         return self.read_bytes(1)[0]

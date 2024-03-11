@@ -23,6 +23,32 @@ struct CSVReader():
         return CsvTable(builder^.finish())
 
 
+struct CSVWriter():
+    var file: FileWrapper
+    var buffer: Bytes
+
+    fn __init__(inout self, path: String, mode: StringLiteral) raises:
+        self.file = FileWrapper(path, mode)
+        self.buffer = Bytes(4096)
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.file = existing.file ^
+        self.buffer = existing.buffer
+    
+    fn write(inout self, src: Bytes) raises -> Int:
+        if src.size() + self.buffer.available() > len(self.buffer):
+            self.flush()
+
+        self.buffer.extend(src)
+        return src.size()
+    
+    fn flush(inout self) raises:
+        if self.buffer.size() > 0:
+            var builder = CsvBuilder(1)
+            builder.push(self.buffer)
+            _ = self.file.write(builder^.finish())
+
+
 fn write_csv() raises:
     var file = FileWrapper("test.csv", "w")
     var csv = CsvBuilder(3)
@@ -51,7 +77,14 @@ fn csv_reader() raises:
     print(data)
 
 
+fn csv_writer() raises:
+    var writer = CSVWriter("test.csv", "w")
+    _ = writer.write(Bytes("Hello,World,I am here"))
+    writer.flush()
+
+
 fn main() raises:
     # write_csv()
     # read_csv()
     csv_reader()
+    csv_writer()
