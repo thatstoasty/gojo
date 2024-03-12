@@ -1,5 +1,5 @@
-from ..builtins._bytes import Bytes, Byte
-from ..builtins import copy
+from ..builtins import Bytes, Byte, copy
+from .io import BUFFER_SIZE
 
 
 struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
@@ -44,18 +44,18 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         return elements_copied
     
     fn read_all(inout self) raises -> Bytes:
-        var result = Bytes(4096)
+        var result = Bytes(BUFFER_SIZE)
         while True:
             try:
-                var temp = Bytes(4096)
-                _ = self.read(temp, 4096)
+                var temp = Bytes(BUFFER_SIZE)
+                _ = self.read(temp, BUFFER_SIZE)
 
                 # If new bytes will overflow the result, resize it.
-                if result.size() + temp.size() > len(result):
-                    result.resize(len(result) * 2)
+                if len(result) + len(temp) > result.size():
+                    result.resize(result.size() * 2)
                 result += temp
 
-                if temp.size() < 4096:
+                if len(temp) < BUFFER_SIZE:
                     raise Error(io.EOF)
             except e:
                 if str(e) == "EOF":

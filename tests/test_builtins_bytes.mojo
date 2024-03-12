@@ -64,6 +64,15 @@ fn test_index_byte() raises:
     test.assert_equal(bytes.index_byte(ord("\n")), 5)
 
 
+fn test_size_and_len():
+    var test = MojoTest("Testing builtins.Bytes.size and builtins.Bytes.__len__")
+    var bytes = Bytes(4096)
+
+    # Size is the number of bytes used, len is the number of bytes allocated.
+    test.assert_equal(bytes.size(), 0)
+    test.assert_equal(len(bytes), 4096)
+
+
 fn main() raises:
     test_bytes_extend_append_and_iadd()
     test_bytes_from_strings()
@@ -71,3 +80,4 @@ fn main() raises:
     test_slice()
     test_slice_out_of_bounds()
     test_index_byte()
+    test_size_and_len()

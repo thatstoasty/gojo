@@ -4,8 +4,8 @@ from gojo.builtins import Bytes
 import gojo.io
 
 
-fn test_string_reader() raises:
-    var test = MojoTest("Testing strings.Reader")
+fn test_read() raises:
+    var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
 
@@ -16,18 +16,49 @@ fn test_string_reader() raises:
     test.assert_equal(bytes_read, len(example))
     test.assert_equal(str(buffer), "Hello, World!")
 
-    # Seek to the beginning of the reader.
-    var position = reader.seek(0, io.SEEK_START)
-    test.assert_equal(position, 0)
+
+fn test_read_at() raises:
+    var test = MojoTest("Testing strings.Reader.read_at")
+    var example: String = "Hello, World!"
+    var reader = new_reader("Hello, World!")
+
+    # Test reading from the reader.
+    var buffer = Bytes(128)
+    var bytes_read = reader.read_at(buffer, 7)
+
+    test.assert_equal(bytes_read, len(example[7:]))
+    test.assert_equal(str(buffer), "World!")
+
+
+fn test_seek() raises:
+    var test = MojoTest("Testing strings.Reader.seek")
+    var example: String = "Hello, World!"
+    var reader = new_reader("Hello, World!")
+
+    # Seek to the middle of the reader.
+    var position = reader.seek(5, io.SEEK_START)
+    test.assert_equal(position, 5)
+
+
+fn test_read_and_unread_byte() raises:
+    var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
+    var example: String = "Hello, World!"
+    var reader = new_reader("Hello, World!")
 
     # Read the first byte from the reader.
-    buffer = Bytes(512)
+    var buffer = Bytes(512)
     var byte = reader.read_byte()
     test.assert_equal(byte, 72)
 
     # Unread the first byte from the reader. Remaining bytes to be read should be the same as the length of the example string.
     reader.unread_byte()
     test.assert_equal(len(reader), len(example))
+
+
+fn test_write_to() raises:
+    var test = MojoTest("Testing strings.Reader.write_to")
+    var example: String = "Hello, World!"
+    var reader = new_reader("Hello, World!")
 
     # Write from the string reader to a StringBuilder.
     var builder = StringBuilder()
@@ -36,4 +67,8 @@ fn test_string_reader() raises:
 
 
 fn main() raises:
-    test_string_reader()
+    test_read()
+    test_read_at()
+    test_seek()
+    test_read_and_unread_byte()
+    test_write_to()
