@@ -152,14 +152,14 @@ struct Buffer(
         """Inlineable version of grow for the fast-case where the
         internal buffer only needs to be resliced.
         It returns the index where bytes should be written and whether it succeeded."""
-        var l = self.buf.size()
+        var buffer_already_used = len(self.buf)
 
-        if n <= cap(self.buf) - l:
+        if n <= cap(self.buf) - buffer_already_used:
             # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
             # Instead, just add bytes of len(n) to the end of the buffer for now.
             # self.buf = self.buf[: l + n]
             self.buf += Bytes(n)
-            return l, True
+            return buffer_already_used, True
 
         return 0, False
 
@@ -179,8 +179,9 @@ struct Buffer(
         if ok:
             return i
 
-        if len(self.buf) == 0 and n <= SMALL_BUFFER_SIZE:
-            self.buf = Bytes(SMALL_BUFFER_SIZE)
+        # If buffer length is 0 and elements being added is less than small_buffer_size, resize the buffer and write from the beginning.
+        if self.buf.size() == 0 and n <= SMALL_BUFFER_SIZE:
+            self.buf.resize(SMALL_BUFFER_SIZE)
             return 0
 
         var c = cap(self.buf)
@@ -324,10 +325,10 @@ struct Buffer(
             The number of bytes written to the writer.
         """
         self.last_read = OP_INVALID
-        var n_bytes: Int = self.buf.size()
+        var n_bytes: Int = len(self.buf)
         var n: Int64 = 0
         if n_bytes > 0:
-            var sl = self.buf[self.off:len(self.buf)]
+            var sl = self.buf[self.off:n_bytes]
             var bytes_written = writer.write(sl)
             if bytes_written > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")

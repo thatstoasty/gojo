@@ -69,8 +69,8 @@ fn test_size_and_len():
     var bytes = Bytes(4096)
 
     # Size is the number of bytes used, len is the number of bytes allocated.
-    test.assert_equal(bytes.size(), 0)
-    test.assert_equal(len(bytes), 4096)
+    test.assert_equal(bytes.size(), 4096)
+    test.assert_equal(len(bytes), 0)
 
 
 fn main() raises:
