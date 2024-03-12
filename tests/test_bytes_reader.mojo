@@ -9,7 +9,7 @@ fn test_read() raises:
     var reader = reader.new_reader(Bytes("0123456789"))
     var dest = Bytes(128)
     _ = reader.read(dest)
-    test.assert_equal(str(dest), "0123456789")    
+    test.assert_equal(str(dest), "0123456789")
 
     # Test negative seek
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
@@ -19,7 +19,7 @@ fn test_read() raises:
         if str(e) != NEGATIVE_POSITION_ERROR:
             raise
         test.assert_equal(str(e), NEGATIVE_POSITION_ERROR)
-    
+
 
 fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")

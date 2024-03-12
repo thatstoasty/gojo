@@ -29,7 +29,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
             raise Error(io.EOF)
 
         var bytes_result = Bytes(result)
-        var elements_copied = copy(dest, bytes_result[:len(bytes_result)])
+        var elements_copied = copy(dest, bytes_result[: len(bytes_result)])
         dest = dest[:elements_copied]
         return elements_copied
 
@@ -39,12 +39,12 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         var result = self.handle.read(size)
         if len(result) == 0:
             raise Error(io.EOF)
-            
+
         var bytes_result = Bytes(result)
-        var elements_copied = copy(dest, bytes_result[:len(bytes_result)])
+        var elements_copied = copy(dest, bytes_result[: len(bytes_result)])
         dest = dest[:elements_copied]
         return elements_copied
-    
+
     fn read_all(inout self) raises -> Bytes:
         var result = Bytes(BUFFER_SIZE)
         while True:

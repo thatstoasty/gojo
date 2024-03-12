@@ -71,7 +71,7 @@ fn test_write_string() raises:
     var test = MojoTest("Testing bytes.Buffer.write_string")
     var b = Bytes(16)
     var buf = new_buffer(b ^)
-    
+
     _ = buf.write_string("\nGoodbye World!")
     test.assert_equal(str(buf), String("\nGoodbye World!"))
 

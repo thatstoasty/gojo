@@ -78,7 +78,7 @@ struct Reader(
         if off >= Int64(len(self.string)):
             raise Error(io.EOF)
 
-        var copied_elements_count = copy(dest, self.string[int(off):])
+        var copied_elements_count = copy(dest, self.string[int(off) :])
         if copied_elements_count < len(dest):
             raise Error(io.EOF)
 
@@ -235,4 +235,3 @@ fn new_reader(string: String = "") -> Reader:
         string: The string to read from.
     """
     return Reader(string)
-

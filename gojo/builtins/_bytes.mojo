@@ -36,24 +36,26 @@ struct Bytes(Stringable, Sized, CollectionElement):
         for string in strs:
             self._vector.extend(string[].as_bytes())
             total_length += len(string[])
-        
+
         self.write_position = total_length
-    
+
     fn __len__(self) -> Int:
         return self.write_position
 
     fn size(self) -> Int:
-        """Returns the position of the last byte written to Bytes since it is 0 initialized."""
+        """Returns the position of the last byte written to Bytes since it is 0 initialized.
+        """
         return len(self._vector)
-    
+
     fn resize(inout self, new_size: Int):
-        """Resizes the Bytes to the new size. If the new size is larger than the current size, the new bytes are 0 initialized."""
+        """Resizes the Bytes to the new size. If the new size is larger than the current size, the new bytes are 0 initialized.
+        """
         self._vector.resize(new_size, 0)
 
         # If the internal vector was resized to a smaller size than what was already written, the write position should be moved back.
         if new_size < self.write_position:
             self.write_position = new_size
-    
+
     fn available(self) -> Int:
         return len(self._vector) - self.write_position
 
@@ -64,7 +66,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         # TODO: Specifying no end to the span sets span end to this super large int for some reason.
         # Set it to len of the vector if that happens. Otherwise, if end is just too large in general, throw OOB error.
 
-        # TODO: If no end was given, then it defaults to that large int. 
+        # TODO: If no end was given, then it defaults to that large int.
         # Accidentally including the 0 (null) characters will mess up strings due to null termination. __str__ expects the exact length of the string from self.write_position.
         var end = limits.end
         if limits.end == 9223372036854775807:
@@ -118,7 +120,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         # var added_size = length_of_self + length_of_other
         # if self._vector.capacity < added_size:
         #     self._vector.reserve(added_size * 2)
-        
+
         # Copy over data starting from the write position.
         for i in range(len(other)):
             self._vector[self.write_position] = other[i]
@@ -196,9 +198,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
             True if the Bytes struct ends with suffix; otherwise, False.
         """
         var len_comparison = len(self) >= len(suffix)
-        var suffix_comparison = self[
-            len(self) - len(suffix) : len(self)
-        ] == suffix
+        var suffix_comparison = self[len(self) - len(suffix) : len(self)] == suffix
         return len_comparison and suffix_comparison
 
     fn capacity(self) -> Int:

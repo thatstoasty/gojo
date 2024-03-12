@@ -16,7 +16,9 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 
 # buffered input
-struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
+struct Reader[R: io.Reader](
+    Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo
+):
     """Implements buffering for an io.Reader object."""
 
     var buf: Bytes
@@ -97,7 +99,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         while i > 0:
             var sl = self.buf[self.write_pos :]
             var bytes_read = 0
-            
+
             try:
                 bytes_read = self.reader.read(sl)
             except e:
@@ -568,10 +570,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         except e:
             if str(e) != io.EOF:
                 raise
-                    
+
         if bytes_written < 0:
             raise Error(ERR_NEGATIVE_WRITE)
-        
+
         self.read_pos += bytes_written
         return Int64(bytes_written)
 
@@ -612,7 +614,9 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
 
 # buffered output
 # TODO: Reader and Writer maybe should not take ownership of the underlying reader/writer? Seems okay for now.
-struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
+struct Writer[W: io.Writer](
+    Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom
+):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
     # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -625,10 +629,10 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
     var writer: W
 
     fn __init__(
-        inout self, 
+        inout self,
         owned writer: W,
         buf: Bytes = Bytes(size=DEFAULT_BUF_SIZE),
-        bytes_written: Int = 0
+        bytes_written: Int = 0,
     ):
         self.buf = buf
         self.bytes_written = bytes_written
@@ -847,13 +851,13 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                 if bytes_read != 0:
                     break
                 nr += 1
-            
+
             if at_eof:
                 break
 
             if nr == MAX_CONSECUTIVE_EMPTY_READS:
                 raise Error(io.ERR_NO_PROGRESS)
-            
+
             self.bytes_written += bytes_read
             total_bytes_written += Int64(bytes_read)
 

@@ -431,4 +431,3 @@ fn read_all[R: Reader](inout reader: R) raises -> Bytes:
                 break
             raise
     return dest
-

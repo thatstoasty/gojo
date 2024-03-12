@@ -8,7 +8,7 @@ from ..io import (
     WriterTo,
     StringWriter,
     ReaderFrom,
-    BUFFER_SIZE
+    BUFFER_SIZE,
 )
 from ..builtins import cap, copy
 from ..builtins._bytes import (
@@ -86,7 +86,7 @@ struct Buffer(
         The slice aliases the buffer content at least until the next buffer modification,
         so immediate changes to the slice will affect the result of future reads.
         """
-        return self.buf[self.off:len(self.buf)]
+        return self.buf[self.off : len(self.buf)]
 
     fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.Available() capacity.
@@ -94,7 +94,7 @@ struct Buffer(
         passed to an immediately succeeding [Buffer.write] call.
         The buffer is only valid until the next write operation on self.
         """
-        return self.buf[len(self.buf):]
+        return self.buf[len(self.buf) :]
 
     fn __str__(self) raises -> String:
         """Returns the contents of the unread portion of the buffer
@@ -102,7 +102,7 @@ struct Buffer(
 
         To build strings more efficiently, see the strings.Builder type.
         """
-        return str(self.buf[self.off:len(self.buf)])
+        return str(self.buf[self.off : len(self.buf)])
 
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
@@ -328,7 +328,7 @@ struct Buffer(
         var n_bytes: Int = len(self.buf)
         var n: Int64 = 0
         if n_bytes > 0:
-            var sl = self.buf[self.off:n_bytes]
+            var sl = self.buf[self.off : n_bytes]
             var bytes_written = writer.write(sl)
             if bytes_written > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")
@@ -409,12 +409,12 @@ struct Buffer(
                 return 0
             raise Error(io.EOF)
 
-        var byte_buffer = self.buf[self.off:len(self.buf)]
+        var byte_buffer = self.buf[self.off : len(self.buf)]
         var index = copy(dest, byte_buffer)
         self.off += index
         if index > 0:
             self.last_read = OP_READ
-        
+
         return index
 
     fn next(inout self, number_of_bytes: Int) raises -> Bytes:
@@ -534,7 +534,7 @@ struct Buffer(
             if str(e) == io.EOF:
                 return str(line)
             raise
-        
+
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
         var lines = Bytes(4096)
@@ -544,7 +544,7 @@ struct Buffer(
 
     fn read_slice(inout self, delim: Byte, inout line: Bytes) raises -> Bytes:
         """Like read_bytes but returns a reference to internal buffer data.
-        TODO: not returning a reference yet. Also, this returns Bytes and Error in Go, 
+        TODO: not returning a reference yet. Also, this returns Bytes and Error in Go,
         but we arent't returning Errors as values until Mojo tuple returns supports Memory Only types.
 
         Args:
@@ -555,7 +555,7 @@ struct Buffer(
             A Bytes struct containing the data up to and including the delimiter.
         """
         var at_eof = False
-        var i = self.buf[self.off:len(self.buf)].index_byte(delim)
+        var i = self.buf[self.off : len(self.buf)].index_byte(delim)
         var end = self.off + i + 1
 
         if i < 0:

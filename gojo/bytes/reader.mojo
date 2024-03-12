@@ -77,7 +77,7 @@ struct Reader(
         if off >= Int64(len(self.buffer)):
             raise Error(io.EOF)
 
-        var unread_bytes = self.buffer[int(off):len(self.buffer)]
+        var unread_bytes = self.buffer[int(off) : len(self.buffer)]
         var bytes_written = copy(dest, unread_bytes)
         if bytes_written < len(dest):
             raise Error(io.EOF)

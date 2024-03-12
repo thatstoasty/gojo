@@ -50,7 +50,9 @@ struct CsvBuilder:
         var size = len(s)
         self.push(s, False)
 
-    fn push_stringabel[T: Stringable](inout self, value: T, consider_escaping: Bool = False):
+    fn push_stringabel[
+        T: Stringable
+    ](inout self, value: T, consider_escaping: Bool = False):
         self.push(str(value), consider_escaping)
 
     fn push_empty(inout self):

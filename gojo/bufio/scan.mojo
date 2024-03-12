@@ -169,7 +169,9 @@ struct Scanner[R: io.Reader]():
             # Is the buffer full? If so, resize.
             if self.end == len(self.buf):
                 # Guarantee no overflow in the multiplication below.
-                if len(self.buf) >= self.max_token_size or len(self.buf) > int(MAX_INT/2):
+                if len(self.buf) >= self.max_token_size or len(self.buf) > int(
+                    MAX_INT / 2
+                ):
                     self.set_err(Err(Error(ERR_TOO_LONG)))
                     return False
 
@@ -180,7 +182,7 @@ struct Scanner[R: io.Reader]():
                 # Make a new Bytes buffer and copy the elements in
                 new_size = math.min(new_size, self.max_token_size)
                 var new_buf = Bytes(new_size)
-                _ = copy(new_buf, self.buf[self.start:self.end])
+                _ = copy(new_buf, self.buf[self.start : self.end])
                 self.buf = new_buf
                 self.end -= self.start
                 self.start = 0

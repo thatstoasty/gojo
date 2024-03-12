@@ -41,7 +41,9 @@ fn test_seek() raises:
 
 
 fn test_read_and_unread_byte() raises:
-    var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
+    var test = MojoTest(
+        "Testing strings.Reader.read_byte and strings.Reader.unread_byte"
+    )
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
 
