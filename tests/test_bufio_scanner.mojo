@@ -139,7 +139,7 @@ fn test_scan_bytes() raises:
 
 fn test_file_wrapper_scanner() raises:
     var test = MojoTest("testing io.FileWrapper and bufio.Scanner")
-    var file = FileWrapper("test_multiple_lines.txt", "r")
+    var file = FileWrapper("tests/data/test_multiple_lines.txt", "r")
 
     # Create a scanner from the reader
     var scanner = Scanner(file ^)

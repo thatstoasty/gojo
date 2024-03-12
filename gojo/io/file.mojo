@@ -24,11 +24,12 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn read(inout self, inout dest: Bytes) raises -> Int:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
-        var result = self.handle.read()
+        var result = self.handle.read(dest.available())
         if len(result) == 0:
             raise Error(io.EOF)
 
-        var elements_copied = copy(dest, Bytes(result))
+        var bytes_result = Bytes(result)
+        var elements_copied = copy(dest, bytes_result[:len(bytes_result)])
         dest = dest[:elements_copied]
         return elements_copied
 
@@ -38,8 +39,9 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         var result = self.handle.read(size)
         if len(result) == 0:
             raise Error(io.EOF)
-
-        var elements_copied = copy(dest, Bytes(result))
+            
+        var bytes_result = Bytes(result)
+        var elements_copied = copy(dest, bytes_result[:len(bytes_result)])
         dest = dest[:elements_copied]
         return elements_copied
     

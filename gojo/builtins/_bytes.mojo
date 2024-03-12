@@ -55,7 +55,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
             self.write_position = new_size
     
     fn available(self) -> Int:
-        return len(self._vector) - self.write_position - 1
+        return len(self._vector) - self.write_position
 
     fn __getitem__(self, index: Int) -> Int8:
         return self._vector[index]
