@@ -9,11 +9,15 @@ struct WrappedError(CollectionElement, Stringable):
 
     fn __init__(inout self, error: Error = Error()):
         self.error = error
+    
+    fn __init__[T: Stringable](inout self, message: T):
+        self.error = Error(message)
 
     fn __str__(self) -> String:
         return String(self.error)
 
 
+@value
 struct Result[T: CollectionElement]():
     var value: Optional[T]
     var error: Optional[WrappedError]
@@ -40,18 +44,23 @@ struct Result[T: CollectionElement]():
         self.value = value
         self.error = error
     
-    fn is_ok(self) -> Bool:
+    fn has_value(self) -> Bool:
         if self.value:
             return True
         return False
     
-    fn is_err(self) -> Bool:
+    fn has_error(self) -> Bool:
         if self.error:
             return True
         return False
-
-    fn ok(self) -> Optional[T]:
-        return self.value
     
-    fn err(self) -> Optional[WrappedError]:
-        return self.error
+    fn has_both(self) -> Bool:
+        if self.value and self.error:
+            return True
+        return False
+
+    fn get_value(self) -> T:
+        return self.value.value()
+    
+    fn get_error(self) -> WrappedError:
+        return self.error.value()

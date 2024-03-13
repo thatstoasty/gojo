@@ -1,4 +1,5 @@
-from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError
+from collections.optional import Optional
+from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError, panic
 import ..io
 
 
@@ -54,18 +55,13 @@ struct Reader(
             return Result(0, WrappedError(EOF_ERROR))
 
         self.prev_rune = -1
-        var unread_bytes = Bytes()
-        try:
-            unread_bytes = self.buffer[int(self.index):len(self.buffer)]
-        except e:
-            return Result(0, WrappedError(e))
+        var unread_bytes = self.buffer[int(self.index):len(self.buffer)]
+        var bytes_read = copy(dest, unread_bytes)
 
-        var n = copy(dest, unread_bytes)
+        self.index += bytes_read
+        return Result(bytes_read, None)
 
-        self.index += n
-        return Result(n, None)
-
-    fn read_at(self, inout dest: Bytes, off: Int64) raises -> Int:
+    fn read_at(self, inout dest: Bytes, off: Int64) -> Result[Int]:
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
 
@@ -78,38 +74,40 @@ struct Reader(
         """
         # cannot modify state - see io.ReaderAt
         if off < 0:
-            raise Error("bytes.Reader.read_at: negative offset")
+            return Result(0, WrappedError("bytes.Reader.read_at: negative offset"))
 
         if off >= Int64(len(self.buffer)):
-            raise Error(io.EOF)
+            return Result(0, WrappedError(io.EOF))
 
         var unread_bytes = self.buffer[int(off) : len(self.buffer)]
         var bytes_written = copy(dest, unread_bytes)
         if bytes_written < len(dest):
-            raise Error(io.EOF)
+            return Result(0, WrappedError(io.EOF))
 
         return bytes_written
 
-    fn read_byte(inout self) raises -> Byte:
+    fn read_byte(inout self) -> Result[Byte]:
         """Reads and returns a single byte from the internal buffer. Implements the [io.ByteReader] Interface.
         """
         self.prev_rune = -1
         if self.index >= len(self.buffer):
-            raise Error(io.EOF)
+            return Result(Int8(0), WrappedError(io.EOF))
 
         var byte = self.buffer[int(self.index)]
         self.index += 1
         return byte
 
-    fn unread_byte(inout self) raises:
+    fn unread_byte(inout self) -> Optional[WrappedError]:
         """Unreads the last byte read by moving the read position back by one.
         Complements [Reader.read_byte] in implementing the [io.ByteScanner] Interface.
         """
         if self.index <= 0:
-            raise Error("bytes.Reader.unread_byte: at beginning of slice")
+            return WrappedError("bytes.Reader.unread_byte: at beginning of slice")
 
         self.prev_rune = -1
         self.index -= 1
+
+        return None
 
     # # read_rune implements the [io.RuneReader] Interface.
     # fn read_rune(self) (ch rune, size Int, err error):
@@ -138,7 +136,7 @@ struct Reader(
     #     self.prev_rune = -1
     #     return nil
 
-    fn seek(inout self, offset: Int64, whence: Int) raises -> Int64:
+    fn seek(inout self, offset: Int64, whence: Int) -> Result[Int64]:
         """Moves the read position to the specified offset from the specified whence.
         Implements the [io.Seeker] Interface.
 
@@ -159,15 +157,15 @@ struct Reader(
         elif whence == io.SEEK_END:
             position = len(self.buffer) + offset
         else:
-            raise Error("bytes.Reader.seek: invalid whence")
+            return Result(Int64(0), WrappedError("bytes.Reader.seek: invalid whence"))
 
         if position < 0:
-            raise Error("bytes.Reader.seek: negative position")
+            return Result(Int64(0), WrappedError("bytes.Reader.seek: negative position"))
 
         self.index = position
-        return position
+        return Result(position, None)
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int64:
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> Result[Int64]:
         """Writes data to w until the buffer is drained or an error occurs.
         implements the [io.WriterTo] Interface.
 
@@ -176,16 +174,20 @@ struct Reader(
         """
         self.prev_rune = -1
         if self.index >= len(self.buffer):
-            return 0
+            return Result(Int64(0), None)
 
-        var b = self.buffer[int(self.index) :]
-        var write_count = writer.write(b)
-        if write_count > b.size():
-            raise Error("bytes.Reader.write_to: invalid Write count")
+        var bytes = self.buffer[int(self.index):len(self.buffer)]
+        var result = writer.write(bytes)
+        if not result.has_value():
+            return Result(Int64(0), WrappedError("bytes.Reader.write_to: write returned None for bytes."))
+
+        var write_count = result.get_value()
+        if write_count > len(bytes):
+            panic("bytes.Reader.write_to: invalid Write count")
 
         self.index += write_count
-        if write_count != b.size():
-            raise Error(io.ERR_SHORT_WRITE)
+        if write_count != len(bytes):
+            return Result(Int64(write_count), WrappedError(io.ERR_SHORT_WRITE))
 
         return Int64(write_count)
 

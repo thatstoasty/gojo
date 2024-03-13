@@ -1,3 +1,4 @@
+from collections.optional import Optional
 from ..builtins import Bytes, Byte, Result, WrappedError
 
 alias Rune = Int32
@@ -276,7 +277,7 @@ trait ByteScanner(ByteReader):
     last-unread byte), or (in implementations that support the [Seeker] trait)
     seek to one byte before the current offset."""
 
-    fn unread_byte(inout self) -> WrappedError:
+    fn unread_byte(inout self) -> Optional[WrappedError]:
         ...
 
 
