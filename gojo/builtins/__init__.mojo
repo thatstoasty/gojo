@@ -1,4 +1,5 @@
 from ._bytes import Bytes, Byte
+from .result import Result, WrappedError
 
 
 fn copy(

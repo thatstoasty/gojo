@@ -1,7 +1,8 @@
-from collections.optional import Optional
-from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte
+from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError
 import ..io
+
+
+alias EOF_ERROR = Error(io.EOF)
 
 
 @value
@@ -40,7 +41,7 @@ struct Reader(
         The result is unaffected by any method calls except [Reader.Reset]."""
         return len(self.buffer)
 
-    fn read(inout self, inout dest: Bytes) raises -> Int:
+    fn read(inout self, inout dest: Bytes) -> Result[Int]:
         """Reads from the internal buffer into the dest Bytes struct.
         Implements the [io.Reader] Interface.
 
@@ -50,14 +51,19 @@ struct Reader(
         Returns:
             Int: The number of bytes read into dest."""
         if self.index >= len(self.buffer):
-            raise Error(io.EOF)
+            return Result(0, WrappedError(EOF_ERROR))
 
         self.prev_rune = -1
-        var unread_bytes = self.buffer[int(self.index) :]
+        var unread_bytes = Bytes()
+        try:
+            unread_bytes = self.buffer[int(self.index):len(self.buffer)]
+        except e:
+            return Result(0, WrappedError(e))
+
         var n = copy(dest, unread_bytes)
 
         self.index += n
-        return n
+        return Result(n, None)
 
     fn read_at(self, inout dest: Bytes, off: Int64) raises -> Int:
         """Reads len(dest) bytes into dest beginning at byte offset off.

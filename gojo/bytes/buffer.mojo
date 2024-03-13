@@ -10,11 +10,7 @@ from ..io import (
     ReaderFrom,
     BUFFER_SIZE,
 )
-from ..builtins import cap, copy
-from ..builtins._bytes import (
-    Bytes,
-    Byte,
-)
+from ..builtins import cap, copy, Bytes, Byte, Result
 
 
 alias Rune = Int32
@@ -48,10 +44,6 @@ alias MIN_READ: Int8 = 512
 alias ERR_TOO_LARGE = "buffer.Buffer: too large"
 alias ERR_NEGATIVE_READ = "buffer.Buffer: reader returned negative count from read"
 alias ERR_SHORT_WRITE = "short write"
-
-alias i1 = __mlir_type.i1
-alias i1_1 = __mlir_attr.`1: i1`
-alias i1_0 = __mlir_attr.`0: i1`
 
 
 @value
@@ -140,15 +132,15 @@ struct Buffer(
 
         self.buf = self.buf[: self.off + position]
 
-    fn reset(inout self) raises:
+    fn reset(inout self):
         """Resets the buffer to be empty,
         but it retains the underlying storage for use by future writes.
         reset is the same as [buffer.truncate](0)."""
-        self.buf = self.buf[0:0]
+        self.buf = Bytes(size=self.buf.capacity())
         self.off = 0
         self.last_read = OP_INVALID
 
-    fn try_grow_by_reslice(inout self, n: Int) raises -> (Int, Bool):
+    fn try_grow_by_reslice(inout self, n: Int) -> (Int, Bool):
         """Inlineable version of grow for the fast-case where the
         internal buffer only needs to be resliced.
         It returns the index where bytes should be written and whether it succeeded."""
@@ -190,9 +182,10 @@ struct Buffer(
             # slice. We only need m+n <= c to slide, but
             # we instead var capacity get twice as large so we
             # don't spend all our time copying.
+
             _ = copy(self.buf, self.buf[self.off :])
         elif c > MAX_INT - c - n:
-            raise Error("buffer.Buffer: too large")
+            raise Error("bytes.Buffer: too large")
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
             var sl = self.buf[self.off :]
@@ -220,7 +213,7 @@ struct Buffer(
         var m = self.grow(n)
         self.buf = self.buf[:m]
 
-    fn write(inout self, src: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) -> Result[Int]:
         """Appends the contents of p to the buffer, growing the buffer as
         needed. The return value n is the length of p; err is always nil. If the
         buffer becomes too large, write will panic with [ERR_TOO_LARGE].
