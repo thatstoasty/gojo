@@ -1,7 +1,7 @@
 from math import max
 from ..io import traits as io
 from ..builtins import Bytes, copy
-from ..bytes import buffer
+from ..strings import StringBuilder
 
 alias MIN_READ_BUFFER_SIZE = 16
 alias MAX_CONSECUTIVE_EMPTY_READS = 100
@@ -54,7 +54,7 @@ struct Reader[R: io.Reader](
 
     # size returns the size of the underlying buffer in bytes.
     fn __len__(self) -> Int:
-        return self.buf.size()
+        return len(self.buf)
 
     # reset discards any buffered data, resets all state, and switches
     # the buffered reader to read from r.
@@ -357,7 +357,7 @@ struct Reader[R: io.Reader](
             self.fill()  # buffer is not full
 
         # Handle last byte, if any.
-        var i = line.size() - 1
+        var i = len(line) - 1
         if i >= 0:
             self.last_byte = int(line[i])
             self.last_rune_size = -1
@@ -388,7 +388,7 @@ struct Reader[R: io.Reader](
         except e:
             if str(e) == ERR_BUFFER_FULL:
                 # Handle the case where "\r\n" straddles the buffer.
-                if line.size() > 0 and line[line.size() - 1] == ord("\r"):
+                if len(line) > 0 and line[len(line) - 1] == ord("\r"):
                     # Put the '\r' back on buf and drop it from line.
                     # Let the next call to read_line check for "\r\n".
                     if self.read_pos == 0:
@@ -396,19 +396,19 @@ struct Reader[R: io.Reader](
                         raise Error("bufio: tried to rewind past start of buffer")
 
                     self.read_pos -= 1
-                    line = line[: line.size() - 1]
+                    line = line[: len(line) - 1]
 
                 return line, True
 
-        if line.size() == 0:
+        if len(line) == 0:
             return line, False
 
-        if line[line.size() - 1] == ord("\n"):
+        if line[len(line) - 1] == ord("\n"):
             var drop = 1
-            if line.size() > 1 and line[line.size() - 2] == ord("\r"):
+            if len(line) > 1 and line[len(line) - 2] == ord("\r"):
                 drop = 2
 
-            line = line[: line.size() - drop]
+            line = line[: len(line) - drop]
 
         return line, False
 
@@ -441,7 +441,7 @@ struct Reader[R: io.Reader](
             # Make a copy of the buffer.
             var buf = frag  # FIXME: Dunno if this will make a copy or just reference frag.
             full_buffers.append(buf)
-            total_len += buf.size()
+            total_len += len(self.buf)
 
         total_len += frag.size()
 
@@ -473,8 +473,7 @@ struct Reader[R: io.Reader](
             var sl = buf[n:]
             n += copy(sl, buffer)
 
-        var frag_sl = buf[n:]
-        _ = copy(frag_sl, frag)
+        _ = copy(buf, frag, n)
         return buf
 
     fn read_string(inout self, delim: Int8) raises -> String:
@@ -498,8 +497,7 @@ struct Reader[R: io.Reader](
         self.collect_fragments(delim, frag, full, n)
 
         # Allocate new buffer to hold the full pieces and the fragment.
-        var buf = buffer.new_buffer()
-        buf.Grow(n)
+        var buf = StringBuilder(n)
 
         # copy full pieces and fragment in.
         for i in range(len(full)):
@@ -645,7 +643,7 @@ struct Writer[W: io.Writer](
 
     fn __len__(self) -> Int:
         """Returns the size of the underlying buffer in bytes."""
-        return self.buf.size()
+        return len(self.buf)
 
     fn reset[W: io.Writer](inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
@@ -697,7 +695,7 @@ struct Writer[W: io.Writer](
 
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""
-        return self.buf.size() - self.bytes_written
+        return self.buf.available()
 
     fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.available() capacity.
@@ -732,7 +730,7 @@ struct Writer[W: io.Writer](
         """
         var total_bytes_written: Int = 0
         var src_copy = src
-        while src_copy.size() > self.available():
+        while len(src_copy) > self.available():
             var bytes_written: Int
             if self.buffered() == 0:
                 # Large write, empty buffer.
@@ -806,8 +804,7 @@ struct Writer[W: io.Writer](
         Returns:
             The number of bytes written.
         """
-        var src_bytes = Bytes(src)
-        return self.write(src_bytes)
+        return self.write(Bytes(src))
 
     fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
         """Implements [io.ReaderFrom]. If the underlying writer

@@ -33,8 +33,8 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
 
     var _vector: Bytes
 
-    fn __init__(inout self):
-        self._vector = Bytes(4096)
+    fn __init__(inout self, size: Int = 4096):
+        self._vector = Bytes(size)
 
     fn __str__(self) -> String:
         """
