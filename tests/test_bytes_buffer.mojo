@@ -17,7 +17,7 @@ fn test_read_byte() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_byte()
-    test.assert_equal(result.get_value(), 72)
+    test.assert_equal(result.unwrap(), 72)
 
 
 fn test_unread_byte() raises:
@@ -25,7 +25,7 @@ fn test_unread_byte() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_byte()
-    test.assert_equal(result.get_value(), 72)
+    test.assert_equal(result.unwrap(), 72)
     test.assert_equal(buf.off, 1)
 
     _ = buf.unread_byte()
@@ -37,7 +37,7 @@ fn test_read_bytes() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_bytes(ord("o"))
-    test.assert_equal(result.get_value(), Bytes("Hello"))
+    test.assert_equal(result.unwrap(), Bytes("Hello"))
 
 
 fn test_read_slice() raises:
@@ -45,7 +45,7 @@ fn test_read_slice() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_slice(5)
-    test.assert_equal(result.get_value(), Bytes("Hello"))
+    test.assert_equal(result.unwrap(), Bytes("Hello"))
 
 
 fn test_read_string() raises:
@@ -53,7 +53,7 @@ fn test_read_string() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_string(ord("o"))
-    test.assert_equal(result.get_value(), Bytes("Hello"))
+    test.assert_equal(result.unwrap(), Bytes("Hello"))
 
 
 fn test_next() raises:

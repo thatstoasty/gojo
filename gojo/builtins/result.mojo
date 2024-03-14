@@ -17,6 +17,10 @@ struct WrappedError(CollectionElement, Stringable):
         return String(self.error)
 
 
+alias ValuePredicateFn = fn[T: CollectionElement](value: T) -> Bool
+alias ErrorPredicateFn = fn(error: Error) -> Bool
+
+
 @value
 struct Result[T: CollectionElement]():
     var value: Optional[T]
@@ -54,13 +58,24 @@ struct Result[T: CollectionElement]():
             return True
         return False
     
+    fn has_error_and(self, f: ErrorPredicateFn) -> Bool:
+        if self.error:
+            return f(self.error.value().error)
+        return False
+    
     fn has_both(self) -> Bool:
         if self.value and self.error:
             return True
         return False
+    
+    fn get_value(self) -> Optional[T]:
+        return self.value
+    
+    fn get_error(self) -> Optional[WrappedError]:
+        return self.error
 
-    fn get_value(self) -> T:
+    fn unwrap(self) -> T:
         return self.value.value()
     
-    fn get_error(self) -> WrappedError:
+    fn unwrap_error(self) -> WrappedError:
         return self.error.value()

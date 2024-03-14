@@ -18,13 +18,12 @@ fn test_read() raises:
     if not result.has_error():
         raise Error("Expected error not raised while testing negative seek.")
 
-    var error = result.get_error()
+    var error = result.unwrap_error()
     if str(error) != NEGATIVE_POSITION_ERROR:
         raise error.error
 
     test.assert_equal(str(error), NEGATIVE_POSITION_ERROR)
     
-
 
 fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
@@ -36,7 +35,7 @@ fn test_read_after_big_seek() raises:
     if not result.has_error():
         raise Error("Expected error not raised while testing negative seek.")
     
-    var error = result.get_error()
+    var error = result.unwrap_error()
     if str(error) != io.EOF:
         raise error.error
 
@@ -110,13 +109,13 @@ fn test_read_and_unread_byte() raises:
     # Read the first byte from the reader.
     var buffer = Bytes(128)
     var result = reader.read_byte()
-    test.assert_equal(result.get_value(), 48)
+    test.assert_equal(result.unwrap(), 48)
     var post_read_position = reader.index
 
     # Unread the first byte from the reader. Read position should be moved back by 1
     result = reader.unread_byte()
     if result.has_error():
-        raise result.get_error().error
+        raise result.unwrap_error().error
     test.assert_equal(reader.index, post_read_position - 1)
 
 

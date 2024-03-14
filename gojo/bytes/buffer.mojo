@@ -276,14 +276,14 @@ struct Buffer(
             if not result.has_value():
                 return Result(total_bytes_read, WrappedError("bytes.Buffer.read_from: reader returned None for bytes read."))
 
-            var bytes_read = result.get_value()
+            var bytes_read = result.unwrap()
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
             
             total_bytes_read += bytes_read
 
             if result.has_error():
-                var error = result.get_error()
+                var error = result.unwrap_error()
                 if String(error) == io.EOF:
                     return Result(total_bytes_read, None)
                 
@@ -343,7 +343,7 @@ struct Buffer(
             if not result.has_value():
                 return Result(Int64(0), WrappedError("bytes.Buffer.read_from: reader returned None for bytes read."))
 
-            var bytes_written = result.get_value()
+            var bytes_written = result.unwrap()
             if bytes_written > bytes_to_write:
                 panic("bytes.Buffer.write_to: invalid write count")
             
@@ -351,7 +351,7 @@ struct Buffer(
             total_bytes_written = Int64(bytes_written)
             
             if result.has_error():
-                var error = result.get_error()
+                var error = result.unwrap_error()
                 return Result(total_bytes_written, error)
             
             # all bytes should have been written, by definition of write method in io.Writer
@@ -550,7 +550,7 @@ struct Buffer(
         if not result.has_value():
             return Result[Bytes](WrappedError("bytes.Buffer.read_bytes: read_slice returned None for bytes."))
 
-        var slice = result.get_value()
+        var slice = result.unwrap()
 
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
@@ -605,7 +605,7 @@ struct Buffer(
         if not result.has_value():
             return Result[String](error=WrappedError("bytes.Buffer.read_string: read_slice returned None for bytes."))
 
-        return Result(String(result.get_value()), result.error)
+        return Result(String(result.unwrap()), result.error)
 
 
 fn new_buffer() -> Buffer:

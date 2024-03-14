@@ -181,7 +181,7 @@ struct Reader(
         if not result.has_value():
             return Result(Int64(0), WrappedError("bytes.Reader.write_to: write returned None for bytes."))
 
-        var write_count = result.get_value()
+        var write_count = result.unwrap()
         if write_count > len(bytes):
             panic("bytes.Reader.write_to: invalid Write count")
 
