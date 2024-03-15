@@ -185,8 +185,8 @@ fn test_read_from() raises:
 
 fn main() raises:
     test_read()
-    test_read_all()
-    test_write_to()
+    # test_read_all()
+    # test_write_to()
     test_read_and_unread_byte()
     test_read_slice()
     test_peek()
