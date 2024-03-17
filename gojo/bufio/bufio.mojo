@@ -95,7 +95,7 @@ struct Reader[R: io.Reader](
 
         # Compares to the length of the entire Bytes object, including 0 initialized positions.
         # IE. var b = Bytes(4096), then trying to write at b[4096] and onwards will fail.
-        if self.write_pos >= len(self.buf):
+        if self.write_pos >= self.buf.size():
             panic("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
@@ -104,8 +104,6 @@ struct Reader[R: io.Reader](
             # TODO: Using temp until slicing can return a Reference
             var temp = Bytes(DEFAULT_BUF_SIZE)
             var result = self.reader.read(temp)
-            if not result.has_value():
-                panic("bufio.Reader.fill: reader returned None for bytes.")
 
             var bytes_read = copy(self.buf, temp, self.write_pos)
             if bytes_read < 0:
@@ -114,7 +112,7 @@ struct Reader[R: io.Reader](
             self.write_pos += bytes_read
 
             if result.has_error():
-                self.err = result.get_error()
+                self.err = result.error
                 return
 
             if bytes_read > 0:
@@ -143,7 +141,7 @@ struct Reader[R: io.Reader](
             number_of_bytes: The number of bytes to peek.
         """
         if number_of_bytes < 0:
-            return Result[Bytes](None, WrappedError(ERR_NEGATIVE_COUNT))
+            return Result(Bytes(), WrappedError(ERR_NEGATIVE_COUNT))
 
         self.last_byte = -1
         self.last_rune_size = -1
@@ -155,7 +153,9 @@ struct Reader[R: io.Reader](
             self.fill()  # self.write_pos-self.read_pos < self.buf.size() => buffer is not full
 
         if number_of_bytes > self.buf.size():
-            return Result(self.buf[self.read_pos:self.write_pos], WrappedError(ERR_BUFFER_FULL))
+            return Result(
+                self.buf[self.read_pos : self.write_pos], WrappedError(ERR_BUFFER_FULL)
+            )
 
         # 0 <= n <= self.buf.size()
         var err: Optional[WrappedError] = None
@@ -211,19 +211,16 @@ struct Reader[R: io.Reader](
         if space_available == 0:
             if self.buffered() > 0:
                 return Result(0, None)
-            print("returning here")
             return Result(0, self.read_error())
 
-        var bytes_read: Int
+        var bytes_read: Int = 0
         if self.read_pos == self.write_pos:
             if dest.available() >= len(self.buf):
                 # Large read, empty buffer.
                 # Read directly into dest to avoid copy.
                 var result = self.reader.read(dest)
-                if not result.has_value():
-                    panic("bufio.Reader.read: reader returned None for bytes.")
-
-                bytes_read = result.unwrap()
+                self.err = result.error
+                bytes_read = result.value
                 if bytes_read < 0:
                     panic(ERR_NEGATIVE_READ)
 
@@ -231,7 +228,6 @@ struct Reader[R: io.Reader](
                     self.last_byte = int(dest[bytes_read - 1])
                     self.last_rune_size = -1
 
-                print("returning here2")
                 return Result(bytes_read, self.read_error())
 
             # One read.
@@ -239,10 +235,8 @@ struct Reader[R: io.Reader](
             self.read_pos = 0
             self.write_pos = 0
             var result = self.reader.read(self.buf)
-            if not result.has_value():
-                panic("bufio.Reader.read: reader returned None for bytes.")
-            
-            bytes_read = result.unwrap()
+
+            bytes_read = result.value
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
@@ -368,16 +362,16 @@ struct Reader[R: io.Reader](
                 line = self.buf[self.read_pos : self.read_pos + i + 1]
                 self.read_pos += i + 1
                 break
-            
+
             # Pending error?
             if self.err:
-                line = self.buf[self.read_pos:self.write_pos]
+                line = self.buf[self.read_pos : self.write_pos]
                 self.read_pos = self.write_pos
                 err = self.read_error()
                 break
 
             # Buffer full?
-            if self.buffered() >= len(self.buf):
+            if self.buffered() >= self.buf.size():
                 self.read_pos = self.write_pos
                 line = self.buf
                 err = WrappedError(ERR_BUFFER_FULL)
@@ -413,13 +407,10 @@ struct Reader[R: io.Reader](
         part of the line returned by read_line.
         """
         var result = self.read_slice(ord("\n"))
-        if not result.has_value():
-            panic("bufio.Reader.read_line: reader returned None for bytes.")
-        
-        var line = result.unwrap()
-        var err = result.unwrap_error()
+        var line = result.value
+        var err = result.error
 
-        if str(err) == ERR_BUFFER_FULL:
+        if err and str(err.value()) == ERR_BUFFER_FULL:
             # Handle the case where "\r\n" straddles the buffer.
             if len(line) > 0 and line[len(line) - 1] == ord("\r"):
                 # Put the '\r' back on buf and drop it from line.
@@ -466,15 +457,12 @@ struct Reader[R: io.Reader](
         var err: Optional[WrappedError] = None
         while True:
             var result = self.read_slice(delim)
-            if not result.has_value():
-                panic("bufio.Reader.collect_fragments: reader returned None for bytes.")
-            
-            var frag = result.unwrap()
+            var frag = result.value
             if not result.has_error():
                 break
-            
-            var read_slice_error = result.unwrap_error()
-            if str(read_slice_error) != ERR_BUFFER_FULL:
+
+            var read_slice_error = result.error
+            if str(read_slice_error.value()) != ERR_BUFFER_FULL:
                 err = read_slice_error
                 break
 
@@ -566,11 +554,8 @@ struct Reader[R: io.Reader](
         self.last_rune_size = -1
 
         var result = self.write_buf(writer)
-        if not result.has_value():
-            panic("bufio.Reader.write_to: writer returned None for bytes.")
-        
-        var bytes_written = result.unwrap()
-        var error = result.get_error()
+        var bytes_written = result.value
+        var error = result.error
         if error:
             return Result(bytes_written, error)
 
@@ -591,10 +576,7 @@ struct Reader[R: io.Reader](
         while self.read_pos < self.write_pos:
             # self.read_pos < self.write_pos => buffer is not empty
             var res = self.write_buf(writer)
-            if not res.has_value():
-                panic("bufio.Reader.write_to: writer returned None for bytes.")
-            
-            var bw = res.unwrap()
+            var bw = res.value
             bytes_written += bw
 
             self.fill()  # buffer is empty
@@ -616,10 +598,7 @@ struct Reader[R: io.Reader](
 
         # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
         var result = writer.write(self.buf[self.read_pos : self.write_pos])
-        if not result.has_value():
-            panic("bufio.Reader.write_buf: writer returned None for bytes.")
-
-        var bytes_written = result.unwrap()
+        var bytes_written = result.value
         if bytes_written < 0:
             panic(ERR_NEGATIVE_WRITE)
 
@@ -731,11 +710,8 @@ struct Writer[W: io.Writer](
             return None
 
         var result = self.writer.write(self.buf[0 : self.bytes_written])
-        if not result.has_value():
-            panic("bufio.Writer.flush: writer returned None for bytes.")
-        
-        var bytes_written = result.unwrap()
-        var error = result.get_error()
+        var bytes_written = result.value
+        var error = result.error
 
         # If the write was short, set a short write error and try to shift up the remaining bytes.
         if bytes_written < self.bytes_written and not error:
@@ -748,7 +724,7 @@ struct Writer[W: io.Writer](
             self.bytes_written -= bytes_written
             self.err = error
             return error
-        
+
         self.bytes_written = 0
         return None
 
@@ -795,18 +771,15 @@ struct Writer[W: io.Writer](
                 # Large write, empty buffer.
                 # write directly from p to avoid copy.
                 var result = self.writer.write(src)
-                if not result.has_value():
-                    panic("bufio.Writer.write: writer returned None for bytes.")
-                
-                bytes_written = result.unwrap()
-                self.err = result.get_error()
+                bytes_written = result.value
+                self.err = result.error
             else:
                 bytes_written = copy(self.buf, src, self.bytes_written)
                 self.bytes_written += bytes_written
                 _ = self.flush()
 
             total_bytes_written += bytes_written
-            src_copy = src[bytes_written:len(src)]
+            src_copy = src[bytes_written : len(src)]
 
         if self.err:
             return Result(total_bytes_written, self.err)
@@ -827,7 +800,7 @@ struct Writer[W: io.Writer](
         # If buffer is full, flush to the underlying writer.
         var err = self.flush()
         if self.available() <= 0 and err:
-            return self.err
+            return Result(0, self.err)
 
         self.buf.append(src)
         self.bytes_written += 1
@@ -904,13 +877,11 @@ struct Writer[W: io.Writer](
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 # TODO: should really be using a slice that returns refs and not a copy.
-                var sl = self.buf[self.bytes_written:len(self.buf)]
+                # Read into remaining unused space in the buffer.
+                var sl = self.buf[self.bytes_written :]
                 var result = reader.read(sl)
-                if not result.has_value():
-                    panic("bufio.Writer.read_from: reader returned None for bytes.")
-                
-                bytes_read = result.unwrap()
-                err = result.get_error()
+                bytes_read = result.value
+                err = result.error
                 _ = copy(self.buf, sl, self.bytes_written)
                 if bytes_read != 0 or err:
                     break
@@ -923,7 +894,7 @@ struct Writer[W: io.Writer](
             total_bytes_written += Int64(bytes_read)
             if err:
                 break
-        
+
         if err and str(err.value()) == io.EOF:
             # If we filled the buffer exactly, flush preemptively.
             if self.available() == 0:

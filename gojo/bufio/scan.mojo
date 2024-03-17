@@ -1,26 +1,11 @@
 import math
 from collections import Optional
 import ..io
-from ..builtins import Bytes, copy
+from ..builtins import Bytes, copy, panic, Result, WrappedError
 from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 
 
 alias MAX_INT: Int = 2147483647
-
-
-@value
-struct WrappedError(CollectionElement, Stringable):
-    """Wrapped Error struct is just to enable the use of optional Errors."""
-
-    var error: Error
-
-    fn __init__(inout self, error: Error = Error()):
-        self.error = error
-
-    fn __str__(self) -> String:
-        return String(self.error)
-
-
 alias Err = Optional[WrappedError]
 
 
@@ -112,7 +97,7 @@ struct Scanner[R: io.Reader]():
             if (self.end > self.start) or self.err:
                 var advance: Int
                 var token = Bytes(size=io.BUFFER_SIZE)
-                var err = Err()
+                var err: Optional[WrappedError] = None
                 var at_eof = False
                 if self.err:
                     at_eof = True
@@ -142,7 +127,7 @@ struct Scanner[R: io.Reader]():
                         # Returning tokens not advancing input at EOF.
                         self.empties += 1
                         if self.empties > MAX_CONSECUTIVE_EMPTY_READS:
-                            raise Error(
+                            panic(
                                 "bufio.Scan: too many empty tokens without progressing"
                             )
 
@@ -194,22 +179,20 @@ struct Scanner[R: io.Reader]():
             while True:
                 var bytes_read: Int = 0
                 var sl = self.buf[self.end : len(self.buf)]
-                var err = Err()
+                var error: Optional[WrappedError] = None
 
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
-                try:
-                    bytes_read = self.reader.read(sl)
-                    _ = copy(self.buf, sl, self.end)
-                    if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
-                        self.set_err(Err(Error(ERR_BAD_READ_COUNT)))
-                        break
-                except e:
-                    # TODO: For some reason the reader isn't throwing eof for scan lines
-                    err = Err(e)
+                var result = self.reader.read(sl)
+                bytes_read = result.value
+                error = result.error
+                _ = copy(self.buf, sl, self.end)
+                if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
+                    self.set_err(Err(ERR_BAD_READ_COUNT))
+                    break
 
                 self.end += bytes_read
-                if err:
-                    self.set_err(err)
+                if error:
+                    self.set_err(error)
                     break
 
                 if bytes_read > 0:
@@ -319,10 +302,14 @@ alias SplitFunction = fn (
 ) raises -> Int
 
 # # Errors returned by Scanner.
-alias ERR_TOO_LONG = "bufio.Scanner: token too long"
-alias ERR_NEGATIVE_ADVANCE = "bufio.Scanner: SplitFunction returns negative advance count"
-alias ERR_ADVANCE_TOO_FAR = "bufio.Scanner: SplitFunction returns advance count beyond input"
-alias ERR_BAD_READ_COUNT = "bufio.Scanner: Read returned impossible count"
+alias ERR_TOO_LONG = Error("bufio.Scanner: token too long")
+alias ERR_NEGATIVE_ADVANCE = Error(
+    "bufio.Scanner: SplitFunction returns negative advance count"
+)
+alias ERR_ADVANCE_TOO_FAR = Error(
+    "bufio.Scanner: SplitFunction returns advance count beyond input"
+)
+alias ERR_BAD_READ_COUNT = Error("bufio.Scanner: Read returned impossible count")
 # ERR_FINAL_TOKEN is a special sentinel error value. It is Intended to be
 # returned by a split function to indicate that the scanning should stop
 # with no error. If the token being delivered with this error is not nil,
@@ -333,7 +320,7 @@ alias ERR_BAD_READ_COUNT = "bufio.Scanner: Read returned impossible count"
 # One could achieve the same behavior with a custom error value but
 # providing one here is tidier.
 # See the emptyFinalToken example for a use of this value.
-alias ERR_FINAL_TOKEN = "final token"
+alias ERR_FINAL_TOKEN = Error("final token")
 
 
 # MAX_SCAN_TOKEN_SIZE is the maximum size used to buffer a token

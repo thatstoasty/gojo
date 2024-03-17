@@ -23,7 +23,7 @@ fn test_read() raises:
         raise error.error
 
     test.assert_equal(str(error), NEGATIVE_POSITION_ERROR)
-    
+
 
 fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
@@ -34,7 +34,7 @@ fn test_read_after_big_seek() raises:
     var result = reader.read(dest)
     if not result.has_error():
         raise Error("Expected error not raised while testing negative seek.")
-    
+
     var error = result.unwrap_error()
     if str(error) != io.EOF:
         raise error.error
@@ -81,7 +81,7 @@ fn test_read_all() raises:
     var test = MojoTest("Testing io.read_all with bytes.Reader")
     var reader = reader.new_reader(Bytes("0123456789"))
     var result = io.read_all(reader)
-    test.assert_equal(str(result), "0123456789")
+    test.assert_equal(str(result.value), "0123456789")
 
 
 fn test_write_to() raises:
@@ -109,13 +109,13 @@ fn test_read_and_unread_byte() raises:
     # Read the first byte from the reader.
     var buffer = Bytes(128)
     var result = reader.read_byte()
-    test.assert_equal(result.unwrap(), 48)
+    test.assert_equal(result.value, 48)
     var post_read_position = reader.index
 
     # Unread the first byte from the reader. Read position should be moved back by 1
-    result = reader.unread_byte()
-    if result.has_error():
-        raise result.unwrap_error().error
+    var err = reader.unread_byte()
+    if err:
+        raise err.value().error
     test.assert_equal(reader.index, post_read_position - 1)
 
 
@@ -129,7 +129,7 @@ fn test_unread_byte_at_beginning() raises:
     var error = reader.unread_byte()
     if str(error.value()) != AT_BEGINNING_ERROR:
         raise error.value().error
-    
+
     test.assert_equal(str(error.value()), AT_BEGINNING_ERROR)
 
 

@@ -55,7 +55,7 @@ struct Reader(
             return Result(0, WrappedError(EOF_ERROR))
 
         self.prev_rune = -1
-        var unread_bytes = self.buffer[int(self.index):len(self.buffer)]
+        var unread_bytes = self.buffer[int(self.index) : len(self.buffer)]
         var bytes_read = copy(dest, unread_bytes)
 
         self.index += bytes_read
@@ -160,7 +160,9 @@ struct Reader(
             return Result(Int64(0), WrappedError("bytes.Reader.seek: invalid whence"))
 
         if position < 0:
-            return Result(Int64(0), WrappedError("bytes.Reader.seek: negative position"))
+            return Result(
+                Int64(0), WrappedError("bytes.Reader.seek: negative position")
+            )
 
         self.index = position
         return Result(position, None)
@@ -176,12 +178,9 @@ struct Reader(
         if self.index >= len(self.buffer):
             return Result(Int64(0), None)
 
-        var bytes = self.buffer[int(self.index):len(self.buffer)]
+        var bytes = self.buffer[int(self.index) : len(self.buffer)]
         var result = writer.write(bytes)
-        if not result.has_value():
-            return Result(Int64(0), WrappedError("bytes.Reader.write_to: write returned None for bytes."))
-
-        var write_count = result.unwrap()
+        var write_count = result.value
         if write_count > len(bytes):
             panic("bytes.Reader.write_to: invalid Write count")
 

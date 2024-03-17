@@ -75,7 +75,8 @@ struct Bytes(Stringable, Sized, CollectionElement):
             end = self.size()
         elif limits.end > self.size() + 1:
             panic(
-                "builtins.Bytes.__getitem__: Index out of range for limits.end. Received: "
+                "builtins.Bytes.__getitem__: Index out of range for limits.end."
+                " Received: "
                 + str(limits.end)
                 + " but the length is "
                 + str((self.size()))

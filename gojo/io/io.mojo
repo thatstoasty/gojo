@@ -34,7 +34,9 @@ fn write_string[W: StringWriter](inout writer: W, string: String) -> Result[Int]
     return writer.write_string(string)
 
 
-fn read_at_least[R: Reader](inout reader: R, inout dest: Bytes, min: Int) -> Result[Int]:
+fn read_at_least[
+    R: Reader
+](inout reader: R, inout dest: Bytes, min: Int) -> Result[Int]:
     """Reads from r into buf until it has read at least min bytes.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -58,13 +60,10 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: Bytes, min: Int) -> Res
     var total_bytes_read: Int = 0
     while total_bytes_read < min and not error:
         var result = reader.read(dest)
-        if not result.has_value():
-            panic("Reader.read returned None for bytes.")
-
-        var bytes_read = result.unwrap()
-        var error = result.get_error()
+        var bytes_read = result.value
+        var error = result.error
         total_bytes_read += bytes_read
-    
+
     if total_bytes_read >= min:
         error = None
     elif total_bytes_read > 0 and str(error.value()):
@@ -420,24 +419,25 @@ fn read_all[R: Reader](inout reader: R) -> Result[Bytes]:
 
     Returns:
         The data read."""
-    var error: Optional[WrappedError] = None
-    var dest = Bytes(512)
+    var dest = Bytes(BUFFER_SIZE)
     var index: Int = 0
+    var at_eof: Bool = False
 
     while True:
         var temp = Bytes(BUFFER_SIZE)
         var result = reader.read(temp)
-        if not result.has_value():
-            panic("io.read_all: Reader.read returned None for bytes.")
+        var bytes_read = result.value
+        if result.error:
+            if str(result.unwrap_error()) != EOF:
+                return Result(dest, result.unwrap_error())
 
-        var bytes_read = result.unwrap()
-        error = result.get_error()
-        if error:
-            if str(error.value()) == EOF:
-                error = None
-            return Result(dest, error)
+            at_eof = True
 
         # If new bytes will overflow the result, resize it.
+        # if some bytes were written, how do I append before returning result on the last one?
         if len(dest) + len(temp) > dest.size():
             dest.resize(dest.size() * 2)
         dest += temp
+
+        if at_eof:
+            return Result(dest, result.unwrap_error())

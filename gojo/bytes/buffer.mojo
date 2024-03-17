@@ -230,7 +230,7 @@ struct Buffer(
         write_at, ok = self.try_grow_by_reslice(len(src))
         if not ok:
             write_at = self.grow(len(src))
-        
+
         return Result(copy(self.buf, src, write_at), None)
 
     fn write_string(inout self, src: String) -> Result[Int]:
@@ -271,22 +271,17 @@ struct Buffer(
             _ = self.grow(MIN_READ)
 
             var result = reader.read(self.buf)
-
-            # If the reader returned None, return an error. If no bytes were read, it should return 0.
-            if not result.has_value():
-                return Result(total_bytes_read, WrappedError("bytes.Buffer.read_from: reader returned None for bytes read."))
-
-            var bytes_read = result.unwrap()
+            var bytes_read = result.value
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
-            
+
             total_bytes_read += bytes_read
 
             if result.has_error():
-                var error = result.unwrap_error()
-                if String(error) == io.EOF:
+                var error = result.error
+                if String(error.value()) == io.EOF:
                     return Result(total_bytes_read, None)
-                
+
                 return Result(total_bytes_read, error)
 
     fn grow_slice(self, inout b: Bytes, n: Int) -> Bytes:
@@ -338,22 +333,17 @@ struct Buffer(
             # TODO: Replace usage of this intermeidate slice when normal slicing, once slice references work.
             var sl = self.buf[self.off : bytes_to_write]
             var result = writer.write(sl)
-
-            # If the writer returned None, return an error. If no bytes were written, it should return 0.
-            if not result.has_value():
-                return Result(Int64(0), WrappedError("bytes.Buffer.read_from: reader returned None for bytes read."))
-
-            var bytes_written = result.unwrap()
+            var bytes_written = result.value
             if bytes_written > bytes_to_write:
                 panic("bytes.Buffer.write_to: invalid write count")
-            
+
             self.off += bytes_written
             total_bytes_written = Int64(bytes_written)
-            
+
             if result.has_error():
-                var error = result.unwrap_error()
+                var error = result.error
                 return Result(total_bytes_written, error)
-            
+
             # all bytes should have been written, by definition of write method in io.Writer
             if bytes_written != bytes_to_write:
                 return Result(total_bytes_written, WrappedError(ERR_SHORT_WRITE))
@@ -527,7 +517,7 @@ struct Buffer(
         self.last_read = OP_INVALID
         if self.off > 0:
             self.off -= 1
-        
+
         return None
 
     fn read_bytes(inout self, delim: Byte) -> Result[Bytes]:
@@ -545,12 +535,7 @@ struct Buffer(
             A Bytes struct containing the data up to and including the delimiter.
         """
         var result = self.read_slice(delim)
-
-        # If the reader returned None, return an error. If no bytes were read, it should return 0.
-        if not result.has_value():
-            return Result[Bytes](WrappedError("bytes.Buffer.read_bytes: read_slice returned None for bytes."))
-
-        var slice = result.unwrap()
+        var slice = result.value
 
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
@@ -602,10 +587,7 @@ struct Buffer(
             A string containing the data up to and including the delimiter.
         """
         var result = self.read_slice(delim)
-        if not result.has_value():
-            return Result[String](error=WrappedError("bytes.Buffer.read_string: read_slice returned None for bytes."))
-
-        return Result(String(result.unwrap()), result.error)
+        return Result(String(result.value), result.error)
 
 
 fn new_buffer() -> Buffer:

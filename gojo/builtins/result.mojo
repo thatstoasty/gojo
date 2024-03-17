@@ -9,21 +9,21 @@ struct WrappedError(CollectionElement, Stringable):
 
     fn __init__(inout self, error: Error = Error()):
         self.error = error
-    
+
     fn __init__[T: Stringable](inout self, message: T):
         self.error = Error(message)
 
     fn __str__(self) -> String:
-        return String(self.error)
+        return self.error._message()
 
 
-alias ValuePredicateFn = fn[T: CollectionElement](value: T) -> Bool
-alias ErrorPredicateFn = fn(error: Error) -> Bool
+alias ValuePredicateFn = fn[T: CollectionElement] (value: T) -> Bool
+alias ErrorPredicateFn = fn (error: Error) -> Bool
 
 
 @value
 struct Result[T: CollectionElement]():
-    var value: Optional[T]
+    var value: T
     var error: Optional[WrappedError]
 
     fn __init__(
@@ -32,14 +32,7 @@ struct Result[T: CollectionElement]():
     ):
         self.value = value
         self.error = None
-    
-    fn __init__(
-        inout self,
-        error: Optional[WrappedError],
-    ):
-        self.value = None
-        self.error = error
-    
+
     fn __init__(
         inout self,
         value: T,
@@ -47,35 +40,16 @@ struct Result[T: CollectionElement]():
     ):
         self.value = value
         self.error = error
-    
-    fn has_value(self) -> Bool:
-        if self.value:
-            return True
-        return False
-    
+
     fn has_error(self) -> Bool:
         if self.error:
             return True
         return False
-    
+
     fn has_error_and(self, f: ErrorPredicateFn) -> Bool:
         if self.error:
             return f(self.error.value().error)
         return False
-    
-    fn has_both(self) -> Bool:
-        if self.value and self.error:
-            return True
-        return False
-    
-    fn get_value(self) -> Optional[T]:
-        return self.value
-    
-    fn get_error(self) -> Optional[WrappedError]:
-        return self.error
 
-    fn unwrap(self) -> T:
-        return self.value.value()
-    
     fn unwrap_error(self) -> WrappedError:
         return self.error.value()

@@ -28,7 +28,7 @@ fn test_read_all() raises:
     var buf = buffer.new_buffer(s)
     var reader = Reader(buf)
     var result = read_all(reader)
-    test.assert_equal(str(result.unwrap()), "0123456789")
+    test.assert_equal(str(result.value), "0123456789")
 
 
 fn test_write_to() raises:
@@ -56,7 +56,7 @@ fn test_read_and_unread_byte() raises:
     var reader = Reader(buf)
     var buffer = Bytes(512)
     var result = reader.read_byte()
-    test.assert_equal(result.unwrap(), 72)
+    test.assert_equal(result.value, 72)
     var post_read_position = reader.read_pos
 
     # Unread the first byte from the reader. Read position should be moved back by 1
@@ -70,7 +70,7 @@ fn test_read_slice() raises:
     var reader = Reader(buf)
 
     var result = reader.read_slice(ord(5))
-    test.assert_equal(result.unwrap(), "012345")
+    test.assert_equal(result.value, "012345")
 
 
 fn test_read_bytes() raises:
@@ -79,7 +79,7 @@ fn test_read_bytes() raises:
     var reader = Reader(buf)
 
     var result = reader.read_bytes(ord("\n"))
-    test.assert_equal(result.unwrap(), "01234")
+    test.assert_equal(result.value, "01234")
 
 
 # TODO: read_line is broken until Mojo support unpacking Memory only types from return Tuples.
@@ -102,8 +102,8 @@ fn test_peek() raises:
     # Peek doesn't advance the reader, so we should see the same content twice.
     var result = reader.peek(5)
     var second_result = reader.peek(5)
-    test.assert_equal(result.unwrap(), "01234")
-    test.assert_equal(second_result.unwrap(), "01234")
+    test.assert_equal(result.value, "01234")
+    test.assert_equal(second_result.value, "01234")
 
 
 fn test_discard() raises:
@@ -112,11 +112,11 @@ fn test_discard() raises:
     var reader = Reader(buf)
 
     var result = reader.discard(5)
-    test.assert_equal(result.unwrap(), 5)
+    test.assert_equal(result.value, 5)
 
     # Peek doesn't advance the reader, so we should see the same content twice.
     var second_result = reader.peek(5)
-    test.assert_equal(second_result.unwrap(), "56789")
+    test.assert_equal(second_result.value, "56789")
 
 
 fn test_write() raises:
@@ -131,7 +131,7 @@ fn test_write() raises:
     var result = writer.write(src)
     _ = writer.flush()
 
-    test.assert_equal(result.unwrap(), 10)
+    test.assert_equal(result.value, 10)
     test.assert_equal(str(writer.writer), "0123456789")
 
 
@@ -146,7 +146,7 @@ fn test_write_byte() raises:
     var result = writer.write_byte(32)
     _ = writer.flush()
 
-    test.assert_equal(result.unwrap(), 1)
+    test.assert_equal(result.value, 1)
     test.assert_equal(str(writer.writer), "Hello ")
 
 
@@ -161,7 +161,7 @@ fn test_write_string() raises:
     var result = writer.write_string(" World!")
     _ = writer.flush()
 
-    test.assert_equal(result.unwrap(), 7)
+    test.assert_equal(result.value, 7)
     test.assert_equal(str(writer.writer), "Hello World!")
 
 
@@ -179,7 +179,7 @@ fn test_read_from() raises:
     var result = writer.read_from(reader_from)
     _ = writer.flush()
 
-    test.assert_equal(result.unwrap(), 7)
+    test.assert_equal(result.value, 7)
     test.assert_equal(str(writer.writer), "Hello World!")
 
 

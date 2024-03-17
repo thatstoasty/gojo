@@ -1,3 +1,4 @@
+from collections.optional import Optional
 from ..builtins import Bytes, Byte, copy, Result, WrappedError
 from .io import BUFFER_SIZE
 
@@ -25,35 +26,48 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
+        var bytes_to_read = dest.available()
         try:
-            var result = self.handle.read(dest.available())
+            result = self.handle.read(bytes_to_read)
         except e:
             return Result(0, WrappedError(e))
-        
-        if len(result) == 0:
+
+        var bytes_read = len(result)
+        if bytes_read == 0:
             return Result(0, WrappedError(io.EOF))
 
         var bytes_result = Bytes(result)
-        var elements_copied = copy(dest, bytes_result[: len(bytes_result)])
-        dest = dest[:elements_copied]
-        return elements_copied
+        var elements_copied = copy(dest, bytes_result[:bytes_read])
+        # dest = dest[:elements_copied]
+
+        var err: Optional[WrappedError] = None
+        if elements_copied < bytes_to_read:
+            err = WrappedError(io.EOF)
+
+        return Result(elements_copied, err)
 
     fn read(inout self, inout dest: Bytes, size: Int64) -> Result[Int]:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
         try:
-            var result = self.handle.read(size)
+            result = self.handle.read(size)
         except e:
             return Result(0, WrappedError(e))
-        
-        if len(result) == 0:
+
+        var bytes_read = len(result)
+        if bytes_read == 0:
             return Result(0, WrappedError(io.EOF))
 
         var bytes_result = Bytes(result)
-        var elements_copied = copy(dest, bytes_result[: len(bytes_result)])
+        var elements_copied = copy(dest, bytes_result[:bytes_read])
         dest = dest[:elements_copied]
-        return elements_copied
+
+        var err: Optional[WrappedError] = None
+        if elements_copied < int(size):
+            err = WrappedError(io.EOF)
+
+        return Result(elements_copied, err)
 
     fn read_all(inout self) -> Result[Bytes]:
         var bytes = Bytes(BUFFER_SIZE)
@@ -68,8 +82,6 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
             if len(temp) < BUFFER_SIZE:
                 return Result(bytes, WrappedError(io.EOF))
-
-        return Result(bytes)
 
     fn read_byte(inout self) -> Result[Byte]:
         try:
@@ -88,7 +100,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         inout self, inout dest: Bytes, delimiter: Int8, max_size: Int
     ) raises:
         for i in range(max_size):
-            var byte = self.read_byte().unwrap()
+            var byte = self.read_byte().value
             if byte == delimiter:
                 return
             dest.append(byte)

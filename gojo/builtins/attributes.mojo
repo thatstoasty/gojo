@@ -1,6 +1,6 @@
-fn copy[T: CollectionElement](
-    inout target: DynamicVector[T], source: DynamicVector[T], start: Int = 0
-) -> Int:
+fn copy[
+    T: CollectionElement
+](inout target: DynamicVector[T], source: DynamicVector[T], start: Int = 0) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
 
@@ -61,4 +61,3 @@ fn cap[T: CollectionElement](iterable: DynamicVector[T]) -> Int:
         iterable: The DynamicVector to get the capacity of.
     """
     return iterable.capacity
-
