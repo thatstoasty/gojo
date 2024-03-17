@@ -4,17 +4,30 @@ from .io import BUFFER_SIZE
 
 struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     var handle: FileHandle
+    var path: String
+    var mode: String
 
-    fn __init__(inout self, path: String, mode: StringLiteral) raises:
+    fn __init__(inout self, path: String, mode: String) raises:
         self.handle = open(path, mode)
+        self.path = path
+        self.mode = mode
 
     fn __moveinit__(inout self, owned existing: Self):
         self.handle = existing.handle ^
+        self.path = existing.path ^
+        self.mode = existing.mode ^
+    
+    fn __enter__(inout self) raises -> Self:
+        self.close()
+        return Self(self.path, self.mode)
+    
+    fn __exit__(inout self) raises:
+        self.close()
 
     fn __del__(owned self):
         try:
             self.close()
-        except Error:
+        except e:
             # TODO: __del__ can't raise, but there should be some fallback.
             print("Failed to close the file.")
 

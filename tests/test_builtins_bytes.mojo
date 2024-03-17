@@ -68,7 +68,7 @@ fn test_size_and_len():
     var test = MojoTest("Testing builtins.Bytes.size and builtins.Bytes.__len__")
     var bytes = Bytes(4096)
 
-    # Size is the number of bytes used, len is the number of bytes allocated.
+    # Len is the number of bytes used, size is the number of bytes allocated.
     test.assert_equal(bytes.size(), 4096)
     test.assert_equal(len(bytes), 0)
 
