@@ -116,6 +116,6 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn write(inout self, src: Bytes) -> Result[Int]:
         try:
             self.handle.write(String(src))
-            return len(src)
+            return Result(len(src), WrappedError(io.EOF))
         except e:
             return Result(0, WrappedError(e))

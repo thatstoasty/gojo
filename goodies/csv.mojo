@@ -15,6 +15,7 @@ struct CSVReader[R: io.Reader]():
     fn __moveinit__(inout self, owned existing: Self):
         self.reader = existing.reader ^
     
+    # TODO: This is slicing off the very last character of the file
     fn read_lines(inout self, lines_to_read: Int, delimiter: String, column_count: Int = 1) raises -> CsvTable:
         var lines_remaining = lines_to_read
         var builder = CsvBuilder(column_count)
@@ -25,33 +26,56 @@ struct CSVReader[R: io.Reader]():
                     raise result.unwrap_error().error
             
             # read_string includes the delimiter in the result, so we slice off whatever the length of the delimiter is from the end
-            builder.push(result.value[:(-1 * len(delimiter))])
+            var fields = result.value[:(-1 * len(delimiter))].split(",")
+            for field in fields:
+                builder.push(field[])
             lines_remaining -= 1
 
         return CsvTable(builder^.finish())
 
 
-struct CSVWriter():
-    var file: FileWrapper
-    var buffer: Bytes
+struct CSVWriter[W: io.Writer]():
+    var writer: bufio.Writer[W]
 
-    fn __init__(inout self, path: String, mode: String) raises:
-        self.file = FileWrapper(path, mode)
-        self.buffer = Bytes(4096)
+    fn __init__(inout self, owned writer: W) raises:
+        self.writer = bufio.Writer(writer ^)
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.file = existing.file ^
-        self.buffer = existing.buffer ^
+        self.writer = existing.writer ^
     
-    fn write(inout self, src: Bytes) raises -> Int:
-        if src.size() + self.buffer.available() > len(self.buffer):
-            self.flush()
-
-        self.buffer.extend(src)
-        return src.size()
+    fn write(inout self, src: CsvTable) raises -> Int:
+        var result = self.writer.write_string(src._inner_string)
+        if result.has_error():
+            var error = result.unwrap_error()
+            if str(error) != io.EOF:
+                raise error.error
+        
+        # Flush remaining contents of buffer
+        var error = self.writer.flush()
+        if error:
+            var err = error.value().error
+            if str(err) != io.EOF:
+                raise err
+                
+        return result.value
     
-    fn flush(inout self) raises:
-        if self.buffer.size() > 0:
-            var builder = CsvBuilder(1)
-            builder.push(self.buffer)
-            _ = self.file.write(builder^.finish())
+    fn write(inout self, src: DynamicVector[String]) raises -> Int:
+        var bytes_written: Int = 0
+        for row in src:
+            var result = self.writer.write_string(row[] + "\r\n")
+            if result.has_error():
+                var error = result.unwrap_error()
+                if str(error) != io.EOF:
+                    raise error.error
+            
+            bytes_written += result.value
+        
+        # Flush remaining contents of buffer
+        var error = self.writer.flush()
+        if error:
+            var err = error.value().error
+            if str(err) != io.EOF:
+                raise err
+        
+        return bytes_written
+    

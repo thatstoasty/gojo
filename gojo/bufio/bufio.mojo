@@ -697,7 +697,7 @@ struct Writer[W: io.Writer](
         # if self.buf == nil:
         #     self.buf = make(Bytes, DEFAULT_BUF_SIZE)
 
-        # self.err = nil
+        self.err = None
         self.bytes_written = 0
         self.writer = writer ^
 
@@ -770,16 +770,16 @@ struct Writer[W: io.Writer](
             if self.buffered() == 0:
                 # Large write, empty buffer.
                 # write directly from p to avoid copy.
-                var result = self.writer.write(src)
+                var result = self.writer.write(src_copy)
                 bytes_written = result.value
                 self.err = result.get_error()
             else:
-                bytes_written = copy(self.buf, src, self.bytes_written)
+                bytes_written = copy(self.buf, src_copy, self.bytes_written)
                 self.bytes_written += bytes_written
                 _ = self.flush()
 
             total_bytes_written += bytes_written
-            src_copy = src[bytes_written : len(src)]
+            src_copy = src_copy[bytes_written : len(src_copy)]
 
         if self.err:
             return Result(total_bytes_written, self.err)
@@ -847,8 +847,7 @@ struct Writer[W: io.Writer](
         Returns:
             The number of bytes written.
         """
-        var src_bytes = Bytes(src)
-        return self.write(src_bytes)
+        return self.write(Bytes(src))
 
     fn read_from[R: io.Reader](inout self, inout reader: R) -> Result[Int64]:
         """Implements [io.ReaderFrom]. If the underlying writer

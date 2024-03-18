@@ -1,3 +1,4 @@
+from tests.wrapper import MojoTest
 from gojo.builtins import Bytes
 from external.csv import CsvBuilder, CsvTable
 from goodies import FileWrapper, CSVReader, CSVWriter
@@ -24,19 +25,33 @@ fn read_csv() raises:
         print(data)
 
 
+# TODO: Last field is getting clipped?
 fn csv_reader() raises:
+    var test = MojoTest("Testing goodies.CSVReader")
     var file = FileWrapper("tests/data/test_read.csv", "r")
     var reader = CSVReader(file ^)
     var csv = reader.read_lines(3, "\n", 3)
     print(csv._inner_string)
-    var data = csv.get(0, 0)
-    print(data)
+    test.assert_equal(csv.get(0, 0), "Hello")
+    test.assert_equal(csv.get(1, 0), "Goodbye")
+    test.assert_equal(csv.get(2, 2), "Dolor")
 
 
 fn csv_writer() raises:
-    var writer = CSVWriter("tests/data/test_write.csv", "w")
-    _ = writer.write(Bytes("Hello,World,I am here"))
-    writer.flush()
+    var test = MojoTest("Testing goodies.CSVWriter")
+    
+    # Build CSV dataframe like structure and write to file
+    var builder = CsvBuilder("a", "b", "c")
+    for i in range(10):
+        builder.push("Hello")
+        builder.push("World")
+        builder.push("I am here")
+    var csv = CsvTable(builder^.finish())
+    var file = FileWrapper("tests/data/test_write.csv", "w")
+    var writer = CSVWriter(file ^)
+    var bytes_written = writer.write(csv)
+
+    test.assert_equal(bytes_written, 237)
 
 
 fn main() raises:

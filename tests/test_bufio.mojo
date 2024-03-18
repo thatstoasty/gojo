@@ -22,6 +22,7 @@ fn test_read() raises:
     test.assert_equal(dest, "Hello World!")
 
 
+# Getting index out of range error
 fn test_read_all() raises:
     var test = MojoTest("Testing bufio.Reader with io.read_all")
 
@@ -166,7 +167,6 @@ fn test_write_string() raises:
     test.assert_equal(str(writer.writer), "Hello World!")
 
 
-# TODO: Loops for awhile without reading anything. Need to fix.
 fn test_read_from() raises:
     var test = MojoTest("Testing bufio.Writer.read_from")
 
@@ -184,10 +184,11 @@ fn test_read_from() raises:
     test.assert_equal(str(writer.writer), "Hello World!")
 
 
+# TODO: Add big file read/write to make sure buffer usage is correct
 fn main() raises:
     test_read()
     # test_read_all()
-    # test_write_to()
+    test_write_to()
     test_read_and_unread_byte()
     test_read_slice()
     test_peek()
