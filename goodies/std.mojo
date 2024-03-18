@@ -1,9 +1,10 @@
 from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from ..builtins import Bytes, Byte, Result, WrappedError
+from gojo.builtins import Bytes, Byte, Result, WrappedError
+import gojo.io
 
 
 @value
-struct STDWriter(Copyable, Writer, StringWriter):
+struct STDWriter(Copyable, io.Writer, io.StringWriter):
     """A writer for POSIX file descriptors."""
 
     var fd: Int
@@ -64,6 +65,6 @@ struct STDWriter(Copyable, Writer, StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var buffer = Bytes(4096)
+        var buffer = Bytes(io.BUFFER_SIZE)
         _ = reader.read(buffer)
         return self.write(buffer)

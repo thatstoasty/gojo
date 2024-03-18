@@ -1,7 +1,7 @@
 from time import now
 from gojo.strings import StringBuilder
 from gojo.bytes import buffer
-from gojo.io.std_writer import STDWriter
+from goodies import STDWriter
 
 
 fn test_string_builder() raises:

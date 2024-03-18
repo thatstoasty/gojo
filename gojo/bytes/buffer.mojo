@@ -278,7 +278,7 @@ struct Buffer(
             total_bytes_read += bytes_read
 
             if result.has_error():
-                var error = result.error
+                var error = result.get_error()
                 if String(error.value()) == io.EOF:
                     return Result(total_bytes_read, None)
 
@@ -341,7 +341,7 @@ struct Buffer(
             total_bytes_written = Int64(bytes_written)
 
             if result.has_error():
-                var error = result.error
+                var error = result.get_error()
                 return Result(total_bytes_written, error)
 
             # all bytes should have been written, by definition of write method in io.Writer
@@ -587,7 +587,7 @@ struct Buffer(
             A string containing the data up to and including the delimiter.
         """
         var result = self.read_slice(delim)
-        return Result(String(result.value), result.error)
+        return Result(String(result.value), result.get_error())
 
 
 fn new_buffer() -> Buffer:

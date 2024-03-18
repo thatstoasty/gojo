@@ -1,6 +1,6 @@
 from collections.optional import Optional
-from ..builtins import Bytes, Byte, copy, Result, WrappedError
-from .io import BUFFER_SIZE
+from gojo.builtins import Bytes, Byte, copy, Result, WrappedError
+import gojo.io
 
 
 struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
@@ -70,17 +70,17 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         return Result(elements_copied, err)
 
     fn read_all(inout self) -> Result[Bytes]:
-        var bytes = Bytes(BUFFER_SIZE)
+        var bytes = Bytes(io.BUFFER_SIZE)
         while True:
-            var temp = Bytes(BUFFER_SIZE)
-            _ = self.read(temp, BUFFER_SIZE)
+            var temp = Bytes(io.BUFFER_SIZE)
+            _ = self.read(temp, io.BUFFER_SIZE)
 
             # If new bytes will overflow the result, resize it.
             if len(bytes) + len(temp) > bytes.size():
                 bytes.resize(bytes.size() * 2)
             bytes += temp
 
-            if len(temp) < BUFFER_SIZE:
+            if len(temp) < io.BUFFER_SIZE:
                 return Result(bytes, WrappedError(io.EOF))
 
     fn read_byte(inout self) -> Result[Byte]:

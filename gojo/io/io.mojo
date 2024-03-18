@@ -61,7 +61,7 @@ fn read_at_least[
     while total_bytes_read < min and not error:
         var result = reader.read(dest)
         var bytes_read = result.value
-        var error = result.error
+        var error = result.get_error()
         total_bytes_read += bytes_read
 
     if total_bytes_read >= min:
@@ -427,7 +427,7 @@ fn read_all[R: Reader](inout reader: R) -> Result[Bytes]:
         var temp = Bytes(BUFFER_SIZE)
         var result = reader.read(temp)
         var bytes_read = result.value
-        if result.error:
+        if result.get_error():
             if str(result.unwrap_error()) != EOF:
                 return Result(dest, result.unwrap_error())
 

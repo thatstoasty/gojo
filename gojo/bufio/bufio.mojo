@@ -112,7 +112,7 @@ struct Reader[R: io.Reader](
             self.write_pos += bytes_read
 
             if result.has_error():
-                self.err = result.error
+                self.err = result.get_error()
                 return
 
             if bytes_read > 0:
@@ -219,7 +219,7 @@ struct Reader[R: io.Reader](
                 # Large read, empty buffer.
                 # Read directly into dest to avoid copy.
                 var result = self.reader.read(dest)
-                self.err = result.error
+                self.err = result.get_error()
                 bytes_read = result.value
                 if bytes_read < 0:
                     panic(ERR_NEGATIVE_READ)
@@ -408,7 +408,7 @@ struct Reader[R: io.Reader](
         """
         var result = self.read_slice(ord("\n"))
         var line = result.value
-        var err = result.error
+        var err = result.get_error()
 
         if err and str(err.value()) == ERR_BUFFER_FULL:
             # Handle the case where "\r\n" straddles the buffer.
@@ -461,7 +461,7 @@ struct Reader[R: io.Reader](
             if not result.has_error():
                 break
 
-            var read_slice_error = result.error
+            var read_slice_error = result.get_error()
             if str(read_slice_error.value()) != ERR_BUFFER_FULL:
                 err = read_slice_error
                 break
@@ -555,7 +555,7 @@ struct Reader[R: io.Reader](
 
         var result = self.write_buf(writer)
         var bytes_written = result.value
-        var error = result.error
+        var error = result.get_error()
         if error:
             return Result(bytes_written, error)
 
@@ -711,7 +711,7 @@ struct Writer[W: io.Writer](
 
         var result = self.writer.write(self.buf[0 : self.bytes_written])
         var bytes_written = result.value
-        var error = result.error
+        var error = result.get_error()
 
         # If the write was short, set a short write error and try to shift up the remaining bytes.
         if bytes_written < self.bytes_written and not error:
@@ -772,7 +772,7 @@ struct Writer[W: io.Writer](
                 # write directly from p to avoid copy.
                 var result = self.writer.write(src)
                 bytes_written = result.value
-                self.err = result.error
+                self.err = result.get_error()
             else:
                 bytes_written = copy(self.buf, src, self.bytes_written)
                 self.bytes_written += bytes_written
@@ -881,7 +881,7 @@ struct Writer[W: io.Writer](
                 var sl = self.buf[self.bytes_written :]
                 var result = reader.read(sl)
                 bytes_read = result.value
-                err = result.error
+                err = result.get_error()
                 _ = copy(self.buf, sl, self.bytes_written)
                 if bytes_read != 0 or err:
                     break

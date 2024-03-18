@@ -2,7 +2,7 @@ from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins._bytes import Bytes
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
-from gojo.io import FileWrapper
+from goodies import FileWrapper
 
 
 fn test_scan_words() raises:

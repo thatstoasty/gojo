@@ -1,6 +1,6 @@
-from gojo.io import FileWrapper
 from gojo.builtins import Bytes
 from external.csv import CsvBuilder, CsvTable
+from .file import FileWrapper
 
 
 struct CSVReader():
@@ -13,10 +13,14 @@ struct CSVReader():
 
     fn __moveinit__(inout self, owned existing: Self):
         self.file = existing.file ^
-        self.buffer = existing.buffer
+        self.buffer = existing.buffer ^
     
     fn read(inout self, column_count: Int = 1) raises -> CsvTable:
-        self.buffer = self.file.read_all()
+        var result = self.file.read_all()
+        if result.has_error():
+            raise result.unwrap_error().error
+
+        self.buffer = result.value
         var builder = CsvBuilder(column_count)
         builder.push(self.buffer)
 
@@ -33,7 +37,7 @@ struct CSVWriter():
 
     fn __moveinit__(inout self, owned existing: Self):
         self.file = existing.file ^
-        self.buffer = existing.buffer
+        self.buffer = existing.buffer ^
     
     fn write(inout self, src: Bytes) raises -> Int:
         if src.size() + self.buffer.available() > len(self.buffer):

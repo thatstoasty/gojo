@@ -2,7 +2,8 @@ from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins import Bytes, Result, WrappedError
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
-from gojo.io import FileWrapper, read_all
+from gojo.io import read_all
+from goodies import FileWrapper
 
 
 fn test_read() raises:

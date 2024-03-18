@@ -1,11 +1,11 @@
 from tests.wrapper import MojoTest
-from gojo.io.file import FileWrapper
 from gojo.builtins import Bytes
 from gojo.io import read_all
+from goodies import FileWrapper
 
 
 fn test_read() raises:
-    var test = MojoTest("Testing io.FileWrapper.read")
+    var test = MojoTest("Testing goodies.FileWrapper.read")
     var file = FileWrapper("tests/data/test.txt", "r")
     var dest = Bytes(128)
     _ = file.read(dest)
@@ -13,7 +13,7 @@ fn test_read() raises:
 
 
 fn test_read_all() raises:
-    var test = MojoTest("Testing io.FileWrapper.read_all")
+    var test = MojoTest("Testing goodies.FileWrapper.read_all")
     var file = FileWrapper("tests/data/test_big_file.txt", "r")
     var result = file.read_all()
     test.assert_equal(len(result.value), 15358)
@@ -24,7 +24,7 @@ fn test_read_all() raises:
 
 
 fn test_io_read_all() raises:
-    var test = MojoTest("Testing io.read_all with io.FileWrapper")
+    var test = MojoTest("Testing io.read_all with goodies.FileWrapper")
     var file = FileWrapper("tests/data/test_big_file.txt", "r")
     var result = read_all(file)
     test.assert_equal(len(result.value), 15358)
@@ -35,13 +35,13 @@ fn test_io_read_all() raises:
 
 
 fn test_read_byte() raises:
-    var test = MojoTest("Testing io.FileWrapper.read_byte")
+    var test = MojoTest("Testing goodies.FileWrapper.read_byte")
     var file = FileWrapper("tests/data/test.txt", "r")
     test.assert_equal(file.read_byte().value, 49)
 
 
 fn test_write() raises:
-    var test = MojoTest("Testing io.FileWrapper.write")
+    var test = MojoTest("Testing goodies.FileWrapper.write")
     var file = FileWrapper("tests/data/test_write.txt", "w")
     var src = Bytes("12345")
     var bytes_written = file.write(src)

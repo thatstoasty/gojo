@@ -51,5 +51,8 @@ struct Result[T: CollectionElement]():
             return f(self.error.value().error)
         return False
 
+    fn get_error(self) -> Optional[WrappedError]:
+        return self.error
+
     fn unwrap_error(self) -> WrappedError:
         return self.error.value()
