@@ -1,28 +1,32 @@
 from gojo.builtins import Bytes
+import gojo.io
+import gojo.bufio
+from gojo.strings import StringBuilder
 from external.csv import CsvBuilder, CsvTable
 from .file import FileWrapper
 
 
-struct CSVReader():
-    var file: FileWrapper
-    var buffer: Bytes
+struct CSVReader[R: io.Reader]():
+    var reader: bufio.Reader[R]
 
-    fn __init__(inout self, path: String, mode: StringLiteral) raises:
-        self.file = FileWrapper(path, mode)
-        self.buffer = Bytes(4096)
+    fn __init__(inout self, owned reader: R) raises:
+        self.reader = bufio.Reader(reader ^)
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.file = existing.file ^
-        self.buffer = existing.buffer ^
+        self.reader = existing.reader ^
     
-    fn read(inout self, column_count: Int = 1) raises -> CsvTable:
-        var result = self.file.read_all()
-        if result.has_error():
-            raise result.unwrap_error().error
-
-        self.buffer = result.value
+    fn read_lines(inout self, lines_to_read: Int, delimiter: String, column_count: Int = 1) raises -> CsvTable:
+        var lines_remaining = lines_to_read
         var builder = CsvBuilder(column_count)
-        builder.push(self.buffer)
+        while lines_remaining != 0:
+            var result = self.reader.read_string(ord(delimiter))
+            if result.has_error():
+                if str(result.unwrap_error()) != io.EOF:
+                    raise result.unwrap_error().error
+            
+            # read_string includes the delimiter in the result, so we slice off whatever the length of the delimiter is from the end
+            builder.push(result.value[:(-1 * len(delimiter))])
+            lines_remaining -= 1
 
         return CsvTable(builder^.finish())
 
@@ -31,7 +35,7 @@ struct CSVWriter():
     var file: FileWrapper
     var buffer: Bytes
 
-    fn __init__(inout self, path: String, mode: StringLiteral) raises:
+    fn __init__(inout self, path: String, mode: String) raises:
         self.file = FileWrapper(path, mode)
         self.buffer = Bytes(4096)
 
@@ -51,44 +55,3 @@ struct CSVWriter():
             var builder = CsvBuilder(1)
             builder.push(self.buffer)
             _ = self.file.write(builder^.finish())
-
-
-fn write_csv() raises:
-    var file = FileWrapper("test.csv", "w")
-    var csv = CsvBuilder(3)
-    csv.push("Hello")
-    csv.push("World")
-    csv.push("I am here", True)
-
-    var csv_text = csv^.finish()
-    _ = file.write(csv_text)
-
-
-fn read_csv() raises:
-    with open("test.csv", "r") as file:
-        var builder = CsvBuilder(3)
-        builder.push(file.read())
-        var csv_text = builder^.finish()
-        var csv = CsvTable(csv_text)
-        var data = csv.get(0, 0)
-        print(data)
-
-
-fn csv_reader() raises:
-    var reader = CSVReader("test.csv", "r")
-    var csv = reader.read(3)
-    var data = csv.get(0, 0)
-    print(data)
-
-
-fn csv_writer() raises:
-    var writer = CSVWriter("test.csv", "w")
-    _ = writer.write(Bytes("Hello,World,I am here"))
-    writer.flush()
-
-
-fn main() raises:
-    # write_csv()
-    # read_csv()
-    csv_reader()
-    csv_writer()

@@ -43,7 +43,8 @@ struct Result[T: CollectionElement]():
 
     fn has_error(self) -> Bool:
         if self.error:
-            return True
+            if str(self.error.value().error) != "":
+                return True
         return False
 
     fn has_error_and(self, f: ErrorPredicateFn) -> Bool:

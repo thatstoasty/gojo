@@ -457,7 +457,7 @@ struct Reader[R: io.Reader](
         var err: Optional[WrappedError] = None
         while True:
             var result = self.read_slice(delim)
-            var frag = result.value
+            frag = result.value
             if not result.has_error():
                 break
 

@@ -6,7 +6,6 @@ import gojo.io
 @value
 struct STDWriter(Copyable, io.Writer, io.StringWriter):
     """A writer for POSIX file descriptors."""
-
     var fd: Int
 
     fn __init__(inout self, fd: Int):

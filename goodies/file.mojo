@@ -6,7 +6,7 @@ import gojo.io
 struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     var handle: FileHandle
 
-    fn __init__(inout self, path: String, mode: StringLiteral) raises:
+    fn __init__(inout self, path: String, mode: String) raises:
         self.handle = open(path, mode)
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -15,7 +15,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn __del__(owned self):
         try:
             self.close()
-        except Error:
+        except:
             # TODO: __del__ can't raise, but there should be some fallback.
             print("Failed to close the file.")
 
