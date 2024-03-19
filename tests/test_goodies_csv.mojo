@@ -25,19 +25,17 @@ fn read_csv() raises:
         print(data)
 
 
-# TODO: Last field is getting clipped?
-fn csv_reader() raises:
+fn test_csv_reader() raises:
     var test = MojoTest("Testing goodies.CSVReader")
     var file = FileWrapper("tests/data/test_read.csv", "r")
     var reader = CSVReader(file ^)
     var csv = reader.read_lines(3, "\n", 3)
-    print(csv._inner_string)
     test.assert_equal(csv.get(0, 0), "Hello")
     test.assert_equal(csv.get(1, 0), "Goodbye")
     test.assert_equal(csv.get(2, 2), "Dolor")
 
 
-fn csv_writer() raises:
+fn test_csv_writer() raises:
     var test = MojoTest("Testing goodies.CSVWriter")
     
     # Build CSV dataframe like structure and write to file
@@ -55,7 +53,5 @@ fn csv_writer() raises:
 
 
 fn main() raises:
-    # write_csv()
-    # read_csv()
-    csv_reader()
-    csv_writer()
+    test_csv_reader()
+    test_csv_writer()

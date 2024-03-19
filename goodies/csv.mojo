@@ -15,18 +15,24 @@ struct CSVReader[R: io.Reader]():
     fn __moveinit__(inout self, owned existing: Self):
         self.reader = existing.reader ^
     
-    # TODO: This is slicing off the very last character of the file
-    fn read_lines(inout self, lines_to_read: Int, delimiter: String, column_count: Int = 1) raises -> CsvTable:
+    # TODO: Probably a good place to optimize. bufio reader fills it's buffer, then we read line by line from it.
+    fn read_lines(inout self, lines_to_read: Int, delimiter: String = "\r\n", column_count: Int = 1) raises -> CsvTable:
         var lines_remaining = lines_to_read
         var builder = CsvBuilder(column_count)
         while lines_remaining != 0:
             var result = self.reader.read_string(ord(delimiter))
             if result.has_error():
-                if str(result.unwrap_error()) != io.EOF:
-                    raise result.unwrap_error().error
+                var err = result.unwrap_error()
+                if str(err) != io.EOF:
+                    raise err.error
             
             # read_string includes the delimiter in the result, so we slice off whatever the length of the delimiter is from the end
-            var fields = result.value[:(-1 * len(delimiter))].split(",")
+            # CRLF is optional on the last line, so we check for the delimiter.
+            var suffix_to_remove = len(delimiter)
+            if lines_remaining == 1 and not result.value.endswith(delimiter):
+                suffix_to_remove = 0
+
+            var fields = result.value[:len(result.value) - suffix_to_remove].split(",")
             for field in fields:
                 builder.push(field[])
             lines_remaining -= 1

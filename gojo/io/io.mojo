@@ -427,9 +427,10 @@ fn read_all[R: Reader](inout reader: R) -> Result[Bytes]:
         var temp = Bytes(BUFFER_SIZE)
         var result = reader.read(temp)
         var bytes_read = result.value
-        if result.get_error():
-            if str(result.unwrap_error()) != EOF:
-                return Result(dest, result.unwrap_error())
+        var err = result.get_error()
+        if err:
+            if str(err.value()) != EOF:
+                return Result(dest, err)
 
             at_eof = True
 
@@ -440,4 +441,4 @@ fn read_all[R: Reader](inout reader: R) -> Result[Bytes]:
         dest += temp
 
         if at_eof:
-            return Result(dest, result.unwrap_error())
+            return Result(dest, err.value())

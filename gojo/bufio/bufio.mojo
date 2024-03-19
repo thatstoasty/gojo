@@ -123,9 +123,12 @@ struct Reader[R: io.Reader](
         self.err = WrappedError(io.ERR_NO_PROGRESS)
 
     fn read_error(inout self) -> Optional[WrappedError]:
-        var err = self.err
+        if not self.err:
+            return None
+
+        var err = self.err.value()
         self.err = None
-        return err.value()
+        return err
 
     # Peek
     fn peek(inout self, number_of_bytes: Int) -> Result[Bytes]:
@@ -219,6 +222,7 @@ struct Reader[R: io.Reader](
                 # Large read, empty buffer.
                 # Read directly into dest to avoid copy.
                 var result = self.reader.read(dest)
+
                 self.err = result.get_error()
                 bytes_read = result.value
                 if bytes_read < 0:
@@ -241,7 +245,6 @@ struct Reader[R: io.Reader](
                 panic(ERR_NEGATIVE_READ)
 
             if bytes_read == 0:
-                print("returning here3")
                 return Result(0, self.read_error())
 
             self.write_pos += bytes_read
@@ -253,8 +256,7 @@ struct Reader[R: io.Reader](
         self.read_pos += bytes_read
         self.last_byte = int(self.buf[self.read_pos - 1])
         self.last_rune_size = -1
-        print("returning here4")
-        return Result(bytes_read)
+        return Result(bytes_read, None)
 
     fn read_byte(inout self) -> Result[Byte]:
         """Reads and returns a single byte from the internal buffer. If no byte is available, returns an error.
@@ -570,7 +572,7 @@ struct Reader[R: io.Reader](
         #     return n, err
 
         # internal buffer not full, fill before writing to writer
-        if (self.write_pos - self.read_pos) < len(self.buf):
+        if (self.write_pos - self.read_pos) < self.buf.size():
             self.fill()
 
         while self.read_pos < self.write_pos:

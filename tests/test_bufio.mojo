@@ -22,12 +22,11 @@ fn test_read() raises:
     test.assert_equal(dest, "Hello World!")
 
 
-# Getting index out of range error
 fn test_read_all() raises:
     var test = MojoTest("Testing bufio.Reader with io.read_all")
 
     var s: String = "0123456789"
-    var buf = buffer.new_buffer(s)
+    var buf = buffer.new_reader(s)
     var reader = Reader(buf)
     var result = read_all(reader)
     test.assert_equal(str(result.value), "0123456789")
@@ -187,7 +186,7 @@ fn test_read_from() raises:
 # TODO: Add big file read/write to make sure buffer usage is correct
 fn main() raises:
     test_read()
-    # test_read_all()
+    test_read_all()
     test_write_to()
     test_read_and_unread_byte()
     test_read_slice()

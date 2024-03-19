@@ -3,9 +3,6 @@ from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError, panic
 import ..io
 
 
-alias EOF_ERROR = Error(io.EOF)
-
-
 @value
 struct Reader(
     Copyable,
@@ -52,14 +49,14 @@ struct Reader(
         Returns:
             Int: The number of bytes read into dest."""
         if self.index >= len(self.buffer):
-            return Result(0, WrappedError(EOF_ERROR))
+            return Result(0, WrappedError(io.EOF))
 
         self.prev_rune = -1
         var unread_bytes = self.buffer[int(self.index) : len(self.buffer)]
         var bytes_read = copy(dest, unread_bytes)
 
         self.index += bytes_read
-        return Result(bytes_read, None)
+        return Result(bytes_read)
 
     fn read_at(self, inout dest: Bytes, off: Int64) -> Result[Int]:
         """Reads len(dest) bytes into dest beginning at byte offset off.
