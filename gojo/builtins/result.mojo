@@ -4,6 +4,7 @@ from collections.optional import Optional
 @value
 struct WrappedError(CollectionElement, Stringable):
     """Wrapped Error struct is just to enable the use of optional Errors."""
+
     var error: Error
 
     fn __init__(inout self, error: Error):
