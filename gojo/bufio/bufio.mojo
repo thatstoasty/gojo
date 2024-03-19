@@ -767,7 +767,7 @@ struct Writer[W: io.Writer](
         """
         var total_bytes_written: Int = 0
         var src_copy = src
-        while src_copy.size() > self.available() and not self.err:
+        while len(src_copy) > self.available() and not self.err:
             var bytes_written: Int
             if self.buffered() == 0:
                 # Large write, empty buffer.

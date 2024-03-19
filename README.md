@@ -11,7 +11,10 @@ Experiments in porting over Golang stdlib into Mojo. This is not intended to be 
 
 ## What this includes
 
-All of these packages are partially implemented.
+All of these packages are partially implemented and do not support unicode characters until Mojo supports them.
+
+
+### Gojo
 
 - `builtins`
   - `Bytes` struct (backed by DynamicVector[Int8])
@@ -24,13 +27,17 @@ All of these packages are partially implemented.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
-  - `STDOUT/STDERR` Writer (leveraging `libc`).
-  - `FileWrapper`: `FileHandle` Wrapper Reader/Writer
 - `strings`
   - `StringBuilder`: String builder for fast string concatenation.
   - `Reader`: String reader.
 - `fmt`
   - Basic `sprintf` function.
+
+### Goodies
+
+- `FileWrapper`: `FileHandle` Wrapper Reader/Writer
+- `STDOUT/STDERR` Writer (leveraging `libc`).
+- `CSV` Buffered Reader/Writer Wrapper around Maxim's `mojo-csv` library.
 
 ## Usage
 
@@ -372,4 +379,6 @@ fn test_string_builder() raises:
 
 ## Sharp Edges & Bugs
 
-- TODO: `bufio.Reader.read_line` is broken until Mojo support unpacking Memory only types from return Tuples.
+- `bufio.Reader.read_line` is broken until Mojo support unpacking Memory only types from return Tuples.
+- `Result[T, Error]` is being used in the meantime until Mojo supports unpacking tuples that contain Memory only types. There can be some memory issues with accessing errors from `Result`.
+- Unicode characters are not supported until Mojo supports them. Sometimes it happens to work, but it's not guaranteed due to length discrepanices with ASCII and Unicode characters. If the character has a length of 2 or more, it probably will not work.
