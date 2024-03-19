@@ -2,6 +2,8 @@
 
 Experiments in porting over Golang stdlib into Mojo. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
+NOTE: Readers and writers have some sharp edges until Mojo can handle returning Error as part of a tuple. It can be returned by a function, but not unpacked by the receiver. This leads to some cases where EOF is not handled how it should be. It's fairly usable in it's current state, but you might run into issues with large data!
+
 ## Projects that use Gojo
 
 ### My projects

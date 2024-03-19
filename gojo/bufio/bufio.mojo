@@ -678,7 +678,7 @@ struct Writer[W: io.Writer](
 
     fn __len__(self) -> Int:
         """Returns the size of the underlying buffer in bytes."""
-        return self.buf.size()
+        return len(self.buf)
 
     fn reset[W: io.Writer](inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
@@ -732,7 +732,7 @@ struct Writer[W: io.Writer](
 
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""
-        return self.buf.size() - self.bytes_written
+        return self.buf.available()
 
     fn available_buffer(self) raises -> Bytes:
         """Returns an empty buffer with self.available() capacity.
