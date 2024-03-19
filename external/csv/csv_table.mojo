@@ -1,3 +1,5 @@
+"""https://github.com/mzaks/mojo-csv/tree/main all sourced from Maxim's mojo-csv repository!"""
+
 from .string_utils import find_indices, string_from_pointer
 from algorithm.functional import vectorize
 from sys.info import simdwidthof

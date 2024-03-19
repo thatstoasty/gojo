@@ -1,3 +1,5 @@
+"""https://github.com/mzaks/mojo-csv/tree/main all sourced from Maxim's mojo-csv repository!"""
+
 from memory.memory import memcpy
 from memory.buffer import Buffer, Dim
 from .string_utils import find_indices, contains_any_of, string_from_pointer

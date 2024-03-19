@@ -3,7 +3,7 @@
 
 from collections.vector import DynamicVector
 import ..io
-from ..builtins._bytes import Bytes
+from ..builtins import Bytes, Result, WrappedError
 
 
 @value
@@ -47,7 +47,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
         # Don't need to add a null terminator because we can pass the length of the string.
         return StringRef(self._vector._vector.data.value, len(self._vector))
 
-    fn write(inout self, src: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) -> Result[Int]:
         """
         Appends a byte array to the builder buffer.
 
@@ -55,9 +55,9 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
           src: The byte array to append.
         """
         self._vector += src
-        return len(src)
+        return Result(len(src), None)
 
-    fn write_byte(inout self, byte: Int8) raises -> Int:
+    fn write_byte(inout self, byte: Int8) -> Result[Int]:
         """
         Appends a byte array to the builder buffer.
 
@@ -65,9 +65,9 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
             byte: The byte array to append.
         """
         self._vector.append(byte)
-        return 1
+        return Result(1, None)
 
-    fn write_string(inout self, src: String) raises -> Int:
+    fn write_string(inout self, src: String) -> Result[Int]:
         """
         Appends a string to the builder buffer.
 
@@ -76,7 +76,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
         """
         var string_buffer = src.as_bytes()
         self._vector.extend(string_buffer)
-        return len(string_buffer)
+        return Result(len(string_buffer), None)
 
     fn __len__(self) -> Int:
         """

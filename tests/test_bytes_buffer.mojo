@@ -16,14 +16,16 @@ fn test_read_byte() raises:
     var test = MojoTest("Testing bytes.Buffer.read_byte")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    test.assert_equal(buf.read_byte(), 72)
+    var result = buf.read_byte()
+    test.assert_equal(result.value, 72)
 
 
 fn test_unread_byte() raises:
     var test = MojoTest("Testing bytes.Buffer.unread_byte")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    test.assert_equal(buf.read_byte(), 72)
+    var result = buf.read_byte()
+    test.assert_equal(result.value, 72)
     test.assert_equal(buf.off, 1)
 
     _ = buf.unread_byte()
@@ -34,23 +36,24 @@ fn test_read_bytes() raises:
     var test = MojoTest("Testing bytes.Buffer.read_bytes")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var res = buf.read_bytes(ord("o"))
-    test.assert_equal(res, Bytes("Hello"))
+    var result = buf.read_bytes(ord("o"))
+    test.assert_equal(result.value, Bytes("Hello"))
 
 
 fn test_read_slice() raises:
     var test = MojoTest("Testing bytes.Buffer.read_slice")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var line = Bytes(128)
-    test.assert_equal(buf.read_slice(5, line), Bytes("Hello"))
+    var result = buf.read_slice(5)
+    test.assert_equal(result.value, Bytes("Hello"))
 
 
 fn test_read_string() raises:
-    var test = MojoTest("Testing bytes.Buffer.read_slice")
+    var test = MojoTest("Testing bytes.Buffer.read_string")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    test.assert_equal(buf.read_string(ord("o")), Bytes("Hello"))
+    var result = buf.read_string(ord("o"))
+    test.assert_equal(result.value, Bytes("Hello"))
 
 
 fn test_next() raises:

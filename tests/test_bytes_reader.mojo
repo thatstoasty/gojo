@@ -13,12 +13,16 @@ fn test_read() raises:
 
     # Test negative seek
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
-    try:
-        _ = reader.seek(-1, io.SEEK_START)
-    except e:
-        if str(e) != NEGATIVE_POSITION_ERROR:
-            raise
-        test.assert_equal(str(e), NEGATIVE_POSITION_ERROR)
+    var result = reader.seek(-1, io.SEEK_START)
+
+    if not result.has_error():
+        raise Error("Expected error not raised while testing negative seek.")
+
+    var error = result.unwrap_error()
+    if str(error) != NEGATIVE_POSITION_ERROR:
+        raise error.error
+
+    test.assert_equal(str(error), NEGATIVE_POSITION_ERROR)
 
 
 fn test_read_after_big_seek() raises:
@@ -27,12 +31,15 @@ fn test_read_after_big_seek() raises:
     _ = reader.seek(123456789, io.SEEK_START)
     var dest = Bytes(128)
 
-    try:
-        _ = reader.read(dest)
-    except e:
-        if str(e) != io.EOF:
-            raise
-        test.assert_equal(str(e), io.EOF)
+    var result = reader.read(dest)
+    if not result.has_error():
+        raise Error("Expected error not raised while testing negative seek.")
+
+    var error = result.unwrap_error()
+    if str(error) != io.EOF:
+        raise error.error
+
+    test.assert_equal(str(error), io.EOF)
 
 
 fn test_read_at() raises:
@@ -74,7 +81,7 @@ fn test_read_all() raises:
     var test = MojoTest("Testing io.read_all with bytes.Reader")
     var reader = reader.new_reader(Bytes("0123456789"))
     var result = io.read_all(reader)
-    test.assert_equal(str(result), "0123456789")
+    test.assert_equal(str(result.value), "0123456789")
 
 
 fn test_write_to() raises:
@@ -101,12 +108,14 @@ fn test_read_and_unread_byte() raises:
 
     # Read the first byte from the reader.
     var buffer = Bytes(128)
-    var byte = reader.read_byte()
-    test.assert_equal(byte, 48)
+    var result = reader.read_byte()
+    test.assert_equal(result.value, 48)
     var post_read_position = reader.index
 
     # Unread the first byte from the reader. Read position should be moved back by 1
-    reader.unread_byte()
+    var err = reader.unread_byte()
+    if err:
+        raise err.value().error
     test.assert_equal(reader.index, post_read_position - 1)
 
 
@@ -117,12 +126,11 @@ fn test_unread_byte_at_beginning() raises:
 
     alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of slice"
 
-    try:
-        reader.unread_byte()
-    except e:
-        if str(e) != AT_BEGINNING_ERROR:
-            raise
-        test.assert_equal(str(e), AT_BEGINNING_ERROR)
+    var error = reader.unread_byte()
+    if str(error.value()) != AT_BEGINNING_ERROR:
+        raise error.value().error
+
+    test.assert_equal(str(error.value()), AT_BEGINNING_ERROR)
 
 
 fn main() raises:
