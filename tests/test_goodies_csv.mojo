@@ -35,6 +35,14 @@ fn test_csv_reader() raises:
     test.assert_equal(csv.get(2, 2), "Dolor")
 
 
+fn test_csv_reader_buffered_read() raises:
+    var test = MojoTest("Testing goodies.CSVReader read bigger than buffer size")
+    var file = FileWrapper("tests/data/test_big_read.csv", "r")
+    var reader = CSVReader(file ^)
+    var csv = reader.read_lines(201, "\n", column_count=3)
+    test.assert_equal(csv.get(200, 0), "Hello")
+
+
 fn test_csv_writer() raises:
     var test = MojoTest("Testing goodies.CSVWriter")
     
@@ -54,4 +62,5 @@ fn test_csv_writer() raises:
 
 fn main() raises:
     test_csv_reader()
+    test_csv_reader_buffered_read()
     test_csv_writer()
