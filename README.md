@@ -42,7 +42,8 @@ All of these packages are partially implemented and do not support unicode chara
 
 ## Usage
 
-Some basic usage examples. For now, check out the tests for usage of the various packages!
+Some basic usage examples. These examples may fall out of sync, so please check out the tests for usage of the various packages!
+Most of the `Reader` and `Writer` traits return a `Result[T]` struct which contains the result value and an `Optional[WrappedError]` struct. In the future, this will be switched to returning a Tuple with the result and an `Optional[Error]`.
 
 `builtins.Bytes`
 
@@ -52,8 +53,8 @@ from gojo.builtins._bytes import Bytes
 
 
 fn test_bytes() raises:
-    var test = MojoTest("Testing bytes")
-    var bytes = Bytes(s="hello")
+    var test = MojoTest("Testing builtins.Bytes extend, append, and iadd")
+    var bytes = Bytes("hello")
     test.assert_equal(str(bytes), "hello")
 
     bytes.append(102)
@@ -175,16 +176,16 @@ from gojo.io import FileWrapper
 
 
 fn test_reader() raises:
-    var test = MojoTest("Testing reader")
+    var test = MojoTest("Testing bufio.Reader.read")
 
     # Create a reader from a string buffer
     var s: String = "Hello"
     var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
+    var reader = Reader(buf)
 
     # Read the buffer into Bytes and then add more to Bytes
     var dest = Bytes(256)
-    _ = r.read(dest)
+    _ = reader.read(dest)
     dest.extend(" World!")
 
     test.assert_equal(dest, "Hello World!")
@@ -244,15 +245,13 @@ fn test_reader() raises:
     test.assert_equal(str(dest), s)
 ```
 
-`io.FileWrapper`
+`goodies.FileWrapper`
 
 ```py
 from tests.wrapper import MojoTest
-from gojo.io.file import File, FileWrapper
 from gojo.io.reader import Reader
-from gojo.io.std_writer import STDWriter
-from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
-from gojo.builtins._bytes import Bytes
+from goodies import FileWrapper
+from gojo.builtins import Bytes
 
 
 fn test_file_wrapper() raises:
@@ -263,15 +262,14 @@ fn test_file_wrapper() raises:
     test.assert_equal(String(dest), String(Bytes("12345")))
 ```
 
-`io.STDWriter`
+`goodies.STDWriter`
 
 ```py
 from tests.wrapper import MojoTest
-from gojo.io.file import File, FileWrapper
-from gojo.io.reader import Reader
-from gojo.io.std_writer import STDWriter
+from goodies import STDWriter
 from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
-from gojo.builtins._bytes import Bytes
+from gojo.builtins import Bytes
+
 
 fn test_writer() raises:
     var test = MojoTest("Testing io.STDWriter")
@@ -324,17 +322,17 @@ fn test_string_reader() raises:
     var buffer = Bytes()
     var bytes_read = reader.read(buffer)
 
-    test.assert_equal(bytes_read, len(example))
+    test.assert_equal(bytes_read.value, len(example))
     test.assert_equal(str(buffer), "Hello, World!")
 
     # Seek to the beginning of the reader.
     var position = reader.seek(0, io.SEEK_START)
-    test.assert_equal(position, 0)
+    test.assert_equal(position.value, 0)
 
     # Read the first byte from the reader.
     buffer = Bytes()
     var byte = reader.read_byte()
-    test.assert_equal(byte, 72)
+    test.assert_equal(byte.value, 72)
 
     # Unread the first byte from the reader. Remaining bytes to be read should be the same as the length of the example string.
     reader.unread_byte()
@@ -371,7 +369,7 @@ fn test_string_builder() raises:
         ),
     )
 
-    # Create a string from the builder by writing bytes to it.
+    # Create a string from the builder by writing bytes to it. In this case, we throw away the Result response and don't check if has an error.
     builder = StringBuilder()
     _ = builder.write(Bytes("Hello"))
     _ = builder.write_byte(32)

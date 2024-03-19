@@ -2,6 +2,7 @@ from collections.optional import Optional
 from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError, panic
 from .traits import ERR_UNEXPECTED_EOF
 
+
 alias BUFFER_SIZE = 4096
 
 
