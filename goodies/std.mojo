@@ -1,11 +1,11 @@
 from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from ..builtins._bytes import Bytes, Byte
+from gojo.builtins import Bytes, Byte, Result, WrappedError
+import gojo.io
 
 
 @value
-struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
+struct STDWriter(Copyable, io.Writer, io.StringWriter):
     """A writer for POSIX file descriptors."""
-
     var fd: Int
 
     fn __init__(inout self, fd: Int):
@@ -24,7 +24,7 @@ struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, src: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) -> Result[Int]:
         """Writes the given bytes to the file descriptor.
 
         Args:
@@ -38,11 +38,13 @@ struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
         ](self.fd, src._vector.data.bitcast[UInt8](), len(src))
 
         if write_count == -1:
-            raise Error("Failed to write to file descriptor " + String(self.fd))
+            return Result(
+                0, WrappedError("Failed to write to file descriptor " + String(self.fd))
+            )
 
-        return write_count
+        return Result(write_count, None)
 
-    fn write_string(inout self, src: String) raises -> Int:
+    fn write_string(inout self, src: String) -> Result[Int]:
         """Writes the given string to the file descriptor.
 
         Args:
@@ -53,7 +55,7 @@ struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
         """
         return self.write(src.as_bytes())
 
-    fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int64:
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> Result[Int]:
         """Reads from the given reader to a temporary buffer and writes to the file descriptor.
 
         Args:
@@ -62,6 +64,6 @@ struct STDWriter(Copyable, Writer, StringWriter, ReaderFrom):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var buffer = Bytes(4096)
+        var buffer = Bytes(io.BUFFER_SIZE)
         _ = reader.read(buffer)
         return self.write(buffer)

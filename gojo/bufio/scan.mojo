@@ -1,26 +1,11 @@
 import math
 from collections import Optional
 import ..io
-from ..builtins import Bytes, copy
+from ..builtins import Bytes, copy, panic, Result, WrappedError
 from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 
 
 alias MAX_INT: Int = 2147483647
-
-
-@value
-struct WrappedError(CollectionElement, Stringable):
-    """Wrapped Error struct is just to enable the use of optional Errors."""
-
-    var error: Error
-
-    fn __init__(inout self, error: Error = Error()):
-        self.error = error
-
-    fn __str__(self) -> String:
-        return String(self.error)
-
-
 alias Err = Optional[WrappedError]
 
 
@@ -112,7 +97,7 @@ struct Scanner[R: io.Reader]():
             if (self.end > self.start) or self.err:
                 var advance: Int
                 var token = Bytes(size=io.BUFFER_SIZE)
-                var err = Err()
+                var err: Optional[WrappedError] = None
                 var at_eof = False
                 if self.err:
                     at_eof = True
@@ -126,7 +111,7 @@ struct Scanner[R: io.Reader]():
                         # When token is not nil, it means the scanning stops
                         # with a trailing token, and thus the return value
                         # should be True to indicate the existence of the token.
-                        return token.size() != 0
+                        return len(token) != 0
 
                     self.set_err(err.value())
                     return False
@@ -135,14 +120,14 @@ struct Scanner[R: io.Reader]():
                     return False
 
                 self.token = token
-                if token.size() != 0:
+                if len(token) != 0:
                     if not self.err or advance > 0:
                         self.empties = 0
                     else:
                         # Returning tokens not advancing input at EOF.
                         self.empties += 1
                         if self.empties > MAX_CONSECUTIVE_EMPTY_READS:
-                            raise Error(
+                            panic(
                                 "bufio.Scan: too many empty tokens without progressing"
                             )
 
@@ -160,27 +145,29 @@ struct Scanner[R: io.Reader]():
             # First, shift data to beginning of buffer if there's lots of empty space
             # or space is needed.
             if self.start > 0 and (
-                self.end == self.buf.size() or self.start > int(self.buf.size() / 2)
+                self.end == len(self.buf) or self.start > int(len(self.buf) / 2)
             ):
                 _ = copy(self.buf, self.buf[self.start : self.end])
                 self.end -= self.start
                 self.start = 0
 
             # Is the buffer full? If so, resize.
-            if self.end == self.buf.size():
+            if self.end == len(self.buf):
                 # Guarantee no overflow in the multiplication below.
-                if self.buf.size() >= self.max_token_size or self.buf.size() > int(MAX_INT/2):
+                if len(self.buf) >= self.max_token_size or len(self.buf) > int(
+                    MAX_INT / 2
+                ):
                     self.set_err(Err(Error(ERR_TOO_LONG)))
                     return False
 
-                var new_size = self.buf.size() * 2
+                var new_size = len(self.buf) * 2
                 if new_size == 0:
                     new_size = START_BUF_SIZE
 
                 # Make a new Bytes buffer and copy the elements in
                 new_size = math.min(new_size, self.max_token_size)
                 var new_buf = Bytes(new_size)
-                _ = copy(new_buf, self.buf[self.start:self.end])
+                _ = copy(new_buf, self.buf[self.start : self.end])
                 self.buf = new_buf
                 self.end -= self.start
                 self.start = 0
@@ -191,23 +178,21 @@ struct Scanner[R: io.Reader]():
             var loop = 0
             while True:
                 var bytes_read: Int = 0
-                var sl = self.buf[self.end : self.buf.size()]
-                var err = Err()
+                var sl = self.buf[self.end : len(self.buf)]
+                var error: Optional[WrappedError] = None
 
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
-                try:
-                    bytes_read = self.reader.read(sl)
-                    _ = copy(self.buf, sl, self.end)
-                    if bytes_read < 0 or self.buf.size() - self.end < bytes_read:
-                        self.set_err(Err(Error(ERR_BAD_READ_COUNT)))
-                        break
-                except e:
-                    # TODO: For some reason the reader isn't throwing eof for scan lines
-                    err = Err(e)
+                var result = self.reader.read(sl)
+                bytes_read = result.value
+                error = result.get_error()
+                _ = copy(self.buf, sl, self.end)
+                if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
+                    self.set_err(Err(ERR_BAD_READ_COUNT))
+                    break
 
                 self.end += bytes_read
-                if err:
-                    self.set_err(err)
+                if error:
+                    self.set_err(error)
                     break
 
                 if bytes_read > 0:
@@ -317,10 +302,14 @@ alias SplitFunction = fn (
 ) raises -> Int
 
 # # Errors returned by Scanner.
-alias ERR_TOO_LONG = "bufio.Scanner: token too long"
-alias ERR_NEGATIVE_ADVANCE = "bufio.Scanner: SplitFunction returns negative advance count"
-alias ERR_ADVANCE_TOO_FAR = "bufio.Scanner: SplitFunction returns advance count beyond input"
-alias ERR_BAD_READ_COUNT = "bufio.Scanner: Read returned impossible count"
+alias ERR_TOO_LONG = Error("bufio.Scanner: token too long")
+alias ERR_NEGATIVE_ADVANCE = Error(
+    "bufio.Scanner: SplitFunction returns negative advance count"
+)
+alias ERR_ADVANCE_TOO_FAR = Error(
+    "bufio.Scanner: SplitFunction returns advance count beyond input"
+)
+alias ERR_BAD_READ_COUNT = Error("bufio.Scanner: Read returned impossible count")
 # ERR_FINAL_TOKEN is a special sentinel error value. It is Intended to be
 # returned by a split function to indicate that the scanning should stop
 # with no error. If the token being delivered with this error is not nil,
@@ -331,7 +320,7 @@ alias ERR_BAD_READ_COUNT = "bufio.Scanner: Read returned impossible count"
 # One could achieve the same behavior with a custom error value but
 # providing one here is tidier.
 # See the emptyFinalToken example for a use of this value.
-alias ERR_FINAL_TOKEN = "final token"
+alias ERR_FINAL_TOKEN = Error("final token")
 
 
 # MAX_SCAN_TOKEN_SIZE is the maximum size used to buffer a token
@@ -353,7 +342,7 @@ fn scan_bytes(
     data: Bytes, at_eof: Bool, inout token: Bytes, inout err: Err
 ) raises -> Int:
     """Split function for a [Scanner] that returns each byte as a token."""
-    if at_eof and len(data) == 0:
+    if at_eof and data.size() == 0:
         return 0
 
     token = data[0:1]
@@ -369,7 +358,7 @@ fn scan_bytes(
 # # Because of the Scan Interface, this makes it impossible for the client to
 # # distinguish correctly encoded replacement runes from encoding errors.
 # fn ScanRunes(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
-# 	if at_eof and len(data) == 0:
+# 	if at_eof and data.size() == 0:
 # 		return 0, nil, nil
 
 
@@ -410,8 +399,8 @@ fn drop_carriage_return(data: Bytes) raises -> Bytes:
         The stripped data.
     """
     # In the case of a \r ending without a \n, indexing on -1 doesn't work as it finds a null terminator instead of \r.
-    if len(data) > 0 and data[len(data) - 1] == ord("\r"):
-        return data[0 : len(data) - 1]
+    if data.size() > 0 and data[data.size() - 1] == ord("\r"):
+        return data[0 : data.size() - 1]
 
     return data
 
@@ -434,7 +423,7 @@ fn scan_lines(
     Returns:
         The number of bytes to advance the input.
     """
-    if at_eof and len(data) == 0:
+    if at_eof and data.size() == 0:
         return 0
 
     var i = data.index_byte(ord("\n"))
@@ -446,7 +435,7 @@ fn scan_lines(
     # If we're at EOF, we have a final, non-terminated line. Return it.
     token = drop_carriage_return(data)
     # if at_eof:
-    return len(data)
+    return data.size()
 
     # Request more data.
     # return 0
@@ -471,7 +460,7 @@ fn scan_words(
     # Skip leading spaces.
     var start = 0
     var width = 0
-    while start < len(data):
+    while start < data.size():
         width = len(data[0])
         if not is_space(data[0]):
             break
@@ -482,7 +471,7 @@ fn scan_words(
     var i = 0
     width = 0
     start = 0
-    while i < len(data):
+    while i < data.size():
         width = len(data[i])
         if is_space(data[i]):
             token = data[start:i]
@@ -491,9 +480,9 @@ fn scan_words(
         i += width
 
     # If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
-    if at_eof and len(data) > start:
+    if at_eof and data.size() > start:
         token = data[start:]
-        return len(data)
+        return data.size()
 
     # Request more data.
     return start

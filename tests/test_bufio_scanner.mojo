@@ -2,7 +2,7 @@ from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins._bytes import Bytes
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
-from gojo.io import FileWrapper
+from goodies import FileWrapper
 
 
 fn test_scan_words() raises:
@@ -139,7 +139,7 @@ fn test_scan_bytes() raises:
 
 fn test_file_wrapper_scanner() raises:
     var test = MojoTest("testing io.FileWrapper and bufio.Scanner")
-    var file = FileWrapper("test_multiple_lines.txt", "r")
+    var file = FileWrapper("tests/data/test_multiple_lines.txt", "r")
 
     # Create a scanner from the reader
     var scanner = Scanner(file ^)

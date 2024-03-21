@@ -3,8 +3,8 @@ from gojo.strings import StringBuilder
 from gojo.builtins import Bytes
 
 
-fn test_string_builder() raises:
-    var test = MojoTest("Testing strings.StringBuilder")
+fn test_write_string() raises:
+    var test = MojoTest("Testing strings.StringBuilder.write_string")
 
     # Create a string from the builder by writing strings to it.
     var builder = StringBuilder()
@@ -20,12 +20,26 @@ fn test_string_builder() raises:
         ),
     )
 
+
+fn test_write() raises:
+    var test = MojoTest("Testing strings.StringBuilder.write")
+
     # Create a string from the builder by writing bytes to it.
-    builder = StringBuilder()
+    var builder = StringBuilder()
     _ = builder.write(Bytes("Hello"))
+    test.assert_equal(str(builder), "Hello")
+
+
+fn test_write_byte() raises:
+    var test = MojoTest("Testing strings.StringBuilder.write_byte")
+
+    # Create a string from the builder by writing bytes to it.
+    var builder = StringBuilder()
     _ = builder.write_byte(32)
-    test.assert_equal(str(builder), "Hello ")
+    test.assert_equal(str(builder), " ")
 
 
 fn main() raises:
-    test_string_builder()
+    test_write_string()
+    test_write()
+    test_write_byte()
