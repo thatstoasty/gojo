@@ -212,3 +212,11 @@ struct Bytes(Stringable, Sized, CollectionElement):
     fn capacity(self) -> Int:
         """Returns the capacity of the Bytes struct."""
         return self._vector.capacity
+
+    fn copy(self) -> Self:
+        """Returns a copy of the Bytes struct. Only copies up to what has been written to the Bytes struct."""
+        # Copy elements up to the write position, don't need to copy over empty elements from end of the vector.
+        var bytes_copy = Self(size=self.write_position)
+        for i in range(self.write_position):
+            bytes_copy.append(self._vector[i])
+        return bytes_copy
