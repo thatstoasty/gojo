@@ -5,7 +5,7 @@ from goodies import STDWriter
 
 
 fn test_string_builder() raises:
-    print("Testing string concatenation performance")
+    print("Testing string builder performance")
     # Create a string from the buffer
     var builder = StringBuilder()
     for i in range(100):
@@ -24,6 +24,7 @@ fn test_string_builder() raises:
     var builder_execution_time = now() - builder_start_time
 
     # Create a string using the + operator
+    print("Testing string concatenation performance")
     var vec = DynamicVector[String]()
     for i in range(100):
         vec.push_back(
@@ -43,6 +44,7 @@ fn test_string_builder() raises:
     var concat_execution_time = now() - concat_start_time
 
     # Create a string using a bytes buffer
+    print("Testing bytes buffer performance")
     var buf = buffer.new_buffer()
     for i in range(100):
         _ = buf.write_string(
@@ -57,11 +59,12 @@ fn test_string_builder() raises:
 
     var buffer_start_time = now()
     var buffer_output = str(buf)
+    print(len(buffer_output))
     var buffer_execution_time = now() - buffer_start_time
 
-    print("StringBuilder: ", "(", builder_execution_time, "ns)")
-    print("String +: ", "(", concat_execution_time, "ns)")
-    print("Bytes Buffer: ", "(", buffer_execution_time, "ns)")
+    print("StringBuilder:", "(", builder_execution_time, "ns)")
+    print("String concat:", "(", concat_execution_time, "ns)")
+    print("Bytes Buffer:", "(", buffer_execution_time, "ns)")
     print(
         "Performance difference: ",
         str(concat_execution_time - builder_execution_time) + "ns",

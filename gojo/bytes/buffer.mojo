@@ -150,7 +150,7 @@ struct Buffer(
             # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
             # Instead, just add bytes of len(n) to the end of the buffer for now.
             # self.buf = self.buf[: l + n]
-            self.buf += Bytes(n)
+            self.buf.resize(self.buf.size() + n)
             return buffer_already_used, True
 
         return 0, False
@@ -197,7 +197,7 @@ struct Buffer(
         # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
         # Instead, just add bytes of len(n) to the end of the buffer for now.
         # self.buf = self.buf[: m + n]
-        self.buf += Bytes(n)
+        self.buf.resize(self.buf.size() + n)
         return write_at
 
     fn Grow(inout self, n: Int):
@@ -230,7 +230,7 @@ struct Buffer(
         write_at, ok = self.try_grow_by_reslice(len(src))
         if not ok:
             write_at = self.grow(len(src))
-
+        
         return Result(copy(self.buf, src, write_at), None)
 
     fn write_string(inout self, src: String) -> Result[Int]:

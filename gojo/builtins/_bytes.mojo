@@ -57,7 +57,7 @@ struct Bytes(Stringable, Sized, CollectionElement):
         # If the internal vector was resized to a smaller size than what was already written, the write position should be moved back.
         if new_size < self.write_position:
             self.write_position = new_size
-
+        
     fn available(self) -> Int:
         return len(self._vector) - self.write_position
 
@@ -118,13 +118,13 @@ struct Bytes(Stringable, Sized, CollectionElement):
         return Bytes(new_vector)
 
     fn __iadd__(inout self: Self, other: Self):
-        # # Up the capacity if the the length of the internal vectors exceeds the current capacity. We are not checking the numbers of bytes written to the Bytes structs.
-        # var length_of_self = len(self._vector)
-        # var length_of_other = len(other._vector)
+        # Up the capacity if the the length of the internal vectors exceeds the current capacity. We are not checking the numbers of bytes written to the Bytes structs.
+        var length_of_self = len(self)
+        var length_of_other = len(other)
 
-        # var added_size = length_of_self + length_of_other
-        # if self._vector.capacity < added_size:
-        #     self._vector.reserve(added_size * 2)
+        var added_size = length_of_self + length_of_other
+        if self.size() < added_size:
+            self.resize(added_size * 2)
 
         # Copy over data starting from the write position.
         for i in range(len(other)):
@@ -146,6 +146,9 @@ struct Bytes(Stringable, Sized, CollectionElement):
         Args:
             value: The value to append.
         """
+        # If the vector is full, resize it.
+        if self.write_position == self.size():
+            self.resize(self.size() * 2)
         self[self.write_position] = value
 
     fn extend(inout self, value: String):
