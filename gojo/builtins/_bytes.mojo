@@ -220,3 +220,23 @@ struct Bytes(Stringable, Sized, CollectionElement):
         for i in range(self.write_position):
             bytes_copy.append(self._vector[i])
         return bytes_copy
+    
+    fn get_bytes(self) -> DynamicVector[Int8]:
+        """
+        Returns a copy of the byte array of the string builder.
+
+        Returns:
+          The byte array of the string builder.
+        """
+        return self.copy()._vector
+      
+    fn get_null_terminated_bytes(self) -> DynamicVector[Int8]:
+        """
+        Returns a copy of the byte array of the string builder with a null terminator.
+
+        Returns:
+          The byte array of the string builder with a null terminator.
+        """
+        var new_bytes = self.copy()._vector
+        new_bytes.append(0)
+        return new_bytes

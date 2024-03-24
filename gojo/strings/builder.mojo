@@ -54,7 +54,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
         Returns:
           The byte array of the string builder.
         """
-        return self._vector.copy()._vector
+        return self._vector.get_bytes()
       
     fn get_null_terminated_bytes(self) -> DynamicVector[Int8]:
         """
@@ -63,9 +63,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
         Returns:
           The byte array of the string builder with a null terminator.
         """
-        var new_bytes = self._vector.copy()._vector
-        new_bytes.append(0)
-        return new_bytes
+        return self._vector.get_null_terminated_bytes()
 
     fn write(inout self, src: Bytes) -> Result[Int]:
         """
