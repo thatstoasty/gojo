@@ -146,7 +146,7 @@ struct Buffer(
         It returns the index where bytes should be written and whether it succeeded."""
         var buffer_already_used = len(self.buf)
 
-        if n <= cap(self.buf) - buffer_already_used:
+        if n <= self.buf.size() - buffer_already_used:
             # FIXME: It seems like reslicing in go can extend the length of the slice. Doens't work like that for my get slice impl.
             # Instead, just add bytes of len(n) to the end of the buffer for now.
             # self.buf = self.buf[: l + n]
@@ -159,7 +159,7 @@ struct Buffer(
         """Grows the buffer to guarantee space for n more bytes.
         It returns the index where bytes should be written.
         If the buffer can't grow it will panic with ERR_TOO_LARGE."""
-        var write_at: Int = self.buf.size()
+        var write_at: Int = len(self.buf)
         # If buffer is empty, reset to recover space.
         if write_at == 0 and self.off != 0:
             self.reset()
@@ -182,15 +182,14 @@ struct Buffer(
             # slice. We only need m+n <= c to slide, but
             # we instead var capacity get twice as large so we
             # don't spend all our time copying.
-
             _ = copy(self.buf, self.buf[self.off :])
         elif c > MAX_INT - c - n:
             panic(ERR_TOO_LARGE)
-        else:
-            # Add self.off to account for self.buf[:self.off] being sliced off the front.
-            var sl = self.buf[self.off :]
-            self.buf = self.grow_slice(sl, self.off + n)
-            # self.buf = sl
+        # TODO: Commented out this branch because growing the slice here and then at the end is redundant?
+        # else:
+        #     # Add self.off to account for self.buf[:self.off] being sliced off the front.
+        #     # var sl = self.buf[self.off :]
+        #     # self.buf = self.grow_slice(sl, self.off + n)
 
         # Restore self.off and len(self.buf).
         self.off = 0
@@ -231,7 +230,8 @@ struct Buffer(
         if not ok:
             write_at = self.grow(len(src))
         
-        return Result(copy(self.buf, src, write_at), None)
+        var bytes_written = copy(self.buf, src, write_at)
+        return Result(bytes_written, None)
 
     fn write_string(inout self, src: String) -> Result[Int]:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -302,7 +302,7 @@ struct Buffer(
             # we could rely purely on append to determine the growth rate.
             c = 2 * cap(b)
 
-        var resized_buffer = Bytes(c)
+        var resized_buffer = Bytes(size=c)
         _ = copy(resized_buffer, b)
         # var b2: Bytes = Bytes()
         # b2._vector.reserve(c)

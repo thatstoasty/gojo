@@ -727,6 +727,8 @@ struct Writer[W: io.Writer](
             self.err = error
             return error
 
+        # Reset the buffer
+        self.buf = Bytes(size=self.buf.size())
         self.bytes_written = 0
         return None
 

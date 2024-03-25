@@ -38,8 +38,12 @@ fn copy(inout target: Bytes, source: Bytes, start: Int = 0) -> Int:
     """
     var count = 0
 
+    # If trying to set a value outside of the bounds of the buffer, use append instead. It will resize the buffer before setting the value.
     for i in range(len(source)):
-        target[i + start] = source[i]
+        if i + start < target.size():
+            target[i + start] = source[i]
+        else:
+            target.append(source[i])
         count += 1
 
     return count

@@ -136,6 +136,27 @@ fn test_write() raises:
     test.assert_equal(str(writer.writer), "0123456789")
 
 
+fn test_several_writes() raises:
+    var test = MojoTest("Testing several bufio.Writer.write")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer()
+    var writer = Writer(buf)
+
+    # Write the content from src to the buffered writer's internal buffer and flush it to the Bytes Buffer Writer.
+    var src = Bytes("0123456789")
+    var result = Result(0)
+    for i in range(500):
+        result = writer.write(src)
+    _ = writer.flush()
+
+    test.assert_equal(result.value, 10)
+    test.assert_equal(len(writer.writer), 5000)
+    var text = str(writer.writer)
+    test.assert_equal(text[0], "0")
+    test.assert_equal(text[4999], "9")
+
+
 fn test_write_byte() raises:
     var test = MojoTest("Testing bufio.Writer.write_byte")
 
@@ -193,6 +214,7 @@ fn main() raises:
     test_peek()
     test_discard()
     test_write()
+    test_several_writes()
     test_write_byte()
     test_write_string()
     test_read_from()
