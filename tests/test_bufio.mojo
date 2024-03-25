@@ -3,6 +3,7 @@ from gojo.bytes import buffer
 from gojo.builtins import Bytes, Result, WrappedError
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
 from gojo.io import read_all
+from gojo.strings import StringBuilder
 from goodies import FileWrapper
 
 
@@ -157,6 +158,28 @@ fn test_several_writes() raises:
     test.assert_equal(text[4999], "9")
 
 
+fn test_big_write() raises:
+    var test = MojoTest("Testing a big bufio.Writer.write")
+
+    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    var buf = buffer.new_buffer()
+    var writer = Writer(buf)
+
+    # Build a string larger than the size of the Bufio struct's internal buffer. 
+    var builder = StringBuilder(5000)
+    var result = Result(0)
+    for i in range(500):
+        result = builder.write_string("0123456789")
+    
+    # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
+    var text = str(builder)
+    _ = writer.write(text)
+    test.assert_equal(result.value, 10)
+    test.assert_equal(len(writer.writer), 5000)
+    test.assert_equal(text[0], "0")
+    test.assert_equal(text[4999], "9")
+
+
 fn test_write_byte() raises:
     var test = MojoTest("Testing bufio.Writer.write_byte")
 
@@ -215,6 +238,7 @@ fn main() raises:
     test_discard()
     test_write()
     test_several_writes()
+    test_big_write()
     test_write_byte()
     test_write_string()
     test_read_from()
