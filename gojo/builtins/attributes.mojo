@@ -1,6 +1,6 @@
 fn copy[
     T: CollectionElement
-](inout target: DynamicVector[T], source: DynamicVector[T], start: Int = 0) -> Int:
+](inout target: List[T], source: List[T], start: Int = 0) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
 
@@ -58,10 +58,10 @@ fn cap(buffer: Bytes) -> Int:
     return buffer.capacity()
 
 
-fn cap[T: CollectionElement](iterable: DynamicVector[T]) -> Int:
-    """Returns the capacity of the DynamicVector.
+fn cap[T: CollectionElement](iterable: List[T]) -> Int:
+    """Returns the capacity of the List.
 
     Args:
-        iterable: The DynamicVector to get the capacity of.
+        iterable: The List to get the capacity of.
     """
     return iterable.capacity

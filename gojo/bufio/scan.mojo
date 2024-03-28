@@ -157,7 +157,7 @@ struct Scanner[R: io.Reader]():
                 if len(self.buf) >= self.max_token_size or len(self.buf) > int(
                     MAX_INT / 2
                 ):
-                    self.set_err(Err(Error(ERR_TOO_LONG)))
+                    self.set_err(WrappedError(ERR_TOO_LONG))
                     return False
 
                 var new_size = len(self.buf) * 2
@@ -187,7 +187,7 @@ struct Scanner[R: io.Reader]():
                 error = result.get_error()
                 _ = copy(self.buf, sl, self.end)
                 if bytes_read < 0 or len(self.buf) - self.end < bytes_read:
-                    self.set_err(Err(ERR_BAD_READ_COUNT))
+                    self.set_err(WrappedError(ERR_BAD_READ_COUNT))
                     break
 
                 self.end += bytes_read
@@ -201,7 +201,7 @@ struct Scanner[R: io.Reader]():
 
                 loop += 1
                 if loop > MAX_CONSECUTIVE_EMPTY_READS:
-                    self.set_err(Err(Error(io.ERR_NO_PROGRESS)))
+                    self.set_err(WrappedError(io.ERR_NO_PROGRESS))
                     break
 
     fn set_err(inout self, err: Err):
@@ -227,11 +227,11 @@ struct Scanner[R: io.Reader]():
             True if the advance was legal, False otherwise.
         """
         if n < 0:
-            self.set_err(Err(Error(ERR_NEGATIVE_ADVANCE)))
+            self.set_err(WrappedError(ERR_NEGATIVE_ADVANCE))
             return False
 
         if n > self.end - self.start:
-            self.set_err(Err(Error(ERR_ADVANCE_TOO_FAR)))
+            self.set_err(WrappedError(ERR_ADVANCE_TOO_FAR))
             return False
 
         self.start += n

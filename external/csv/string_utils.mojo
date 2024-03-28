@@ -60,9 +60,9 @@ fn vectorize_and_exit[
         _ = workgroup_function[1](size - rest)
 
 
-fn find_indices(s: String, c: String) -> DynamicVector[UInt64]:
+fn find_indices(s: String, c: String) -> List[UInt64]:
     var size = len(s)
-    var result = DynamicVector[UInt64]()
+    var result = List[UInt64]()
     var char = Int8(ord(c))
     var p = s._as_ptr()
 
@@ -71,7 +71,7 @@ fn find_indices(s: String, c: String) -> DynamicVector[UInt64]:
         @parameter
         if simd_width == 1:
             if p.offset(offset).load() == char:
-                return result.push_back(offset)
+                return result.append(offset)
         else:
             var chunk = p.simd_load[simd_width](offset)
             var occurrence = chunk == char
@@ -152,7 +152,7 @@ fn string_from_pointer(p: DTypePointer[DType.int8], length: Int) -> String:
     return String(p, length)
 
 
-fn print_v(v: DynamicVector[UInt64]):
+fn print_v(v: List[UInt64]):
     print_no_newline("(", len(v), ")", "[")
     for i in range(len(v)):
         print_no_newline(v[i], ",")

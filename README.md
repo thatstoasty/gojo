@@ -18,7 +18,7 @@ All of these packages are partially implemented and do not support unicode chara
 ### Gojo
 
 - `builtins`
-  - `Bytes` struct (backed by DynamicVector[Int8])
+  - `Bytes` struct (backed by List[Int8])
 - `bufio`
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
@@ -67,7 +67,7 @@ fn test_bytes() raises:
     bytes += String(" World").as_bytes()
     test.assert_equal(str(bytes), "hellof World")
 
-    var bytes2 = DynamicVector[Int8]()
+    var bytes2 = List[Int8]()
     bytes2.append(104)
     bytes.extend(bytes2)
     test.assert_equal(str(bytes), "hellof Worldh")
@@ -94,7 +94,7 @@ fn test_scan_words() raises:
     var scanner = Scanner(r ^)
     scanner.split = scan_words
 
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("Testing")
     expected_results.append("this")
     expected_results.append("string!")
@@ -116,7 +116,7 @@ fn test_scan_lines() raises:
     # Create a scanner from the reader
     var scanner = Scanner(r ^)
 
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("Testing")
     expected_results.append("this")
     expected_results.append("string!")
@@ -139,7 +139,7 @@ fn test_scan_bytes() raises:
     var scanner = Scanner(r ^)
     scanner.split = scan_bytes
 
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("a")
     expected_results.append("b")
     expected_results.append("c")
@@ -156,7 +156,7 @@ fn test_file_wrapper_scanner() raises:
 
     # Create a scanner from the reader
     var scanner = Scanner(file ^)
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("11111")
     expected_results.append("22222")
     expected_results.append("33333")

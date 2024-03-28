@@ -14,7 +14,7 @@ fn test_bytes_extend_append_and_iadd():
     bytes += String(" World").as_bytes()
     test.assert_equal(str(bytes), "hellof World")
 
-    var bytes2 = DynamicVector[Int8]()
+    var bytes2 = List[Int8]()
     bytes2.append(104)
     bytes.extend(bytes2)
     test.assert_equal(str(bytes), "hellof Worldh")
@@ -27,8 +27,8 @@ fn test_bytes_from_strings():
 
 
 fn test_bytes_from_dynamic_vector():
-    var test = MojoTest("Testing builtins.Bytes from DynamicVector of Bytes")
-    var data = DynamicVector[Int8]()
+    var test = MojoTest("Testing builtins.Bytes from List of Bytes")
+    var data = List[Int8]()
     data.append(104)
     data.append(104)
     var bytes = Bytes(data)

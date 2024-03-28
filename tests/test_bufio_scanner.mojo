@@ -17,7 +17,7 @@ fn test_scan_words() raises:
     var scanner = Scanner(r ^)
     scanner.split = scan_words
 
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("Testing")
     expected_results.append("this")
     expected_results.append("string!")
@@ -39,7 +39,7 @@ fn test_scan_lines() raises:
     # Create a scanner from the reader
     var scanner = Scanner(r ^)
 
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("Testing")
     expected_results.append("this")
     expected_results.append("string!")
@@ -51,7 +51,7 @@ fn test_scan_lines() raises:
 
 
 fn scan_no_newline_test(
-    test_case: String, result_lines: DynamicVector[String], test: MojoTest
+    test_case: String, result_lines: List[String], test: MojoTest
 ) raises:
     # Create a reader from a string buffer
     var buf = buffer.new_buffer(test_case)
@@ -68,7 +68,7 @@ fn scan_no_newline_test(
 fn test_scan_lines_no_newline() raises:
     var test = MojoTest("Testing bufio.scan_lines with no final newline")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz"
-    var result_lines = DynamicVector[String]()
+    var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
     result_lines.append("opqrstuvwxyz")
 
@@ -80,7 +80,7 @@ fn test_scan_lines_cr_no_newline() raises:
         "Testing bufio.scan_lines with no final newline but carriage return"
     )
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\r"
-    var result_lines = DynamicVector[String]()
+    var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
     result_lines.append("opqrstuvwxyz")
 
@@ -90,7 +90,7 @@ fn test_scan_lines_cr_no_newline() raises:
 fn test_scan_lines_empty_final_line() raises:
     var test = MojoTest("Testing bufio.scan_lines with an empty final line")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\n"
-    var result_lines = DynamicVector[String]()
+    var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
     result_lines.append("opqrstuvwxyz")
     result_lines.append("")
@@ -103,7 +103,7 @@ fn test_scan_lines_cr_empty_final_line() raises:
         "Testing bufio.scan_lines with an empty final line and carriage return"
     )
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\r"
-    var result_lines = DynamicVector[String]()
+    var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
     result_lines.append("opqrstuvwxyz")
     result_lines.append("")
@@ -114,7 +114,7 @@ fn test_scan_lines_cr_empty_final_line() raises:
 fn test_scan_bytes() raises:
     var test = MojoTest("Testing scan_bytes")
 
-    var test_cases = DynamicVector[String]()
+    var test_cases = List[String]()
     test_cases.append("")
     test_cases.append("a")
     test_cases.append("abc")
@@ -143,7 +143,7 @@ fn test_file_wrapper_scanner() raises:
 
     # Create a scanner from the reader
     var scanner = Scanner(file ^)
-    var expected_results = DynamicVector[String]()
+    var expected_results = List[String]()
     expected_results.append("11111")
     expected_results.append("22222")
     expected_results.append("33333")

@@ -442,7 +442,7 @@ struct Reader[R: io.Reader](
         inout self,
         delim: Int8,
         inout frag: Bytes,
-        inout full_buffers: DynamicVector[Bytes],
+        inout full_buffers: List[Bytes],
         inout total_len: Int,
     ) -> Optional[WrappedError]:
         """Reads until the first occurrence of delim in the input. It
@@ -491,7 +491,7 @@ struct Reader[R: io.Reader](
         Returns:
             The Bytes from the internal buffer.
         """
-        var full = DynamicVector[Bytes]()
+        var full = List[Bytes]()
         var frag = Bytes(4096)
         var n: Int = 0
         var err = self.collect_fragments(delim, frag, full, n)
@@ -524,7 +524,7 @@ struct Reader[R: io.Reader](
         Returns:
             The String from the internal buffer.
         """
-        var full = DynamicVector[Bytes]()
+        var full = List[Bytes]()
         var frag = Bytes()
         var n: Int = 0
         var err = self.collect_fragments(delim, frag, full, n)
@@ -680,7 +680,7 @@ struct Writer[W: io.Writer](
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
-    fn reset[W: io.Writer](inout self, owned writer: W):
+    fn reset(inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
         resets b to write its output to w.
         Calling reset on the zero value of [Writer] initializes the internal buffer
