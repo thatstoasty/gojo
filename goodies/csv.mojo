@@ -65,7 +65,7 @@ struct CSVWriter[W: io.Writer]():
                 
         return result.value
     
-    fn write(inout self, src: DynamicVector[String]) raises -> Int:
+    fn write(inout self, src: List[String]) raises -> Int:
         var bytes_written: Int = 0
         for row in src:
             var result = self.writer.write_string(row[] + "\r\n")

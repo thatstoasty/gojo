@@ -25,9 +25,9 @@ fn test_string_builder() raises:
 
     # Create a string using the + operator
     print("Testing string concatenation performance")
-    var vec = DynamicVector[String]()
+    var vec = List[String]()
     for i in range(100):
-        vec.push_back(
+        vec.append(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
             " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"

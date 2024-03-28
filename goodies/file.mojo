@@ -90,10 +90,10 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         except e:
             return Result(Int8(0), WrappedError(e))
 
-    fn read_bytes(inout self, size: Int64) raises -> Tensor[DType.int8]:
+    fn read_bytes(inout self, size: Int64) raises -> List[Int8]:
         return self.handle.read_bytes(size)
 
-    fn read_bytes(inout self) raises -> Tensor[DType.int8]:
+    fn read_bytes(inout self) raises -> List[Int8]:
         return self.handle.read_bytes()
 
     fn stream_until_delimiter(
