@@ -1,6 +1,5 @@
 from .errors import panic
 
-
 alias Byte = Int8
 
 

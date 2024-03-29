@@ -1,7 +1,5 @@
-"""https://github.com/mzaks/mojo-csv/tree/main all sourced from Maxim's mojo-csv repository!"""
-
 from memory.memory import memcpy
-from memory.buffer import Buffer, Dim
+from buffer import Buffer, Dim
 from .string_utils import find_indices, contains_any_of, string_from_pointer
 
 alias BufferType = Buffer[DType.int8]
@@ -52,9 +50,7 @@ struct CsvBuilder:
         var size = len(s)
         self.push(s, False)
 
-    fn push_stringabel[
-        T: Stringable
-    ](inout self, value: T, consider_escaping: Bool = False):
+    fn push_stringabel[T: Stringable](inout self, value: T, consider_escaping: Bool = False):
         self.push(str(value), consider_escaping)
 
     fn push_empty(inout self):
