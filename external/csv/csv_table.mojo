@@ -1,5 +1,3 @@
-"""https://github.com/mzaks/mojo-csv/tree/main all sourced from Maxim's mojo-csv repository!"""
-
 from .string_utils import find_indices, string_from_pointer
 from algorithm.functional import vectorize
 from sys.info import simdwidthof
@@ -82,7 +80,7 @@ struct CsvTable:
         @always_inline
         @parameter
         fn find_indicies[simd_width: Int](offset: Int):
-            var chars = p.simd_load[simd_width](offset)
+            var chars = p.load[width=simd_width](offset)
             var quotes = chars == QUOTE
             var commas = chars == COMMA
             var lfs = chars == LF
