@@ -95,7 +95,7 @@ struct Reader[R: io.Reader](
 
         # Compares to the length of the entire Bytes object, including 0 initialized positions.
         # IE. var b = Bytes(4096), then trying to write at b[4096] and onwards will fail.
-        if self.write_pos >= self.buf.size():
+        if self.write_pos >= self.buf.capacity:
             panic("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
@@ -151,16 +151,16 @@ struct Reader[R: io.Reader](
 
         while (
             self.write_pos - self.read_pos < number_of_bytes
-            and self.write_pos - self.read_pos < self.buf.size()
+            and self.write_pos - self.read_pos < self.buf.capacity
         ):
-            self.fill()  # self.write_pos-self.read_pos < self.buf.size() => buffer is not full
+            self.fill()  # self.write_pos-self.read_pos < self.buf.capacity => buffer is not full
 
-        if number_of_bytes > self.buf.size():
+        if number_of_bytes > self.buf.capacity:
             return Result(
                 self.buf[self.read_pos : self.write_pos], WrappedError(ERR_BUFFER_FULL)
             )
 
-        # 0 <= n <= self.buf.size()
+        # 0 <= n <= self.buf.capacity
         var err: Optional[WrappedError] = None
         var available_space = self.write_pos - self.read_pos
         if available_space < number_of_bytes:
@@ -298,7 +298,7 @@ struct Reader[R: io.Reader](
     # # rune and its size in bytes. If the encoded rune is invalid, it consumes one byte
     # # and returns unicode.ReplacementChar (U+FFFD) with a size of 1.
     # fn read_rune(inout self) (r rune, size int, err error):
-    #     for self.read_pos+utf8.UTFMax > self.write_pos and !utf8.FullRune(self.buf[self.read_pos:self.write_pos]) and self.err == nil and self.write_pos-self.read_pos < self.buf.size():
+    #     for self.read_pos+utf8.UTFMax > self.write_pos and !utf8.FullRune(self.buf[self.read_pos:self.write_pos]) and self.err == nil and self.write_pos-self.read_pos < self.buf.capacity:
     #         self.fill() # self.write_pos-self.read_pos < len(buf) => buffer is not full
 
     #     self.last_rune_size = -1
@@ -373,7 +373,7 @@ struct Reader[R: io.Reader](
                 break
 
             # Buffer full?
-            if self.buffered() >= self.buf.size():
+            if self.buffered() >= self.buf.capacity:
                 self.read_pos = self.write_pos
                 line = self.buf
                 err = WrappedError(ERR_BUFFER_FULL)
@@ -572,7 +572,7 @@ struct Reader[R: io.Reader](
         #     return n, err
 
         # internal buffer not full, fill before writing to writer
-        if (self.write_pos - self.read_pos) < self.buf.size():
+        if (self.write_pos - self.read_pos) < self.buf.capacity:
             self.fill()
 
         while self.read_pos < self.write_pos:
@@ -622,7 +622,7 @@ struct Reader[R: io.Reader](
 #     """
 #     # # Is it already a Reader?
 #     # b, ok := rd.(*Reader)
-#     # if ok and self.buf.size() >= size:
+#     # if ok and self.buf.capacity >= size:
 #     # 	return b
 
 #     var r = Reader(reader ^)
@@ -728,7 +728,7 @@ struct Writer[W: io.Writer](
             return error
 
         # Reset the buffer
-        self.buf = Bytes(size=self.buf.size())
+        self.buf = Bytes(size=self.buf.capacity)
         self.bytes_written = 0
         return None
 
@@ -914,7 +914,7 @@ fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:
     size, it returns the underlying [Writer]."""
     # Is it already a Writer?
     # b, ok := w.(*Writer)
-    # if ok and self.buf.size() >= size:
+    # if ok and self.buf.capacity >= size:
     # 	return b
 
     var buf_size = size

@@ -76,8 +76,8 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
             _ = self.read(temp, io.BUFFER_SIZE)
 
             # If new bytes will overflow the result, resize it.
-            if len(bytes) + len(temp) > bytes.size():
-                bytes.resize(bytes.size() * 2)
+            if len(bytes) + len(temp) > bytes.capacity:
+                bytes.resize(bytes.capacity * 2)
             bytes += temp
 
             if len(temp) < io.BUFFER_SIZE:

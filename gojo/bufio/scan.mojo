@@ -342,7 +342,7 @@ fn scan_bytes(
     data: Bytes, at_eof: Bool, inout token: Bytes, inout err: Err
 ) raises -> Int:
     """Split function for a [Scanner] that returns each byte as a token."""
-    if at_eof and data.size() == 0:
+    if at_eof and data.capacity == 0:
         return 0
 
     token = data[0:1]
@@ -358,7 +358,7 @@ fn scan_bytes(
 # # Because of the Scan Interface, this makes it impossible for the client to
 # # distinguish correctly encoded replacement runes from encoding errors.
 # fn ScanRunes(data Bytes, at_eof Bool) (advance Int, token Bytes, err error):
-# 	if at_eof and data.size() == 0:
+# 	if at_eof and data.capacity == 0:
 # 		return 0, nil, nil
 
 
@@ -399,8 +399,8 @@ fn drop_carriage_return(data: Bytes) raises -> Bytes:
         The stripped data.
     """
     # In the case of a \r ending without a \n, indexing on -1 doesn't work as it finds a null terminator instead of \r.
-    if data.size() > 0 and data[data.size() - 1] == ord("\r"):
-        return data[0 : data.size() - 1]
+    if data.capacity > 0 and data[data.capacity - 1] == ord("\r"):
+        return data[0 : data.capacity - 1]
 
     return data
 
@@ -423,7 +423,7 @@ fn scan_lines(
     Returns:
         The number of bytes to advance the input.
     """
-    if at_eof and data.size() == 0:
+    if at_eof and data.capacity == 0:
         return 0
 
     var i = data.index_byte(ord("\n"))
@@ -435,7 +435,7 @@ fn scan_lines(
     # If we're at EOF, we have a final, non-terminated line. Return it.
     token = drop_carriage_return(data)
     # if at_eof:
-    return data.size()
+    return data.capacity
 
     # Request more data.
     # return 0
@@ -460,7 +460,7 @@ fn scan_words(
     # Skip leading spaces.
     var start = 0
     var width = 0
-    while start < data.size():
+    while start < data.capacity:
         width = len(data[0])
         if not is_space(data[0]):
             break
@@ -471,7 +471,7 @@ fn scan_words(
     var i = 0
     width = 0
     start = 0
-    while i < data.size():
+    while i < data.capacity:
         width = len(data[i])
         if is_space(data[i]):
             token = data[start:i]
@@ -480,9 +480,9 @@ fn scan_words(
         i += width
 
     # If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
-    if at_eof and data.size() > start:
+    if at_eof and data.capacity > start:
         token = data[start:]
-        return data.size()
+        return data.capacity
 
     # Request more data.
     return start
