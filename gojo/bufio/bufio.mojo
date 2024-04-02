@@ -90,12 +90,14 @@ struct Reader[R: io.Reader](
         """Reads a new chunk into the buffer."""
         # Slide existing data to beginning.
         if self.read_pos > 0:
-            _ = copy(self.buf, self.buf[self.read_pos : self.write_pos])
+            var current_capacity = self.buf.capacity
+            self.buf = self.buf[self.read_pos : self.write_pos]
+            self.buf.reserve(current_capacity)
             self.write_pos -= self.read_pos
             self.read_pos = 0
 
         # Compares to the length of the entire List[Byte] object, including 0 initialized positions.
-        # IE. var b = List[Byte](4096), then trying to write at b[4096] and onwards will fail.
+        # IE. var b = List[Byte](capacity=4096), then trying to write at b[4096] and onwards will fail.
         if self.write_pos >= self.buf.capacity:
             panic("bufio.Reader: tried to fill full buffer")
 
@@ -104,11 +106,8 @@ struct Reader[R: io.Reader](
         while i > 0:
             # TODO: Using temp until slicing can return a Reference
             var temp = List[Byte](capacity=DEFAULT_BUF_SIZE)
-
-            # TODO: filehandle read is not maintaining reader position?
             var result = self.reader.read(temp)
             var bytes_read = copy(self.buf, temp, self.write_pos)
-  
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
@@ -358,7 +357,7 @@ struct Reader[R: io.Reader](
         """
         var err: Optional[WrappedError] = None
         var s = 0  # search start index
-        var line: List[Byte] = List[Byte](DEFAULT_BUF_SIZE)
+        var line: List[Byte] = List[Byte](capacity=DEFAULT_BUF_SIZE)
         while True:
             # Search buffer.
             var i = index_byte(self.buf[self.read_pos + s : self.write_pos], delim)
@@ -426,7 +425,6 @@ struct Reader[R: io.Reader](
 
                 self.read_pos -= 1
                 line = line[: len(line) - 1]
-
             return line, True
 
         if len(line) == 0:
@@ -472,7 +470,7 @@ struct Reader[R: io.Reader](
                 break
 
             # Make a copy of the buffer.
-            var buf = frag
+            var buf = List[Byte](frag)
             full_buffers.append(buf)
             total_len += len(buf)
 
@@ -495,12 +493,12 @@ struct Reader[R: io.Reader](
             The List[Byte] from the internal buffer.
         """
         var full = List[List[Byte]]()
-        var frag = List[Byte](4096)
+        var frag = List[Byte](capacity=4096)
         var n: Int = 0
         var err = self.collect_fragments(delim, frag, full, n)
 
         # Allocate new buffer to hold the full pieces and the fragment.
-        var buf = List[Byte](n)
+        var buf = List[Byte](capacity=n)
         n = 0
 
         # copy full pieces and fragment in.
@@ -632,7 +630,7 @@ struct Reader[R: io.Reader](
 #     # 	return b
 
 #     var r = Reader(reader ^)
-#     r.reset(List[Byte](max(size, MIN_READ_BUFFER_SIZE)), reader ^)
+#     r.reset(List[Byte](capacity=max(size, MIN_READ_BUFFER_SIZE)), reader ^)
 #     return r
 
 

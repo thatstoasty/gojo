@@ -62,5 +62,5 @@ fn test_csv_writer() raises:
 
 fn main() raises:
     test_csv_reader()
-    # test_csv_reader_buffered_read()
+    test_csv_reader_buffered_read()
     test_csv_writer()
