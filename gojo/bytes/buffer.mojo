@@ -71,7 +71,7 @@ struct Buffer(
         self.off = 0
         self.last_read = OP_INVALID
 
-    fn bytes(self) raises -> List[Byte]:
+    fn bytes(self) -> List[Byte]:
         """Returns a slice of length self.buf.capacity holding the unread portion of the buffer.
         The slice is valid for use only until the next buffer modification (that is,
         only until the next call to a method like [Buffer.read], [Buffer.write], [Buffer.reset], or [Buffer.truncate]).
