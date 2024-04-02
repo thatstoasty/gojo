@@ -17,8 +17,6 @@ All of these packages are partially implemented and do not support unicode chara
 
 ### Gojo
 
-- `builtins`
-  - `Bytes` struct (backed by List[Int8])
 - `bufio`
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.

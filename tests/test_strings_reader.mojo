@@ -50,7 +50,7 @@ fn test_read_and_unread_byte() raises:
     var reader = new_reader("Hello, World!")
 
     # Read the first byte from the reader.
-    var buffer = List[Byte](512)
+    var buffer = List[Byte](capacity=512)
     var byte = reader.read_byte()
     test.assert_equal(byte.value, 72)
 

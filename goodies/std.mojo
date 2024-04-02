@@ -64,6 +64,6 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var buffer = List[Byte](io.BUFFER_SIZE)
+        var buffer = List[Byte](capacity=io.BUFFER_SIZE)
         _ = reader.read(buffer)
         return self.write(buffer)

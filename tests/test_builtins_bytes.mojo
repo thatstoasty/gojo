@@ -4,7 +4,7 @@ from gojo.builtins.bytes import Byte, index_byte
 
 # fn test_slice_out_of_bounds() raises:
 #     var test = MojoTest("Testing builtins.List[Byte] slice out of bounds")
-#     var bytes = List[Byte]("hello")
+#     var bytes = String("hello").as_bytes()
 #     var successful = True
 
 #     try:
