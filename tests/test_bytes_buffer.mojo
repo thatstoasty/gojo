@@ -1,5 +1,5 @@
 from tests.wrapper import MojoTest
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Byte
 from gojo.bytes import new_buffer
 
 
@@ -7,9 +7,10 @@ fn test_read() raises:
     var test = MojoTest("Testing bytes.Buffer.read")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var dest = Bytes(256)
+    var dest = List[Byte](capacity=256)
     _ = buf.read(dest)
-    test.assert_equal(str(dest), s)
+    dest.append(0)
+    test.assert_equal(String(dest), s)
 
 
 fn test_read_byte() raises:
@@ -37,7 +38,7 @@ fn test_read_bytes() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_bytes(ord("o"))
-    test.assert_equal(result.value, Bytes("Hello"))
+    test.assert_equal(result.value, String("Hello").as_bytes())
 
 
 fn test_read_slice() raises:
@@ -45,7 +46,7 @@ fn test_read_slice() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_slice(5)
-    test.assert_equal(result.value, Bytes("Hello"))
+    test.assert_equal(result.value, String("Hello").as_bytes())
 
 
 fn test_read_string() raises:
@@ -53,26 +54,26 @@ fn test_read_string() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_string(ord("o"))
-    test.assert_equal(result.value, Bytes("Hello"))
+    test.assert_equal(result.value, String("Hello").as_bytes())
 
 
 fn test_next() raises:
     var test = MojoTest("Testing bytes.Buffer.next")
     var buf = new_buffer("Hello World!")
-    test.assert_equal(buf.next(5), Bytes("Hello"))
+    test.assert_equal(buf.next(5), String("Hello").as_bytes())
 
 
 fn test_write() raises:
     var test = MojoTest("Testing bytes.Buffer.write")
-    var b = Bytes(16)
+    var b = List[Byte](capacity=16)
     var buf = new_buffer(b ^)
-    _ = buf.write(Bytes("Hello World!"))
+    _ = buf.write(String("Hello World!").as_bytes())
     test.assert_equal(str(buf), String("Hello World!"))
 
 
 fn test_write_string() raises:
     var test = MojoTest("Testing bytes.Buffer.write_string")
-    var b = Bytes(16)
+    var b = List[Byte](capacity=16)
     var buf = new_buffer(b ^)
 
     _ = buf.write_string("\nGoodbye World!")
@@ -81,7 +82,7 @@ fn test_write_string() raises:
 
 fn test_write_byte() raises:
     var test = MojoTest("Testing bytes.Buffer.write_byte")
-    var b = Bytes(16)
+    var b = List[Byte](capacity=16)
     var buf = new_buffer(b ^)
     _ = buf.write_byte(0x41)
     test.assert_equal(str(buf), String("A"))
@@ -89,7 +90,7 @@ fn test_write_byte() raises:
 
 fn test_new_buffer() raises:
     var test = MojoTest("Testing bytes.new_buffer")
-    var b = Bytes("Hello World!")
+    var b = String("Hello World!").as_bytes()
     var buf = new_buffer(b ^)
     test.assert_equal(str(buf), "Hello World!")
 

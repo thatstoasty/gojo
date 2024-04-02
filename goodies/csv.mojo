@@ -1,4 +1,4 @@
-from gojo.builtins import Bytes
+from gojo.builtins import Byte
 import gojo.io
 import gojo.bufio
 from gojo.strings import StringBuilder

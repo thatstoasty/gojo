@@ -1,5 +1,5 @@
 from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.builtins import Bytes, Byte, Result, WrappedError
+from gojo.builtins import Byte, Result, WrappedError
 import gojo.io
 
 
@@ -24,7 +24,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, src: Bytes) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> Result[Int]:
         """Writes the given bytes to the file descriptor.
 
         Args:
@@ -35,7 +35,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         """
         var write_count: c_ssize_t = external_call[
             "write", c_ssize_t, c_int, char_pointer, c_size_t
-        ](self.fd, src._vector.data.bitcast[UInt8](), len(src))
+        ](self.fd, src.data.bitcast[UInt8](), len(src))
 
         if write_count == -1:
             return Result(
@@ -64,6 +64,6 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var buffer = Bytes(io.BUFFER_SIZE)
+        var buffer = List[Byte](io.BUFFER_SIZE)
         _ = reader.read(buffer)
         return self.write(buffer)

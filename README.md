@@ -53,7 +53,7 @@ For `goodies`: `mojo package goodies -I .`
 
 ```py
 from tests.wrapper import MojoTest
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Bytes
 
 
 fn test_bytes() raises:
@@ -78,7 +78,7 @@ fn test_bytes() raises:
 ```py
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Bytes
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
 from gojo.io import FileWrapper
 
@@ -174,7 +174,7 @@ fn test_file_wrapper_scanner() raises:
 ```py
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Bytes
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
 from gojo.io import FileWrapper
 
@@ -199,7 +199,7 @@ fn test_reader() raises:
 
 ```py
 from tests.wrapper import MojoTest
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Bytes
 from gojo.bytes.buffer import new_buffer, Buffer
 
 
@@ -232,7 +232,7 @@ fn test_write() raises:
 
 ```py
 from tests.wrapper import MojoTest
-from gojo.builtins._bytes import Bytes
+from gojo.builtins.bytes import Bytes
 from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
 
 

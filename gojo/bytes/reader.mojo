@@ -1,5 +1,5 @@
 from collections.optional import Optional
-from ..builtins import cap, copy, Bytes, Byte, Result, WrappedError, panic
+from ..builtins import cap, copy, Byte, Result, WrappedError, panic
 import ..io
 
 
@@ -21,7 +21,7 @@ struct Reader(
     The zero value for Reader operates like a Reader of an empty slice.
     """
 
-    var buffer: Bytes
+    var buffer: List[Byte]
     var index: Int64  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
 
@@ -39,12 +39,12 @@ struct Reader(
         The result is unaffected by any method calls except [Reader.Reset]."""
         return len(self.buffer)
 
-    fn read(inout self, inout dest: Bytes) -> Result[Int]:
-        """Reads from the internal buffer into the dest Bytes struct.
+    fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
+        """Reads from the internal buffer into the dest List[Byte] struct.
         Implements the [io.Reader] Interface.
 
         Args:
-            dest: The destination Bytes struct to read into.
+            dest: The destination List[Byte] struct to read into.
 
         Returns:
             Int: The number of bytes read into dest."""
@@ -58,12 +58,12 @@ struct Reader(
         self.index += bytes_read
         return Result(bytes_read)
 
-    fn read_at(self, inout dest: Bytes, off: Int64) -> Result[Int]:
+    fn read_at(self, inout dest: List[Byte], off: Int64) -> Result[Int]:
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
 
         Args:
-            dest: The destination Bytes struct to read into.
+            dest: The destination List[Byte] struct to read into.
             off: The offset to start reading from.
 
         Returns:
@@ -187,7 +187,7 @@ struct Reader(
 
         return Int64(write_count)
 
-    fn reset(inout self, buffer: Bytes):
+    fn reset(inout self, buffer: List[Byte]):
         """Resets the [Reader.Reader] to be reading from b.
 
         Args:
@@ -198,7 +198,7 @@ struct Reader(
         self.prev_rune = -1
 
 
-fn new_reader(buffer: Bytes) -> Reader:
+fn new_reader(buffer: List[Byte]) -> Reader:
     """Returns a new [Reader.Reader] reading from b.
 
     Args:
@@ -206,3 +206,14 @@ fn new_reader(buffer: Bytes) -> Reader:
 
     """
     return Reader(buffer, 0, -1)
+
+
+fn new_reader(buffer: String) -> Reader:
+    """Returns a new [Reader.Reader] reading from b.
+
+    Args:
+        buffer: The new buffer to read from.
+
+    """
+    return Reader(buffer.as_bytes(), 0, -1)
+

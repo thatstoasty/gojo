@@ -1,6 +1,6 @@
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder
-from gojo.builtins import Bytes
+from gojo.builtins import Byte
 
 
 fn test_write_string() raises:
@@ -13,7 +13,7 @@ fn test_write_string() raises:
         _ = builder.write_string("Lorem ipsum dolor sit amet ")
 
     test.assert_equal(
-        str(builder),
+        String(builder),
         (
             "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor"
             " sit amet "
@@ -26,8 +26,8 @@ fn test_write() raises:
 
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
-    _ = builder.write(Bytes("Hello"))
-    test.assert_equal(str(builder), "Hello")
+    _ = builder.write(String("Hello").as_bytes())
+    test.assert_equal(String(builder), "Hello")
 
 
 fn test_write_byte() raises:
@@ -36,7 +36,7 @@ fn test_write_byte() raises:
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
     _ = builder.write_byte(32)
-    test.assert_equal(str(builder), " ")
+    test.assert_equal(String(builder), " ")
 
 
 fn main() raises:

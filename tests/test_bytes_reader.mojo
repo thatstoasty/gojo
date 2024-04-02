@@ -1,15 +1,16 @@
 from tests.wrapper import MojoTest
-from gojo.builtins._bytes import Bytes
+from gojo.builtins import Byte
 from gojo.bytes import reader, buffer
 import gojo.io
 
 
 fn test_read() raises:
     var test = MojoTest("Testing bytes.Reader.read")
-    var reader = reader.new_reader(Bytes("0123456789"))
-    var dest = Bytes(128)
+    var reader = reader.new_reader("0123456789")
+    var dest = List[Byte](capacity=128)
     _ = reader.read(dest)
-    test.assert_equal(str(dest), "0123456789")
+    dest.append(0)
+    test.assert_equal(String(dest), "0123456789")
 
     # Test negative seek
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
@@ -27,9 +28,9 @@ fn test_read() raises:
 
 fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
-    var reader = reader.new_reader(Bytes("0123456789"))
+    var reader = reader.new_reader("0123456789")
     _ = reader.seek(123456789, io.SEEK_START)
-    var dest = Bytes(128)
+    var dest = List[Byte](capacity=128)
 
     var result = reader.read(dest)
     if not result.has_error():
@@ -44,51 +45,58 @@ fn test_read_after_big_seek() raises:
 
 fn test_read_at() raises:
     var test = MojoTest("Testing bytes.Reader.read_at")
-    var reader = reader.new_reader(Bytes("0123456789"))
+    var reader = reader.new_reader("0123456789")
 
-    var dest = Bytes(128)
+    var dest = List[Byte](capacity=128)
     var pos = reader.read_at(dest, 0)
-    test.assert_equal(str(dest), "0123456789")
+    dest.append(0)
+    test.assert_equal(String(dest), "0123456789")
 
-    dest = Bytes(128)
+    dest = List[Byte](capacity=128)
     pos = reader.read_at(dest, 1)
-    test.assert_equal(str(dest), "123456789")
+    dest.append(0)
+    test.assert_equal(String(dest), "123456789")
 
 
 fn test_seek() raises:
     var test = MojoTest("Testing bytes.Reader.seek")
-    var reader = reader.new_reader(Bytes("0123456789"))
+    var reader = reader.new_reader("0123456789")
     var pos = reader.seek(5, io.SEEK_START)
 
-    var dest = Bytes(16)
+    var dest = List[Byte](capacity=16)
     _ = reader.read(dest)
-    test.assert_equal(str(dest), "56789")
+    dest.append(0)
+    test.assert_equal(String(dest), "56789")
 
     # Test SEEK_END relative seek
     pos = reader.seek(-2, io.SEEK_END)
-    dest = Bytes(16)
+    dest = List[Byte](capacity=16)
     _ = reader.read(dest)
-    test.assert_equal(str(dest), "89")
+    dest.append(0)
+    test.assert_equal(String(dest), "89")
 
     # Test SEEK_CURRENT relative seek (should be at the end of the reader, ie [:-4])
     pos = reader.seek(-4, io.SEEK_CURRENT)
-    dest = Bytes(16)
+    dest = List[Byte](capacity=16)
     _ = reader.read(dest)
-    test.assert_equal(str(dest), "6789")
+    dest.append(0)
+    test.assert_equal(String(dest), "6789")
 
 
 fn test_read_all() raises:
     var test = MojoTest("Testing io.read_all with bytes.Reader")
-    var reader = reader.new_reader(Bytes("0123456789"))
+    var reader = reader.new_reader("0123456789")
     var result = io.read_all(reader)
-    test.assert_equal(str(result.value), "0123456789")
+    var bytes = result.value
+    bytes.append(0)
+    test.assert_equal(String(bytes), "0123456789")
 
 
 fn test_write_to() raises:
     var test = MojoTest("Testing bytes.Reader.write_to")
 
     # Create a new reader containing the content "0123456789"
-    var reader = reader.new_reader(Bytes("0123456789"))
+    var reader = reader.new_reader("0123456789")
 
     # Create a new writer containing the content "Hello World"
     var test_string: String = "Hello World"
@@ -107,7 +115,7 @@ fn test_read_and_unread_byte() raises:
     var reader = reader.new_reader(s)
 
     # Read the first byte from the reader.
-    var buffer = Bytes(128)
+    var buffer = List[Byte](capacity=128)
     var result = reader.read_byte()
     test.assert_equal(result.value, 48)
     var post_read_position = reader.index

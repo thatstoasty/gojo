@@ -1,5 +1,5 @@
 from collections.optional import Optional
-from gojo.builtins import Bytes, Byte, copy, Result, WrappedError
+from gojo.builtins import Byte, copy, Result, WrappedError
 import gojo.io
 
 
@@ -22,11 +22,11 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn close(inout self) raises:
         self.handle.close()
 
-    fn read(inout self, inout dest: Bytes) -> Result[Int]:
+    fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
-        var bytes_to_read = dest.available()
+        var bytes_to_read = dest.capacity - len(dest)
         try:
             result = self.handle.read(bytes_to_read)
         except e:
@@ -36,7 +36,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         if bytes_read == 0:
             return Result(0, WrappedError(io.EOF))
 
-        var bytes_result = Bytes(result)
+        var bytes_result = result.as_bytes()
         var elements_copied = copy(dest, bytes_result[:bytes_read])
         # dest = dest[:elements_copied]
 
@@ -46,7 +46,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
         return Result(elements_copied, err)
 
-    fn read(inout self, inout dest: Bytes, size: Int64) -> Result[Int]:
+    fn read(inout self, inout dest: List[Byte], size: Int64) -> Result[Int]:
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
@@ -59,7 +59,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         if bytes_read == 0:
             return Result(0, WrappedError(io.EOF))
 
-        var bytes_result = Bytes(result)
+        var bytes_result = result.as_bytes()
         var elements_copied = copy(dest, bytes_result[:bytes_read])
         dest = dest[:elements_copied]
 
@@ -69,16 +69,16 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
         return Result(elements_copied, err)
 
-    fn read_all(inout self) -> Result[Bytes]:
-        var bytes = Bytes(io.BUFFER_SIZE)
+    fn read_all(inout self) -> Result[List[Byte]]:
+        var bytes = List[Byte](capacity=io.BUFFER_SIZE)
         while True:
-            var temp = Bytes(io.BUFFER_SIZE)
+            var temp = List[Byte](capacity=io.BUFFER_SIZE)
             _ = self.read(temp, io.BUFFER_SIZE)
 
             # If new bytes will overflow the result, resize it.
-            if len(bytes) + len(temp) > bytes.size():
-                bytes.resize(bytes.size() * 2)
-            bytes += temp
+            if len(bytes) + len(temp) > bytes.capacity:
+                bytes.reserve(bytes.capacity * 2)
+            bytes.extend(temp)
 
             if len(temp) < io.BUFFER_SIZE:
                 return Result(bytes, WrappedError(io.EOF))
@@ -97,7 +97,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         return self.handle.read_bytes()
 
     fn stream_until_delimiter(
-        inout self, inout dest: Bytes, delimiter: Int8, max_size: Int
+        inout self, inout dest: List[Byte], delimiter: Int8, max_size: Int
     ) raises:
         for i in range(max_size):
             var byte = self.read_byte().value
@@ -113,9 +113,11 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         except e:
             return Result(Int64(0), WrappedError(e))
 
-    fn write(inout self, src: Bytes) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> Result[Int]:
         try:
-            self.handle.write(String(src))
+            var copy = List[Byte](src)
+            var bytes_length = len(copy)
+            self.handle.write(StringRef(copy.steal_data().value, bytes_length))
             return Result(len(src), WrappedError(io.EOF))
         except e:
             return Result(0, WrappedError(e))
