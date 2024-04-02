@@ -59,7 +59,6 @@ fn test_string_builder() raises:
 
     var buffer_start_time = now()
     var buffer_output = str(buf)
-    print(len(buffer_output))
     var buffer_execution_time = now() - buffer_start_time
 
     print("StringBuilder:", "(", builder_execution_time, "ns)")

@@ -103,10 +103,12 @@ struct Reader[R: io.Reader](
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
             # TODO: Using temp until slicing can return a Reference
-            var temp = List[Byte](DEFAULT_BUF_SIZE)
-            var result = self.reader.read(temp)
+            var temp = List[Byte](capacity=DEFAULT_BUF_SIZE)
 
+            # TODO: filehandle read is not maintaining reader position?
+            var result = self.reader.read(temp)
             var bytes_read = copy(self.buf, temp, self.write_pos)
+  
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
@@ -601,6 +603,9 @@ struct Reader[R: io.Reader](
 
         # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
         var result = writer.write(self.buf[self.read_pos : self.write_pos])
+        if result.error:
+            return Result(Int64(result.value), result.error)
+        
         var bytes_written = result.value
         if bytes_written < 0:
             panic(ERR_NEGATIVE_WRITE)
@@ -881,12 +886,14 @@ struct Writer[W: io.Writer](
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 # TODO: should really be using a slice that returns refs and not a copy.
-                # Read into remaining unused space in the buffer.
-                var sl = self.buf[self.bytes_written :]
+                # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
+                var sl = self.buf[self.bytes_written:len(self.buf)]
+                sl.reserve(self.buf.capacity)
                 var result = reader.read(sl)
                 bytes_read = result.value
                 err = result.get_error()
                 _ = copy(self.buf, sl, self.bytes_written)
+                
                 if bytes_read != 0 or err:
                     break
                 nr += 1
@@ -905,7 +912,7 @@ struct Writer[W: io.Writer](
                 err = self.flush()
             else:
                 err = None
-
+        
         return Result(total_bytes_written, None)
 
 
@@ -923,7 +930,7 @@ fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:
         buf_size = DEFAULT_BUF_SIZE
 
     return Writer[W](
-        buf=List[Byte](size),
+        buf=List[Byte](capacity=size),
         writer=writer ^,
         bytes_written=0,
     )

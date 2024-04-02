@@ -1,6 +1,6 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins.bytes import Bytes
+from gojo.builtins.bytes import Byte
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
 from goodies import FileWrapper
 
@@ -133,7 +133,7 @@ fn test_scan_bytes() raises:
         var j = 0
 
         while scanner.scan():
-            test.assert_equal(scanner.current_token_as_bytes(), Bytes(test_case[j]))
+            test.assert_equal(scanner.current_token_as_bytes(), test_case[j].as_bytes())
             j += 1
 
 

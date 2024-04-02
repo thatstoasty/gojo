@@ -167,7 +167,7 @@ struct Scanner[R: io.Reader]():
 
                 # Make a new List[Byte] buffer and copy the elements in
                 new_size = math.min(new_size, self.max_token_size)
-                var new_buf = List[Byte](new_size)
+                var new_buf = List[Byte](capacity=new_size)
                 _ = copy(new_buf, self.buf[self.start : self.end])
                 self.buf = new_buf
                 self.end -= self.start

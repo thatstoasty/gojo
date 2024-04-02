@@ -1,6 +1,7 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins import Bytes, Result, WrappedError
+from gojo.builtins import Byte, Result, WrappedError
+from gojo.builtins.bytes import to_string
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
 from gojo.io import read_all
 from gojo.strings import StringBuilder
@@ -15,12 +16,12 @@ fn test_read() raises:
     var buf = buffer.new_buffer(s)
     var reader = Reader(buf)
 
-    # Read the buffer into Bytes and then add more to Bytes
-    var dest = Bytes(256)
+    # Read the buffer into List[Byte] and then add more to List[Byte]
+    var dest = List[Byte](capacity=256)
     _ = reader.read(dest)
-    dest.extend(" World!")
+    dest.extend(String(" World!").as_bytes())
 
-    test.assert_equal(dest, "Hello World!")
+    test.assert_equal(to_string(dest), "Hello World!")
 
 
 fn test_read_all() raises:
@@ -30,7 +31,9 @@ fn test_read_all() raises:
     var buf = buffer.new_reader(s)
     var reader = Reader(buf)
     var result = read_all(reader)
-    test.assert_equal(str(result.value), "0123456789")
+    var bytes = result.value
+    bytes.append(0)
+    test.assert_equal(String(bytes), "0123456789")
 
 
 fn test_write_to() raises:
@@ -56,7 +59,7 @@ fn test_read_and_unread_byte() raises:
     var example: String = "Hello, World!"
     var buf = buffer.new_buffer(example ^)
     var reader = Reader(buf)
-    var buffer = Bytes(512)
+    var buffer = List[Byte](capacity=512)
     var result = reader.read_byte()
     test.assert_equal(result.value, 72)
     var post_read_position = reader.read_pos
@@ -72,7 +75,8 @@ fn test_read_slice() raises:
     var reader = Reader(buf)
 
     var result = reader.read_slice(ord(5))
-    test.assert_equal(result.value, "012345")
+    var bytes = result.value
+    test.assert_equal(to_string(result.value), "012345")
 
 
 fn test_read_bytes() raises:
@@ -81,7 +85,7 @@ fn test_read_bytes() raises:
     var reader = Reader(buf)
 
     var result = reader.read_bytes(ord("\n"))
-    test.assert_equal(result.value, "01234")
+    test.assert_equal(to_string(result.value), "01234")
 
 
 # TODO: read_line is broken until Mojo support unpacking Memory only types from return Tuples.
@@ -90,7 +94,7 @@ fn test_read_line() raises:
     # var buf = buffer.new_buffer("01234\n56789")
     # var reader = Reader(buf)
 
-    # var line: Bytes
+    # var line: List[Byte]
     # var b: Bool
     # line, b = reader.read_line()
     # test.assert_equal(line, "01234")
@@ -104,8 +108,8 @@ fn test_peek() raises:
     # Peek doesn't advance the reader, so we should see the same content twice.
     var result = reader.peek(5)
     var second_result = reader.peek(5)
-    test.assert_equal(result.value, "01234")
-    test.assert_equal(second_result.value, "01234")
+    test.assert_equal(to_string(result.value), "01234")
+    test.assert_equal(to_string(second_result.value), "01234")
 
 
 fn test_discard() raises:
@@ -118,18 +122,18 @@ fn test_discard() raises:
 
     # Peek doesn't advance the reader, so we should see the same content twice.
     var second_result = reader.peek(5)
-    test.assert_equal(second_result.value, "56789")
+    test.assert_equal(to_string(second_result.value), "56789")
 
 
 fn test_write() raises:
     var test = MojoTest("Testing bufio.Writer.write and flush")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer()
     var writer = Writer(buf)
 
-    # Write the content from src to the buffered writer's internal buffer and flush it to the Bytes Buffer Writer.
-    var src = Bytes("0123456789")
+    # Write the content from src to the buffered writer's internal buffer and flush it to the List[Byte] Buffer Writer.
+    var src = String("0123456789").as_bytes()
     var result = writer.write(src)
     _ = writer.flush()
 
@@ -140,12 +144,12 @@ fn test_write() raises:
 fn test_several_writes() raises:
     var test = MojoTest("Testing several bufio.Writer.write")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer()
     var writer = Writer(buf)
 
-    # Write the content from src to the buffered writer's internal buffer and flush it to the Bytes Buffer Writer.
-    var src = Bytes("0123456789")
+    # Write the content from src to the buffered writer's internal buffer and flush it to the List[Byte] Buffer Writer.
+    var src = String("0123456789").as_bytes()
     var result = Result(0)
     for i in range(500):
         result = writer.write(src)
@@ -161,7 +165,7 @@ fn test_several_writes() raises:
 fn test_big_write() raises:
     var test = MojoTest("Testing a big bufio.Writer.write")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer()
     var writer = Writer(buf)
 
@@ -173,7 +177,7 @@ fn test_big_write() raises:
     
     # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
     var text = str(builder)
-    _ = writer.write(text)
+    _ = writer.write(text.as_bytes())
     test.assert_equal(result.value, 10)
     test.assert_equal(len(writer.writer), 5000)
     test.assert_equal(text[0], "0")
@@ -183,11 +187,11 @@ fn test_big_write() raises:
 fn test_write_byte() raises:
     var test = MojoTest("Testing bufio.Writer.write_byte")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer("Hello")
     var writer = Writer(buf)
 
-    # Write a byte with the value of 32 to the writer's internal buffer and flush it to the Bytes Buffer Writer.
+    # Write a byte with the value of 32 to the writer's internal buffer and flush it to the List[Byte] Buffer Writer.
     var result = writer.write_byte(32)
     _ = writer.flush()
 
@@ -198,11 +202,11 @@ fn test_write_byte() raises:
 fn test_write_string() raises:
     var test = MojoTest("Testing bufio.Writer.write_string")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer("Hello")
     var writer = Writer(buf)
 
-    # Write a string to the writer's internal buffer and flush it to the Bytes Buffer Writer.
+    # Write a string to the writer's internal buffer and flush it to the List[Byte] Buffer Writer.
     var result = writer.write_string(" World!")
     _ = writer.flush()
 
@@ -213,12 +217,12 @@ fn test_write_string() raises:
 fn test_read_from() raises:
     var test = MojoTest("Testing bufio.Writer.read_from")
 
-    # Create a new Bytes Buffer Writer and use it to create the buffered Writer
+    # Create a new List[Byte] Buffer Writer and use it to create the buffered Writer
     var buf = buffer.new_buffer("Hello")
     var writer = Writer(buf)
 
-    # Read from a ReaderFrom struct into the Buffered Writer's internal buffer and flush it to the Bytes Buffer Writer.
-    var src = Bytes(" World!")
+    # Read from a ReaderFrom struct into the Buffered Writer's internal buffer and flush it to the List[Byte] Buffer Writer.
+    var src = String(" World!").as_bytes()
     var reader_from = buffer.new_buffer(src)
     var result = writer.read_from(reader_from)
     _ = writer.flush()

@@ -53,7 +53,7 @@ fn index_byte(bytes: List[Byte], delim: Byte) -> Int:
 
 
 fn to_string(bytes: List[Byte]) -> String:
-    """Makes a deepcopy of the List[Byte] supplied and converts it to a string.
+    """Makes a deepcopy of the List[Byte] supplied and converts it to a string. If it's not null terminated, it will append a null byte.
 
     Args:
         bytes: The List[Byte] struct to convert.
@@ -62,5 +62,6 @@ fn to_string(bytes: List[Byte]) -> String:
         The string representation of the List[Byte] struct.
     """
     var copy = List[Byte](bytes)
-    copy.append(0)
+    if copy[-1] != 0:
+        copy.append(0)
     return String(copy)
