@@ -4,7 +4,7 @@ from .list import equals
 alias Byte = Int8
 
 
-fn has_prefix(bytes: List[Byte], prefix: List[Byte]) raises -> Bool:
+fn has_prefix(bytes: List[Byte], prefix: List[Byte]) -> Bool:
     """Reports whether the List[Byte] struct begins with prefix.
 
     Args:
@@ -19,7 +19,7 @@ fn has_prefix(bytes: List[Byte], prefix: List[Byte]) raises -> Bool:
     return len_comparison and prefix_comparison
 
 
-fn has_suffix(bytes: List[Byte], suffix: List[Byte]) raises -> Bool:
+fn has_suffix(bytes: List[Byte], suffix: List[Byte]) -> Bool:
     """Reports whether the List[Byte] struct ends with suffix.
 
     Args:
