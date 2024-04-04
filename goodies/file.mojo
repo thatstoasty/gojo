@@ -13,14 +13,18 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         self.handle = existing.handle ^
 
     fn __del__(owned self):
-        try:
-            self.close()
-        except:
+        var err = self.close()
+        if err:
             # TODO: __del__ can't raise, but there should be some fallback.
-            print("Failed to close the file.")
+            print(err.value())
 
-    fn close(inout self) raises:
-        self.handle.close()
+    fn close(inout self) -> Optional[WrappedError]:
+        try:
+            self.handle.close()
+        except e:
+            return WrappedError(e)
+
+        return None
 
     fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
         # Pretty hacky way to force the filehandle read into the defined trait.

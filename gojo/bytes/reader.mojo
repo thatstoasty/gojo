@@ -216,4 +216,3 @@ fn new_reader(buffer: String) -> Reader:
 
     """
     return Reader(buffer.as_bytes(), 0, -1)
-

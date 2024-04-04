@@ -106,7 +106,7 @@ trait Closer(Movable):
     Specific implementations may document their own behavior.
     """
 
-    fn close(inout self) raises:
+    fn close(inout self) -> Optional[WrappedError]:
         ...
 
 
