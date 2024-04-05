@@ -45,7 +45,11 @@ from ..syscall.net import (
     SO_RCVTIMEO,
 )
 from .fd import FileDescriptor, FileDescriptorBase
-from .ip import convert_binary_ip_to_string, build_sockaddr_pointer, convert_binary_port_to_int
+from .ip import (
+    convert_binary_ip_to_string,
+    build_sockaddr_pointer,
+    convert_binary_port_to_int,
+)
 from .address import Addr, TCPAddr, HostPort
 
 alias SocketClosedError = Error("Socket: Socket is already closed")
@@ -62,6 +66,7 @@ struct Socket(FileDescriptorBase):
         socket_type: The socket type.
         protocol: The protocol.
     """
+
     var sockfd: FileDescriptor
     var address_family: Int
     var socket_type: UInt8
@@ -163,7 +168,14 @@ struct Socket(FileDescriptorBase):
             raise Error("Failed to accept connection")
 
         var remote = self.get_peer_name()
-        return Self(new_sockfd, self.address_family, self.socket_type, self.protocol, self.local_address, TCPAddr(remote.host, remote.port))
+        return Self(
+            new_sockfd,
+            self.address_family,
+            self.socket_type,
+            self.protocol,
+            self.local_address,
+            TCPAddr(remote.host, remote.port),
+        )
 
     fn listen(self, backlog: Int = 0) raises:
         """Enable a server to accept connections.
@@ -230,7 +242,7 @@ struct Socket(FileDescriptorBase):
 
         return HostPort(
             host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AF_INET, 16),
-            port=convert_binary_port_to_int(addr_in.sin_port)
+            port=convert_binary_port_to_int(addr_in.sin_port),
         )
 
     fn get_peer_name(self) raises -> HostPort:
@@ -254,7 +266,7 @@ struct Socket(FileDescriptorBase):
 
         return HostPort(
             host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AF_INET, 16),
-            port=convert_binary_port_to_int(addr_in.sin_port)
+            port=convert_binary_port_to_int(addr_in.sin_port),
         )
 
     fn get_socket_option(self, option_name: Int) raises -> Int:
@@ -306,7 +318,12 @@ struct Socket(FileDescriptorBase):
 
         if connect(self.sockfd.fd, sockaddr_pointer, sizeof[sockaddr_in]()) == -1:
             self.shutdown()
-            raise Error("Socket.connect: Failed to connect to the remote socket at: " + address + ":" + str(port))
+            raise Error(
+                "Socket.connect: Failed to connect to the remote socket at: "
+                + address
+                + ":"
+                + str(port)
+            )
 
         var remote = self.get_peer_name()
         self.remote_address = TCPAddr(remote.host, remote.port)

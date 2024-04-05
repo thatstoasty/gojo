@@ -13,6 +13,7 @@ trait Conn(io.Writer, io.Reader, io.Closer):
         ...
 
     """Conn is a generic stream-oriented network connection."""
+
     fn local_address(self) -> TCPAddr:
         """Returns the local network address, if known."""
         ...
@@ -68,6 +69,7 @@ struct Connection(Conn):
     Args:
         fd: The file descriptor of the connection.
     """
+
     var fd: Arc[Socket]
 
     fn __init__(inout self, socket: Socket):
@@ -118,10 +120,12 @@ struct Connection(Conn):
 
     fn local_address(self) -> TCPAddr:
         """Returns the local network address.
-        The Addr returned is shared by all invocations of local_address, so do not modify it."""
+        The Addr returned is shared by all invocations of local_address, so do not modify it.
+        """
         return self.fd[].local_address
 
     fn remote_address(self) -> TCPAddr:
         """Returns the remote network address.
-        The Addr returned is shared by all invocations of remote_address, so do not modify it."""
+        The Addr returned is shared by all invocations of remote_address, so do not modify it.
+        """
         return self.fd[].remote_address

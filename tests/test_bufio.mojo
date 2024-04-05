@@ -169,12 +169,12 @@ fn test_big_write() raises:
     var buf = buffer.new_buffer()
     var writer = Writer(buf)
 
-    # Build a string larger than the size of the Bufio struct's internal buffer. 
+    # Build a string larger than the size of the Bufio struct's internal buffer.
     var builder = StringBuilder(5000)
     var result = Result(0)
     for i in range(500):
         result = builder.write_string("0123456789")
-    
+
     # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
     var text = str(builder)
     _ = writer.write(text.as_bytes())

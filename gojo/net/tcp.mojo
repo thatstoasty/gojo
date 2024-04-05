@@ -78,6 +78,7 @@ struct TCPConnection(Conn):
     Args:
         connection: The underlying Connection.
     """
+
     var _connection: Connection
 
     fn __init__(inout self, connection: Connection):
@@ -152,7 +153,9 @@ struct TCPConnection(Conn):
 
 
 fn listen_tcp(network: String, local_address: TCPAddr) raises -> TCPListener:
-    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, local_address.ip + ":" + str(local_address.port))
+    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(
+        network, local_address.ip + ":" + str(local_address.port)
+    )
 
 
 fn listen_tcp(network: String, ip: String, port: Int) raises -> TCPListener:

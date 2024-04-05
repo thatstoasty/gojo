@@ -22,10 +22,11 @@ from ..syscall.net import (
     getaddrinfo_unix,
     gai_strerror,
     to_char_ptr,
-    c_charptr_to_string
+    c_charptr_to_string,
 )
 
 alias AddrInfo = Variant[addrinfo, addrinfo_unix]
+
 
 fn get_addr_info(host: String) raises -> AddrInfo:
     var status: Int32 = 0
