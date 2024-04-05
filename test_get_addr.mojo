@@ -52,5 +52,5 @@ fn test_stuff() raises:
 
 
 fn main() raises:
-    # test_stuff()
-    test_listener()
+    test_stuff()
+    # test_listener()
