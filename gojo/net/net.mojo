@@ -5,25 +5,14 @@ from ..builtins import Byte, Result, WrappedError
 from .socket import Socket
 from .address import Addr, TCPAddr
 
-
-# Time in nanoseconds
-alias Duration = Int
 alias DEFAULT_BUFFER_SIZE = 4096
-alias DEFAULT_TCP_KEEP_ALIVE = Duration(15 * 1000 * 1000 * 1000)  # 15 seconds
-
-
-trait Listener(Movable):
-    fn accept(borrowed self) raises -> Connection:
-        ...
-
-    fn close(self) -> Optional[WrappedError]:
-        ...
-
-    fn addr(self) -> Addr:
-        ...
 
 
 trait Conn(io.Writer, io.Reader, io.Closer):
+    fn __init__(inout self, socket: Socket):
+        ...
+
+    """Conn is a generic stream-oriented network connection."""
     fn local_address(self) -> TCPAddr:
         """Returns the local network address, if known."""
         ...
@@ -73,9 +62,26 @@ trait Conn(io.Writer, io.Reader, io.Closer):
 
 @value
 struct Connection(Conn):
+    """Connection is a concrete generic stream-oriented network connection.
+    It is used as the internal connection for structs like TCPConnection.
+
+    Args:
+        fd: The file descriptor of the connection.
+    """
     var fd: Arc[Socket]
 
+    fn __init__(inout self, socket: Socket):
+        self.fd = Arc(socket)
+
     fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
+        """Reads data from the underlying file descriptor.
+
+        Args:
+            dest: The buffer to read data into.
+
+        Returns:
+            The number of bytes read, or an error if one occurred.
+        """
         var result = self.fd[].read(dest)
         if result.error:
             if str(result.unwrap_error()) != io.EOF:
@@ -84,6 +90,14 @@ struct Connection(Conn):
         return result.value
 
     fn write(inout self, src: List[Byte]) -> Result[Int]:
+        """Writes data to the underlying file descriptor.
+
+        Args:
+            src: The buffer to read data into.
+
+        Returns:
+            The number of bytes written, or an error if one occurred.
+        """
         var result = self.fd[].write(src)
         if result.error:
             return Result[Int](0, result.unwrap_error())
@@ -91,6 +105,11 @@ struct Connection(Conn):
         return result.value
 
     fn close(inout self) -> Optional[WrappedError]:
+        """Closes the underlying file descriptor.
+
+        Returns:
+            An error if one occurred, or None if the file descriptor was closed successfully.
+        """
         var err = self.fd[].close()
         if err:
             return err.value()

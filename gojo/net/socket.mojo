@@ -144,6 +144,7 @@ struct Socket(FileDescriptorBase):
             self.shutdown()
         if not self._closed:
             var err = self.close()
+            _ = self.sockfd.fd
             if err:
                 print("Failed to close socket during deletion:", err.value())
 

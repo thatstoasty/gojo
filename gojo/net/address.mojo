@@ -84,12 +84,6 @@ fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
     return TCPAddr(host, portnum)
 
 
-fn join_host_port(host: String, port: String) -> String:
-    if host.find(":") != -1:  # must be IPv6 literal
-        return "[" + host + "]:" + port
-    return host + ":" + port
-
-
 alias missingPortError = Error("missing port in address")
 alias tooManyColonsError = Error("too many colons in address")
 
@@ -104,6 +98,12 @@ struct HostPort(Stringable):
 
     fn __str__(self) -> String:
         return join_host_port(self.host, str(self.port))
+
+
+fn join_host_port(host: String, port: String) -> String:
+    if host.find(":") != -1:  # must be IPv6 literal
+        return "[" + host + "]:" + port
+    return host + ":" + port
 
 
 fn split_host_port(hostport: String) raises -> HostPort:
