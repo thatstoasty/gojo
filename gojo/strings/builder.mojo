@@ -10,7 +10,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
-    together. It is around 10x faster than using the `+` operator to concatenate
+    together. It is around 20x faster than using the `+` operator to concatenate
     strings because it avoids the overhead of creating and destroying many
     intermediate strings and performs memcopy operations.
 
@@ -24,8 +24,8 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
       from strings.builder import StringBuilder
 
       var sb = StringBuilder()
-      sb.append("mojo")
-      sb.append("jojo")
+      sb.write_string("mojo")
+      sb.write_string("jojo")
       print(sb) # mojojojo
       ```
     """
