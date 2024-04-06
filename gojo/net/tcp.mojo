@@ -102,9 +102,9 @@ struct TCPConnection(Conn):
         var result = self._connection.read(dest)
         if result.error:
             if str(result.unwrap_error()) != io.EOF:
-                return Result[Int](0, result.unwrap_error())
+                return Result(0, result.unwrap_error())
 
-        return result.value
+        return result
 
     fn write(inout self, src: List[Byte]) -> Result[Int]:
         """Writes data to the underlying file descriptor.

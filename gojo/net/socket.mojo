@@ -409,9 +409,10 @@ struct Socket(FileDescriptorBase):
         # Then we copy all the data over.
         var result = self.sockfd.read(dest)
         if result.error:
-            return Result(0, result.unwrap_error())
+            if str(result.unwrap_error()) != "EOF":
+                return Result(0, result.unwrap_error())
 
-        return result.value
+        return result
 
     fn shutdown(self):
         _ = shutdown(self.sockfd.fd, SHUT_RDWR)
