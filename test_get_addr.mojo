@@ -2,10 +2,38 @@ from gojo.net.socket import Socket
 from gojo.net.ip import get_ip_address
 from gojo.net.tcp import listen_tcp, TCPAddr
 from gojo.syscall.net import SO_REUSEADDR, PF_UNIX, SO_RCVTIMEO
+from gojo.net.dial import dial_tcp
 
 # fn main() raises:
 #     var ip = get_ip_address("localhost")
 #     print(ip)
+
+
+fn test_dial() raises:
+    var connection = dial_tcp("tcp", get_ip_address("www.example.com"), 80)
+    var result = connection.write(String("GET / HTTP/1.1\r\n\r\n").as_bytes())
+    if result.error:
+        raise result.unwrap_error().error
+
+    if result.value == 0:
+        print("No bytes sent to peer.")
+        return
+
+    var response = List[Int8](capacity=4096)
+    result = connection.read(response)
+    if result.error:
+        raise result.unwrap_error().error
+
+    if result.value == 0:
+        print("No bytes received from peer.")
+        return
+
+    response.append(0)
+    print(String(response))
+
+    var err = connection.close()
+    if err:
+        raise err.value().error
 
 
 fn test_listener() raises:
@@ -52,5 +80,6 @@ fn test_stuff() raises:
 
 
 fn main() raises:
-    test_stuff()
+    # test_stuff()
     # test_listener()
+    test_dial()

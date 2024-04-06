@@ -16,7 +16,6 @@ trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
     ...
 
 
-@value
 struct FileDescriptor(FileDescriptorBase):
     var fd: Int
     var is_closed: Bool

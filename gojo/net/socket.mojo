@@ -55,7 +55,6 @@ from .address import Addr, TCPAddr, HostPort
 alias SocketClosedError = Error("Socket: Socket is already closed")
 
 
-@value
 struct Socket(FileDescriptorBase):
     """Represents a network file descriptor. Wraps around a file descriptor and provides network functions.
 
@@ -135,8 +134,18 @@ struct Socket(FileDescriptorBase):
         self._closed = False
         self._is_connected = True
 
-    fn __enter__(self) -> Self:
-        return self
+    fn __moveinit__(inout self, owned existing: Self):
+        self.sockfd = existing.sockfd ^
+        self.address_family = existing.address_family
+        self.socket_type = existing.socket_type
+        self.protocol = existing.protocol
+        self.local_address = existing.local_address ^
+        self.remote_address = existing.remote_address ^
+        self._closed = existing._closed
+        self._is_connected = existing._is_connected
+
+    # fn __enter__(self) -> Self:
+    #     return self
 
     # fn __exit__(inout self) raises:
     #     if self._is_connected:

@@ -9,7 +9,7 @@ alias DEFAULT_BUFFER_SIZE = 4096
 
 
 trait Conn(io.Writer, io.Reader, io.Closer):
-    fn __init__(inout self, socket: Socket):
+    fn __init__(inout self, owned socket: Socket):
         ...
 
     """Conn is a generic stream-oriented network connection."""
@@ -72,8 +72,8 @@ struct Connection(Conn):
 
     var fd: Arc[Socket]
 
-    fn __init__(inout self, socket: Socket):
-        self.fd = Arc(socket)
+    fn __init__(inout self, owned socket: Socket):
+        self.fd = Arc(socket ^)
 
     fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
         """Reads data from the underlying file descriptor.

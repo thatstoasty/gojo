@@ -56,10 +56,10 @@ struct ListenConfig(CollectionElement):
         socket.set_socket_option(SO_REUSEADDR, 1)
         socket.listen()
         print(String("Listening on ") + socket.local_address)
-        return TCPListener(socket, self, network, address)
+        return TCPListener(socket ^, self, network, address)
 
 
-trait Listener(CollectionElement):
+trait Listener(Movable):
     # Raising here because a Result[Optional[Connection], Optional[WrappedError]] is funky.
     fn accept(self) raises -> Connection:
         ...
@@ -84,8 +84,8 @@ struct TCPConnection(Conn):
     fn __init__(inout self, connection: Connection):
         self._connection = connection
 
-    fn __init__(inout self, socket: Socket):
-        self._connection = Connection(socket)
+    fn __init__(inout self, owned socket: Socket):
+        self._connection = Connection(socket ^)
 
     fn __moveinit__(inout self, owned existing: Self):
         self._connection = existing._connection ^
@@ -162,12 +162,23 @@ fn listen_tcp(network: String, ip: String, port: Int) raises -> TCPListener:
     return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, ip + ":" + str(port))
 
 
-@value
 struct TCPListener(Listener):
     var _file_descriptor: Socket
     var listen_config: ListenConfig
     var network_type: String
     var address: String
+
+    fn __init__(inout self, owned file_descriptor: Socket, listen_config: ListenConfig, network_type: String, address: String):
+        self._file_descriptor = file_descriptor ^
+        self.listen_config = listen_config
+        self.network_type = network_type
+        self.address = address
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self._file_descriptor = existing._file_descriptor ^
+        self.listen_config = existing.listen_config ^
+        self.network_type = existing.network_type
+        self.address = existing.address
 
     fn listen(self) raises -> Self:
         return self.listen_config.listen(self.network_type, self.address)
