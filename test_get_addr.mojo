@@ -12,7 +12,11 @@ from gojo.net.dial import dial_tcp
 fn test_dial() raises:
     # Connect to example.com on port 80 and send a GET request
     var connection = dial_tcp("tcp", get_ip_address("www.example.com"), 80)
-    var result = connection.write(String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes())
+    var result = connection.write(
+        String(
+            "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n"
+        ).as_bytes()
+    )
     if result.error:
         raise result.unwrap_error().error
 

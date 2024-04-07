@@ -4,7 +4,7 @@ from .address import split_host_port
 
 
 @value
-struct Dialer():
+struct Dialer:
     var local_address: TCPAddr
 
     fn dial(self, network: String, address: String) raises -> TCPConnection:

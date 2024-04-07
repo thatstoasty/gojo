@@ -180,7 +180,13 @@ struct TCPListener(Listener):
     var network_type: String
     var address: String
 
-    fn __init__(inout self, owned file_descriptor: Socket, listen_config: ListenConfig, network_type: String, address: String):
+    fn __init__(
+        inout self,
+        owned file_descriptor: Socket,
+        listen_config: ListenConfig,
+        network_type: String,
+        address: String,
+    ):
         self._file_descriptor = file_descriptor ^
         self.listen_config = listen_config
         self.network_type = network_type
