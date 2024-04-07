@@ -1,5 +1,6 @@
 from .tcp import TCPAddr, TCPConnection, resolve_internet_addr
 from .socket import Socket
+from .address import split_host_port
 
 
 @value
@@ -14,12 +15,33 @@ struct Dialer():
         return TCPConnection(socket ^)
 
 
-fn dial_tcp(network: String, local_address: TCPAddr) raises -> TCPConnection:
+fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "tcp", "tcp4", or "tcp6".
+    Args:
+        network: The network type.
+        remote_address: The remote address to connect to.
+
+    Returns:
+        The TCP connection.
+    """
     # TODO: Add conversion of domain name to ip address
-    return Dialer(local_address).dial(
-        network, local_address.ip + ":" + str(local_address.port)
+    return Dialer(remote_address).dial(
+        network, remote_address.ip + ":" + str(remote_address.port)
     )
 
 
-fn dial_tcp(network: String, ip: String, port: Int) raises -> TCPConnection:
-    return Dialer(TCPAddr(ip, port)).dial(network, ip + ":" + str(port))
+fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "tcp", "tcp4", or "tcp6".
+    Args:
+        network: The network type.
+        remote_address: The remote address to connect to.
+
+    Returns:
+        The TCP connection.
+    """
+    var address = split_host_port(remote_address)
+    return Dialer(TCPAddr(address.host, address.port)).dial(network, remote_address)

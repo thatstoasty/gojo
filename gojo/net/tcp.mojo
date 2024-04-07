@@ -153,13 +153,25 @@ struct TCPConnection(Conn):
 
 
 fn listen_tcp(network: String, local_address: TCPAddr) raises -> TCPListener:
+    """Creates a new TCP listener.
+
+    Args:
+        network: The network type.
+        local_address: The local address to listen on.
+    """
     return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(
         network, local_address.ip + ":" + str(local_address.port)
     )
 
 
-fn listen_tcp(network: String, ip: String, port: Int) raises -> TCPListener:
-    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, ip + ":" + str(port))
+fn listen_tcp(network: String, local_address: String) raises -> TCPListener:
+    """Creates a new TCP listener.
+
+    Args:
+        network: The network type.
+        local_address: The address to listen on. The format is "host:port".
+    """
+    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, local_address)
 
 
 struct TCPListener(Listener):
