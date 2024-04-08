@@ -152,11 +152,11 @@ struct Header(CollectionElement):
 
     fn set(inout self, inout key: String, value: String) raises:
         """Sets the header entries associated with key to the
-    single element value. It replaces any existing values
-    associated with key. The key is case insensitive; it is
-    canonicalized by [canonical_mime_header_key].
-    To use non-canonical keys, assign to the map directly.
-    """
+        single element value. It replaces any existing values
+        associated with key. The key is case insensitive; it is
+        canonicalized by [canonical_mime_header_key].
+        To use non-canonical keys, assign to the map directly.
+        """
         var mime_header = MIMEHeader(self.value)
         mime_header.set(key, value)
 
