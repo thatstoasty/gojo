@@ -3,3 +3,4 @@ from .list import equals
 from .result import Result, WrappedError
 from .attributes import cap, copy
 from .errors import exit, panic
+from .ascii import equal_fold
