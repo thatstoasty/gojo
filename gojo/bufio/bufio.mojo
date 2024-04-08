@@ -603,7 +603,7 @@ struct Reader[R: io.Reader](
         var result = writer.write(self.buf[self.read_pos : self.write_pos])
         if result.error:
             return Result(Int64(result.value), result.error)
-        
+
         var bytes_written = result.value
         if bytes_written < 0:
             panic(ERR_NEGATIVE_WRITE)
@@ -885,13 +885,13 @@ struct Writer[W: io.Writer](
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 # TODO: should really be using a slice that returns refs and not a copy.
                 # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
-                var sl = self.buf[self.bytes_written:len(self.buf)]
+                var sl = self.buf[self.bytes_written : len(self.buf)]
                 sl.reserve(self.buf.capacity)
                 var result = reader.read(sl)
                 bytes_read = result.value
                 err = result.get_error()
                 _ = copy(self.buf, sl, self.bytes_written)
-                
+
                 if bytes_read != 0 or err:
                     break
                 nr += 1
@@ -910,7 +910,7 @@ struct Writer[W: io.Writer](
                 err = self.flush()
             else:
                 err = None
-        
+
         return Result(total_bytes_written, None)
 
 
