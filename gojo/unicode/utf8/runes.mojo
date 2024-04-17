@@ -1,3 +1,7 @@
+"""Almost all of the actual implementation in this module was written by @mzaks (https://github.com/mzaks)!
+This would not be possible without his help.
+"""
+
 from ...builtins import Rune
 from algorithm.functional import vectorize
 from memory.unsafe import DTypePointer
@@ -324,12 +328,7 @@ fn rune_count_in_string(s: String) -> Int:
 
     @parameter
     fn count[simd_width: Int](offset: Int):
-        result += (
-            ((p.load[width=simd_width](offset) >> 6) != 0b10)
-            .cast[DType.uint8]()
-            .reduce_add()
-            .to_int()
-        )
+        result += ((p.load[width=simd_width](offset) >> 6) != 0b10).cast[DType.uint8]().reduce_add().to_int()
 
     vectorize[count, simd_width_u8](string_byte_length)
     return result

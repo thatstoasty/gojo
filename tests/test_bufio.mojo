@@ -57,7 +57,7 @@ fn test_read_and_unread_byte() raises:
 
     # Read the first byte from the reader.
     var example: String = "Hello, World!"
-    var buf = buffer.new_buffer(example ^)
+    var buf = buffer.new_buffer(example^)
     var reader = Reader(buf)
     var buffer = List[Byte](capacity=512)
     var result = reader.read_byte()
@@ -88,16 +88,15 @@ fn test_read_bytes() raises:
     test.assert_equal(to_string(result.value), "01234")
 
 
-# TODO: read_line is broken until Mojo support unpacking Memory only types from return Tuples.
 fn test_read_line() raises:
     var test = MojoTest("Testing bufio.Reader.read_line")
-    # var buf = buffer.new_buffer("01234\n56789")
-    # var reader = Reader(buf)
+    var buf = buffer.new_buffer("01234\n56789")
+    var reader = Reader(buf)
 
-    # var line: List[Byte]
-    # var b: Bool
-    # line, b = reader.read_line()
-    # test.assert_equal(line, "01234")
+    var line: List[Byte]
+    var b: Bool
+    line, b = reader.read_line()
+    test.assert_equal(line, "01234")
 
 
 fn test_peek() raises:
