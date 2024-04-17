@@ -550,8 +550,6 @@ struct Buffer(
 
     fn read_slice(inout self, delim: Byte) -> (List[Byte], Error):
         """Like read_bytes but returns a reference to internal buffer data.
-        TODO: not returning a reference yet. Also, this returns List[Byte] and Error in Go,
-        but we arent't returning Errors as values until Mojo tuple returns supports Memory Only types.
 
         Args:
             delim: The delimiter to read until.
@@ -593,11 +591,7 @@ struct Buffer(
         var slice: List[Byte]
         var err: Error
         slice, err = self.read_slice(delim)
-
-        # Add null terminator
-        if slice[-1] != 0:
-            slice.append(0)
-        return String(slice), Error()
+        return String(slice), err
 
 
 fn new_buffer() -> Buffer:

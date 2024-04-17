@@ -59,8 +59,8 @@ struct CSVWriter[W: io.Writer]():
                 raise err
 
         # Flush remaining contents of buffer
-        var error = self.writer.flush()
-        if error:
+        err = self.writer.flush()
+        if err:
             if str(err) != io.EOF:
                 raise err
 

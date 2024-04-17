@@ -78,7 +78,7 @@ fn find_indices(s: String, c: String) -> List[UInt64]:
             result.resize(current_len + occurrence_count, 0)
             compressed_store(
                 offsets,
-                DTypePointer[DType.uint64](result.data.value).offset(current_len),
+                DTypePointer[DType.uint64](result.data).offset(current_len),
                 occurrence,
             )
 

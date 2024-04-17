@@ -105,11 +105,11 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
             var temp = List[Byte](capacity=DEFAULT_BUF_SIZE)
             var bytes_read: Int
             var err: Error
-            var result = self.reader.read(temp)
-            bytes_read = copy(self.buf, temp, self.write_pos)
+            bytes_read, err = self.reader.read(temp)
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
+            bytes_read = copy(self.buf, temp, self.write_pos)
             self.write_pos += bytes_read
 
             if err:
@@ -689,17 +689,17 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
     fn flush(inout self) -> Error:
         """Writes any buffered data to the underlying [io.Writer]."""
         # Prior to attempting to flush, check if there's a pre-existing error or if there's nothing to flush.
+        var err = Error()
         if self.err:
             return self.err
         if self.bytes_written == 0:
-            return Error()
+            return err
 
-        var bytes_written: Int
-        var err: Error
+        var bytes_written: Int = 0
         bytes_written, err = self.writer.write(self.buf[0 : self.bytes_written])
 
         # If the write was short, set a short write error and try to shift up the remaining bytes.
-        if bytes_written < self.bytes_written and str(err) == "":
+        if bytes_written < self.bytes_written and not err:
             err = Error(io.ERR_SHORT_WRITE)
 
         if err:
@@ -713,7 +713,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         # Reset the buffer
         self.buf = List[Byte](capacity=self.buf.capacity)
         self.bytes_written = 0
-        return Error()
+        return err
 
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""
@@ -752,9 +752,9 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         """
         var total_bytes_written: Int = 0
         var src_copy = src
+        var err = Error()
         while len(src_copy) > self.available() and not self.err:
-            var bytes_written: Int
-            var err: Error
+            var bytes_written: Int = 0
             if self.buffered() == 0:
                 # Large write, empty buffer.
                 # write directly from p to avoid copy.
@@ -768,13 +768,13 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             total_bytes_written += bytes_written
             src_copy = src_copy[bytes_written : len(src_copy)]
 
-        if str(self.err):
+        if self.err:
             return total_bytes_written, self.err
 
         var n = copy(self.buf, src_copy, self.bytes_written)
         self.bytes_written += n
         total_bytes_written += n
-        return total_bytes_written, Error()
+        return total_bytes_written, err
 
     fn write_byte(inout self, src: Int8) -> (Int, Error):
         """Writes a single byte to the internal buffer.
@@ -866,10 +866,9 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                 # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
                 var sl = self.buf[self.bytes_written : len(self.buf)]
                 sl.reserve(self.buf.capacity)
-                var bytes_read: Int
-                var err: Error
                 bytes_read, err = reader.read(sl)
-                _ = copy(self.buf, sl, self.bytes_written)
+                if bytes_read > 0:
+                    bytes_read = copy(self.buf, sl, self.bytes_written)
 
                 if bytes_read != 0 or err:
                     break

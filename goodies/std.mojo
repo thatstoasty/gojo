@@ -1,5 +1,5 @@
 from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.builtins import Byte, Result, Error
+from gojo.builtins import Byte
 import gojo.io
 
 
@@ -39,9 +39,9 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         )
 
         if write_count == -1:
-            return 0, Error("Failed to write to file descriptor " + String(self.fd)))
+            return 0, Error("Failed to write to file descriptor " + String(self.fd))
 
-        return write_count, None)
+        return write_count, Error()
 
     fn write_string(inout self, src: String) -> (Int, Error):
         """Writes the given string to the file descriptor.

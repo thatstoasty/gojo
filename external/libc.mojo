@@ -13,7 +13,7 @@ alias FD_STDERR: c_int = 2
 alias SUCCESS = 0
 alias GRND_NONBLOCK: UInt8 = 1
 
-alias char_pointer = AnyPointer[c_char]
+alias char_pointer = UnsafePointer[c_char]
 
 
 @value
@@ -39,7 +39,7 @@ struct Str:
     fn to_string(self, size: Int) -> String:
         var result: String = ""
         for i in range(size):
-            result += chr(self.vector[i].to_int())
+            result += chr(int(self.vector[i]))
         return result
 
     fn __enter__(owned self: Self) -> Self:
@@ -693,7 +693,7 @@ fn inet_pton(address_family: Int, address: String) -> Int:
 
     var ip_buf = Pointer[c_void].alloc(ip_buf_size)
     var conv_status = inet_pton(rebind[c_int](address_family), to_char_ptr(address), ip_buf)
-    return ip_buf.bitcast[c_uint]().load().to_int()
+    return int(ip_buf.bitcast[c_uint]().load())
 
 
 # --- ( File Related Syscalls & Structs )---------------------------------------
