@@ -2,7 +2,7 @@
 # Modified to use List[Int8] instead of List[String]
 
 import ..io
-from ..builtins import Byte, Result, WrappedError
+from ..builtins import Byte
 
 
 @value
@@ -32,7 +32,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
 
     var _vector: List[Byte]
 
-    fn __init__(inout self, size: Int = 4096):
+    fn __init__(inout self, *, size: Int = 4096):
         self._vector = List[Byte](capacity=size)
 
     fn __str__(self) -> String:
@@ -70,7 +70,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
 
         return copy
 
-    fn write(inout self, src: List[Byte]) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """
         Appends a byte array to the builder buffer.
 
@@ -78,9 +78,9 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
           src: The byte array to append.
         """
         self._vector.extend(src)
-        return Result(len(src), None)
+        return len(src), Error()
 
-    fn write_byte(inout self, byte: Int8) -> Result[Int]:
+    fn write_byte(inout self, byte: Int8) -> (Int, Error):
         """
         Appends a byte array to the builder buffer.
 
@@ -88,9 +88,9 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
             byte: The byte array to append.
         """
         self._vector.append(byte)
-        return Result(1, None)
+        return 1, Error()
 
-    fn write_string(inout self, src: String) -> Result[Int]:
+    fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
 
@@ -99,7 +99,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
         """
         var string_buffer = src.as_bytes()
         self._vector.extend(string_buffer)
-        return Result(len(string_buffer), None)
+        return len(string_buffer), Error()
 
     fn __len__(self) -> Int:
         """
