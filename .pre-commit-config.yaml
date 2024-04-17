@@ -5,3 +5,11 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
+-   repo: local
+    hooks:
+    -   id: mojo-format
+        name: mojo-format
+        entry: mojo format -l 120
+        language: system
+        files: '\.(mojo|🔥)$'
+        stages: [commit]

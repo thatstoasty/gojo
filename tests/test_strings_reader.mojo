@@ -14,7 +14,7 @@ fn test_read() raises:
     var bytes_read = reader.read(buffer)
     buffer.append(0)
 
-    test.assert_equal(bytes_read.value, len(example))
+    test.assert_equal(bytes_read.get[0](), len(example))
     test.assert_equal(String(buffer), "Hello, World!")
 
 
@@ -28,7 +28,7 @@ fn test_read_at() raises:
     var bytes_read = reader.read_at(buffer, 7)
     buffer.append(0)
 
-    test.assert_equal(bytes_read.value, len(example[7:]))
+    test.assert_equal(bytes_read.get[0](), len(example[7:]))
     test.assert_equal(String(buffer), "World!")
 
 
@@ -39,20 +39,18 @@ fn test_seek() raises:
 
     # Seek to the middle of the reader.
     var position = reader.seek(5, io.SEEK_START)
-    test.assert_equal(position.value, 5)
+    test.assert_equal(position.get[0](), 5)
 
 
 fn test_read_and_unread_byte() raises:
-    var test = MojoTest(
-        "Testing strings.Reader.read_byte and strings.Reader.unread_byte"
-    )
+    var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
 
     # Read the first byte from the reader.
     var buffer = List[Byte](capacity=512)
     var byte = reader.read_byte()
-    test.assert_equal(byte.value, 72)
+    test.assert_equal(byte.get[0](), 72)
 
     # Unread the first byte from the reader. Remaining bytes to be read should be the same as the length of the example string.
     _ = reader.unread_byte()

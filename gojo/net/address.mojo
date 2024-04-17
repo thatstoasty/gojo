@@ -71,11 +71,7 @@ fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
             host = host_port.host
             port = host_port.port
             portnum = atol(port.__str__())
-    elif (
-        network == NetworkType.ip.value
-        or network == NetworkType.ip4.value
-        or network == NetworkType.ip6.value
-    ):
+    elif network == NetworkType.ip.value or network == NetworkType.ip4.value or network == NetworkType.ip6.value:
         if address != "":
             host = address
     elif network == NetworkType.unix.value:

@@ -41,7 +41,7 @@ All of these packages are partially implemented and do not support unicode chara
 ## Usage
 
 Some basic usage examples. These examples may fall out of sync, so please check out the tests for usage of the various packages!
-Most of the `Reader` and `Writer` traits return a `Result[T]` struct which contains the result value and an `Optional[WrappedError]` struct. In the future, this will be switched to returning a Tuple with the result and an `Optional[Error]`.
+Most of the `Reader` and `Writer` traits return a `Result[T]` struct which contains the result value and an `Error` struct. In the future, this will be switched to returning a Tuple with the result and an `Error`.
 
 You can copy over the modules you want to use from the `gojo` or `goodies` directories, or you can build the package by running:
 For `gojo`: `mojo package gojo -I .`
