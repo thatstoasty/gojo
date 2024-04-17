@@ -1,5 +1,5 @@
 from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.builtins import Byte, Result, WrappedError
+from gojo.builtins import Byte
 import gojo.io
 
 
@@ -25,7 +25,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, src: List[Byte]) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Writes the given bytes to the file descriptor.
 
         Args:
@@ -34,18 +34,16 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var write_count: c_ssize_t = external_call[
-            "write", c_ssize_t, c_int, char_pointer, c_size_t
-        ](self.fd, src.data.bitcast[UInt8](), len(src))
+        var write_count: c_ssize_t = external_call["write", c_ssize_t, c_int, char_pointer, c_size_t](
+            self.fd, src.data.bitcast[UInt8](), len(src)
+        )
 
         if write_count == -1:
-            return Result(
-                0, WrappedError("Failed to write to file descriptor " + String(self.fd))
-            )
+            return 0, Error("Failed to write to file descriptor " + String(self.fd))
 
-        return Result(write_count, None)
+        return write_count, Error()
 
-    fn write_string(inout self, src: String) -> Result[Int]:
+    fn write_string(inout self, src: String) -> (Int, Error):
         """Writes the given string to the file descriptor.
 
         Args:
@@ -56,7 +54,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         """
         return self.write(src.as_bytes())
 
-    fn read_from[R: io.Reader](inout self, inout reader: R) -> Result[Int]:
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int, Error):
         """Reads from the given reader to a temporary buffer and writes to the file descriptor.
 
         Args:

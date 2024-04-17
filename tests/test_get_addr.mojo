@@ -12,34 +12,35 @@ from gojo.net.dial import dial_tcp
 fn test_dial() raises:
     # Connect to example.com on port 80 and send a GET request
     var connection = dial_tcp("tcp", TCPAddr(get_ip_address("www.example.com"), 80))
-    var result = connection.write(
-        String(
-            "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n"
-        ).as_bytes()
+    var bytes_written: Int = 0
+    var err = Error()
+    bytes_written, err = connection.write(
+        String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
     )
-    if result.error:
-        raise result.unwrap_error().error
+    if err:
+        raise err
 
-    if result.value == 0:
+    if bytes_written == 0:
         print("No bytes sent to peer.")
         return
 
     # Read the response from the connection
     var response = List[Int8](capacity=4096)
-    result = connection.read(response)
-    if result.error:
-        raise result.unwrap_error().error
+    var bytes_read: Int = 0
+    bytes_read, err = connection.read(response)
+    if err:
+        raise err
 
-    if result.value == 0:
+    if bytes_read == 0:
         print("No bytes received from peer.")
         return
 
     print(String(response))
 
     # Cleanup the connection
-    var err = connection.close()
+    err = connection.close()
     if err:
-        raise err.value().error
+        raise err
 
 
 fn test_listener() raises:
@@ -48,7 +49,7 @@ fn test_listener() raises:
         var conn = listener.accept()
         var err = conn.close()
         if err:
-            raise err.value().error
+            raise err
 
 
 fn test_stuff() raises:
@@ -75,7 +76,7 @@ fn test_stuff() raises:
     print("closed")
     if err:
         print("err returned")
-        raise err.value().error
+        raise err
     # var option_value = socket.get_sock_opt(SO_REUSEADDR)
     # print(option_value)
     # socket.connect(self.ip, self.port)

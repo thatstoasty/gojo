@@ -1,7 +1,6 @@
-from collections.optional import Optional
 from memory._arc import Arc
 import ..io
-from ..builtins import Byte, Result, WrappedError
+from ..builtins import Byte
 from .socket import Socket
 from .address import Addr, TCPAddr
 
@@ -73,9 +72,9 @@ struct Connection(Conn):
     var fd: Arc[Socket]
 
     fn __init__(inout self, owned socket: Socket):
-        self.fd = Arc(socket ^)
+        self.fd = Arc(socket^)
 
-    fn read(inout self, inout dest: List[Byte]) -> Result[Int]:
+    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -84,14 +83,16 @@ struct Connection(Conn):
         Returns:
             The number of bytes read, or an error if one occurred.
         """
-        var result = self.fd[].read(dest)
-        if result.error:
-            if str(result.unwrap_error()) != io.EOF:
-                return Result[Int](0, result.unwrap_error())
+        var bytes_written: Int = 0
+        var err = Error()
+        bytes_written, err = self.fd[].read(dest)
+        if err:
+            if str(err) != io.EOF:
+                return 0, err
 
-        return result.value
+        return bytes_written, err
 
-    fn write(inout self, src: List[Byte]) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -100,23 +101,21 @@ struct Connection(Conn):
         Returns:
             The number of bytes written, or an error if one occurred.
         """
-        var result = self.fd[].write(src)
-        if result.error:
-            return Result[Int](0, result.unwrap_error())
+        var bytes_read: Int = 0
+        var err = Error()
+        bytes_read, err = self.fd[].write(src)
+        if err:
+            return 0, err
 
-        return result.value
+        return bytes_read, err
 
-    fn close(inout self) -> Optional[WrappedError]:
+    fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
 
         Returns:
             An error if one occurred, or None if the file descriptor was closed successfully.
         """
-        var err = self.fd[].close()
-        if err:
-            return err.value()
-
-        return None
+        return self.fd[].close()
 
     fn local_address(self) -> TCPAddr:
         """Returns the local network address.
