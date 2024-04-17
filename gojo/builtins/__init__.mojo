@@ -2,4 +2,5 @@ from .bytes import Byte, index_byte, has_suffix, has_prefix, to_string
 from .list import equals
 from .attributes import cap, copy
 from .errors import exit, panic
-from .ascii import equal_fold
+
+alias Rune = Int32
