@@ -50,9 +50,7 @@ struct CsvBuilder:
         var size = len(s)
         self.push(s, False)
 
-    fn push_stringabel[
-        T: Stringable
-    ](inout self, value: T, consider_escaping: Bool = False):
+    fn push_stringabel[T: Stringable](inout self, value: T, consider_escaping: Bool = False):
         self.push(str(value), consider_escaping)
 
     fn push_empty(inout self):
@@ -65,9 +63,7 @@ struct CsvBuilder:
                 self.push_empty()
 
     fn push(inout self, s: String, consider_escaping: Bool = True):
-        if consider_escaping and contains_any_of(
-            s, CR_CHAR, LF_CHAR, COMMA_CHAR, QUOTE_CHAR
-        ):
+        if consider_escaping and contains_any_of(s, CR_CHAR, LF_CHAR, COMMA_CHAR, QUOTE_CHAR):
             return self.push(QUOTE_CHAR + escape_quotes_in(s) + QUOTE_CHAR, False)
 
         var size = len(s)

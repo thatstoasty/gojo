@@ -14,7 +14,7 @@ fn test_scan_words() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r ^)
+    var scanner = Scanner(r^)
     scanner.split = scan_words
 
     var expected_results = List[String]()
@@ -37,7 +37,7 @@ fn test_scan_lines() raises:
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r ^)
+    var scanner = Scanner(r^)
 
     var expected_results = List[String]()
     expected_results.append("Testing")
@@ -50,15 +50,13 @@ fn test_scan_lines() raises:
         i += 1
 
 
-fn scan_no_newline_test(
-    test_case: String, result_lines: List[String], test: MojoTest
-) raises:
+fn scan_no_newline_test(test_case: String, result_lines: List[String], test: MojoTest) raises:
     # Create a reader from a string buffer
     var buf = buffer.new_buffer(test_case)
     var r = Reader(buf)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r ^)
+    var scanner = Scanner(r^)
     var i = 0
     while scanner.scan():
         test.assert_equal(scanner.current_token(), result_lines[i])
@@ -76,9 +74,7 @@ fn test_scan_lines_no_newline() raises:
 
 
 fn test_scan_lines_cr_no_newline() raises:
-    var test = MojoTest(
-        "Testing bufio.scan_lines with no final newline but carriage return"
-    )
+    var test = MojoTest("Testing bufio.scan_lines with no final newline but carriage return")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\r"
     var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
@@ -99,9 +95,7 @@ fn test_scan_lines_empty_final_line() raises:
 
 
 fn test_scan_lines_cr_empty_final_line() raises:
-    var test = MojoTest(
-        "Testing bufio.scan_lines with an empty final line and carriage return"
-    )
+    var test = MojoTest("Testing bufio.scan_lines with an empty final line and carriage return")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\r"
     var result_lines = List[String]()
     result_lines.append("abcdefghijklmn")
@@ -127,7 +121,7 @@ fn test_scan_bytes() raises:
         var reader = Reader(buf)
 
         # Create a scanner from the reader
-        var scanner = Scanner(reader ^)
+        var scanner = Scanner(reader^)
         scanner.split = scan_bytes
 
         var j = 0
@@ -142,7 +136,7 @@ fn test_file_wrapper_scanner() raises:
     var file = FileWrapper("tests/data/test_multiple_lines.txt", "r")
 
     # Create a scanner from the reader
-    var scanner = Scanner(file ^)
+    var scanner = Scanner(file^)
     var expected_results = List[String]()
     expected_results.append("11111")
     expected_results.append("22222")

@@ -1,6 +1,6 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins import Byte, Result, WrappedError
+from gojo.builtins import Byte
 from gojo.builtins.bytes import to_string
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
 from gojo.io import read_all
@@ -57,7 +57,7 @@ fn test_read_and_unread_byte() raises:
 
     # Read the first byte from the reader.
     var example: String = "Hello, World!"
-    var buf = buffer.new_buffer(example ^)
+    var buf = buffer.new_buffer(example^)
     var reader = Reader(buf)
     var buffer = List[Byte](capacity=512)
     var result = reader.read_byte()
@@ -150,7 +150,7 @@ fn test_several_writes() raises:
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the List[Byte] Buffer Writer.
     var src = String("0123456789").as_bytes()
-    var result = Result(0)
+    var result = 0)
     for i in range(500):
         result = writer.write(src)
     _ = writer.flush()
@@ -171,7 +171,7 @@ fn test_big_write() raises:
 
     # Build a string larger than the size of the Bufio struct's internal buffer.
     var builder = StringBuilder(5000)
-    var result = Result(0)
+    var result = 0)
     for i in range(500):
         result = builder.write_string("0123456789")
 

@@ -9,9 +9,7 @@ from collections.vector import InlinedFixedVector
 alias simd_width_i8 = simdwidthof[DType.int8]()
 
 
-fn vectorize_and_exit[
-    simd_width: Int, workgroup_function: fn[i: Int] (Int) capturing -> Bool
-](size: Int):
+fn vectorize_and_exit[simd_width: Int, workgroup_function: fn[i: Int] (Int) capturing -> Bool](size: Int):
     var loops = size // simd_width
     for i in range(loops):
         if workgroup_function[simd_width](i * simd_width):

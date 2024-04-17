@@ -26,9 +26,7 @@ fn test_index_byte():
 
 
 fn test_size_and_len():
-    var test = MojoTest(
-        "Testing builtins.List[Byte].size and builtins.List[Byte].__len__"
-    )
+    var test = MojoTest("Testing builtins.List[Byte].size and builtins.List[Byte].__len__")
     var bytes = List[Byte](capacity=4096)
 
     # Size is the number of bytes used, len is the number of bytes allocated.

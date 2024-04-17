@@ -88,9 +88,7 @@ struct CsvTable:
             var crs = chars == CR
 
             var offsets = iota[DType.uint8, simd_width]()
-            var sp: DTypePointer[DType.uint8] = stack_allocation[
-                simd_width, UInt8, simd_width
-            ]()
+            var sp: DTypePointer[DType.uint8] = stack_allocation[simd_width, UInt8, simd_width]()
             compressed_store(offsets, sp, all_bits)
             var all_len = reduce_bit_count(all_bits)
 
@@ -127,10 +125,7 @@ struct CsvTable:
         if index >= len(self._ends):
             return ""
 
-        if (
-            self._inner_string[self._starts[index]] == '"'
-            and self._inner_string[self._ends[index] - 1] == '"'
-        ):
+        if self._inner_string[self._starts[index]] == '"' and self._inner_string[self._ends[index] - 1] == '"':
             var start = self._starts[index] + 1
             var length = (self._ends[index] - 1) - start
             var p1 = Pointer[Int8].alloc(length + 1)

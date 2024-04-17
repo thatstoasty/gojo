@@ -16,7 +16,7 @@ fn test_read() raises:
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
     var result = reader.seek(-1, io.SEEK_START)
 
-    if not result.has_error():
+    if not err_message != "":
         raise Error("Expected error not raised while testing negative seek.")
 
     var error = result.unwrap_error()
@@ -33,7 +33,7 @@ fn test_read_after_big_seek() raises:
     var dest = List[Byte](capacity=128)
 
     var result = reader.read(dest)
-    if not result.has_error():
+    if not err_message != "":
         raise Error("Expected error not raised while testing negative seek.")
 
     var error = result.unwrap_error()

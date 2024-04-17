@@ -28,7 +28,7 @@ fn read_csv() raises:
 fn test_csv_reader() raises:
     var test = MojoTest("Testing goodies.CSVReader")
     var file = FileWrapper("tests/data/test_read.csv", "r")
-    var reader = CSVReader(file ^)
+    var reader = CSVReader(file^)
     var csv = reader.read_lines(3, "\n", 3)
     test.assert_equal(csv.get(0, 0), "Hello")
     test.assert_equal(csv.get(1, 0), "Goodbye")
@@ -38,14 +38,14 @@ fn test_csv_reader() raises:
 fn test_csv_reader_buffered_read() raises:
     var test = MojoTest("Testing goodies.CSVReader read bigger than buffer size")
     var file = FileWrapper("tests/data/test_big_read.csv", "r")
-    var reader = CSVReader(file ^)
+    var reader = CSVReader(file^)
     var csv = reader.read_lines(201, "\n", column_count=3)
     test.assert_equal(csv.get(200, 0), "Hello")
 
 
 fn test_csv_writer() raises:
     var test = MojoTest("Testing goodies.CSVWriter")
-    
+
     # Build CSV dataframe like structure and write to file
     var builder = CsvBuilder("a", "b", "c")
     for i in range(10):
@@ -54,7 +54,7 @@ fn test_csv_writer() raises:
         builder.push("I am here")
     var csv = CsvTable(builder^.finish())
     var file = FileWrapper("tests/data/test_write.csv", "w")
-    var writer = CSVWriter(file ^)
+    var writer = CSVWriter(file^)
     var bytes_written = writer.write(csv)
 
     test.assert_equal(bytes_written, 237)

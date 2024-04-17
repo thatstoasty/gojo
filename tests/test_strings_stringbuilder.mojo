@@ -14,10 +14,7 @@ fn test_write_string() raises:
 
     test.assert_equal(
         String(builder),
-        (
-            "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor"
-            " sit amet "
-        ),
+        "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet ",
     )
 
 

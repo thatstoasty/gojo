@@ -12,7 +12,7 @@ struct Dialer:
         var socket = Socket(local_address=self.local_address)
         socket.connect(tcp_addr.ip, tcp_addr.port)
         print(String("Connected to ") + socket.remote_address)
-        return TCPConnection(socket ^)
+        return TCPConnection(socket^)
 
 
 fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
@@ -27,9 +27,7 @@ fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
         The TCP connection.
     """
     # TODO: Add conversion of domain name to ip address
-    return Dialer(remote_address).dial(
-        network, remote_address.ip + ":" + str(remote_address.port)
-    )
+    return Dialer(remote_address).dial(network, remote_address.ip + ":" + str(remote_address.port))
 
 
 fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
