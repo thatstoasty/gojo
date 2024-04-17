@@ -2,14 +2,17 @@
 
 Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
-NOTE: Readers and writers have some sharp edges until Mojo can handle returning Error as part of a tuple. It can be returned by a function, but not unpacked by the receiver. This leads to some cases where EOF is not handled how it should be. It's fairly usable in it's current state, but you might run into issues with large data!
-
 ## Projects that use Gojo
 
 ### My projects
 
 - `weave`: A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. [Link to the project.](https://github.com/thatstoasty/weave)
 - `mog`: Terminal text styling library. [Link to the project.](https://github.com/thatstoasty/mog)
+- `stump`: Bound Logger library. [Link to the project.](https://github.com/thatstoasty/stump)
+
+### Community projects
+
+- `lightbug_http`: Simple and fast HTTP framework for Mojo! 🔥 [Link to the project.]([https://github.com/thatstoasty/weave](https://github.com/saviorand/lightbug_http/tree/main)
 
 ## What this includes
 
@@ -21,8 +24,8 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
 - `bytes`
-  - `Buffer`: Buffer backed by `Bytes` struct.
-  - `Reader`: Reader backed by `Bytes` struct.
+  - `Buffer`: Buffer backed by `List[Int8]`.
+  - `Reader`: Reader backed by `List[Int8]`.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
@@ -31,6 +34,12 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: String reader.
 - `fmt`
   - Basic `sprintf` function.
+- `syscall`
+  - External call wrappers for `libc` functions and types.
+- `net`
+  - `Socket`: Wraps `FileDescriptor` and implements network specific functions.
+  - `FileDescriptor`: File Descriptor wrapper that implements `io.Writer`, `io.Reader`, and `io.Closer`.
+  - `Dial` and `Listen` interfaces (for TCP only atm).
 
 ### Goodies
 
@@ -41,7 +50,6 @@ All of these packages are partially implemented and do not support unicode chara
 ## Usage
 
 Some basic usage examples. These examples may fall out of sync, so please check out the tests for usage of the various packages!
-Most of the `Reader` and `Writer` traits return a `Result[T]` struct which contains the result value and an `Error` struct. In the future, this will be switched to returning a Tuple with the result and an `Error`.
 
 You can copy over the modules you want to use from the `gojo` or `goodies` directories, or you can build the package by running:
 For `gojo`: `mojo package gojo -I .`
@@ -380,6 +388,4 @@ fn test_string_builder() raises:
 
 ## Sharp Edges & Bugs
 
-- `bufio.Reader.read_line` is broken until Mojo support unpacking Memory only types from return Tuples.
-- `Result[T, Error]` is being used in the meantime until Mojo supports unpacking tuples that contain Memory only types. There can be some memory issues with accessing errors from `Result`.
 - Unicode characters are not supported until Mojo supports them. Sometimes it happens to work, but it's not guaranteed due to length discrepanices with ASCII and Unicode characters. If the character has a length of 2 or more, it probably will not work.
