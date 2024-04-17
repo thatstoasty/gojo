@@ -1,6 +1,6 @@
 # gojo
 
-Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
+Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
 ## Projects that use Gojo
 
@@ -12,7 +12,7 @@ Experiments in porting over Golang stdlib into Mojo and extra goodies that make 
 
 ### Community projects
 
-- `lightbug_http`: Simple and fast HTTP framework for Mojo! 🔥 [Link to the project.]([https://github.com/thatstoasty/weave](https://github.com/saviorand/lightbug_http/tree/main)
+- `lightbug_http`: Simple and fast HTTP framework for Mojo! 🔥 [Link to the project.](https://github.com/saviorand/lightbug_http/tree/main)
 
 ## What this includes
 

@@ -1,7 +1,6 @@
-from collections.optional import Optional
 from memory._arc import Arc
 import ..io
-from ..builtins import Byte, Error
+from ..builtins import Byte
 from .socket import Socket
 from .address import Addr, TCPAddr
 
@@ -84,14 +83,14 @@ struct Connection(Conn):
         Returns:
             The number of bytes read, or an error if one occurred.
         """
-        var bytes_written: Int
-        var err: Error
+        var bytes_written: Int = 0
+        var err = Error()
         bytes_written, err = self.fd[].read(dest)
         if err:
             if str(err) != io.EOF:
                 return 0, err
 
-        return bytes_written, Error()
+        return bytes_written, err
 
     fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
@@ -102,13 +101,13 @@ struct Connection(Conn):
         Returns:
             The number of bytes written, or an error if one occurred.
         """
-        var bytes_read: Int
-        var err: Error
+        var bytes_read: Int = 0
+        var err = Error()
         bytes_read, err = self.fd[].write(src)
         if err:
             return 0, err
 
-        return bytes_read, Error()
+        return bytes_read, err
 
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
