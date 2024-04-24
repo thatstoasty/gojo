@@ -558,7 +558,7 @@ struct Buffer(
             A List[Byte] struct containing the data up to and including the delimiter.
         """
         var at_eof = False
-        var i = index_byte(self.buf[self.off : len(self.buf)], (delim))
+        var i = index_byte(self.buf[self.off : len(self.buf)], delim)
         var end = self.off + i + 1
 
         if i < 0:
@@ -591,6 +591,7 @@ struct Buffer(
         var slice: List[Byte]
         var err: Error
         slice, err = self.read_slice(delim)
+        slice.append(0)
         return String(slice), err
 
 

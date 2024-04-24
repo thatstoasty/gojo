@@ -127,7 +127,7 @@ fn test_scan_bytes() raises:
         var j = 0
 
         while scanner.scan():
-            test.assert_equal(scanner.current_token_as_bytes(), test_case[j].as_bytes())
+            test.assert_equal(String(scanner.current_token_as_bytes()), test_case[j])
             j += 1
 
 
