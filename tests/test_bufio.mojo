@@ -31,7 +31,7 @@ fn test_read_all() raises:
     var buf = buffer.new_reader(s)
     var reader = Reader(buf)
     var result = read_all(reader)
-    var bytes = result.get[0]()
+    var bytes = result[0]
     bytes.append(0)
     test.assert_equal(String(bytes), "0123456789")
 
@@ -61,7 +61,7 @@ fn test_read_and_unread_byte() raises:
     var reader = Reader(buf)
     var buffer = List[Byte](capacity=512)
     var result = reader.read_byte()
-    test.assert_equal(result.get[0](), 72)
+    test.assert_equal(int(result[0]), int(72))
     var post_read_position = reader.read_pos
 
     # Unread the first byte from the reader. Read position should be moved back by 1
@@ -75,8 +75,8 @@ fn test_read_slice() raises:
     var reader = Reader(buf)
 
     var result = reader.read_slice(ord(5))
-    var bytes = result.get[0]()
-    test.assert_equal(to_string(result.get[0]()), "012345")
+    var bytes = result[0]
+    test.assert_equal(to_string(result[0]), "012345")
 
 
 fn test_read_bytes() raises:
@@ -85,7 +85,7 @@ fn test_read_bytes() raises:
     var reader = Reader(buf)
 
     var result = reader.read_bytes(ord("\n"))
-    test.assert_equal(to_string(result.get[0]()), "01234")
+    test.assert_equal(to_string(result[0]), "01234")
 
 
 fn test_read_line() raises:
@@ -96,7 +96,7 @@ fn test_read_line() raises:
     var line: List[Byte]
     var b: Bool
     line, b = reader.read_line()
-    test.assert_equal(line, "01234")
+    test.assert_equal(String(line), "01234")
 
 
 fn test_peek() raises:
@@ -107,8 +107,8 @@ fn test_peek() raises:
     # Peek doesn't advance the reader, so we should see the same content twice.
     var result = reader.peek(5)
     var second_result = reader.peek(5)
-    test.assert_equal(to_string(result.get[0]()), "01234")
-    test.assert_equal(to_string(second_result.get[0]()), "01234")
+    test.assert_equal(to_string(result[0]), "01234")
+    test.assert_equal(to_string(second_result[0]), "01234")
 
 
 fn test_discard() raises:
@@ -117,11 +117,11 @@ fn test_discard() raises:
     var reader = Reader(buf)
 
     var result = reader.discard(5)
-    test.assert_equal(result.get[0](), 5)
+    test.assert_equal(result[0], 5)
 
     # Peek doesn't advance the reader, so we should see the same content twice.
     var second_result = reader.peek(5)
-    test.assert_equal(to_string(second_result.get[0]()), "56789")
+    test.assert_equal(to_string(second_result[0]), "56789")
 
 
 fn test_write() raises:
@@ -136,7 +136,7 @@ fn test_write() raises:
     var result = writer.write(src)
     _ = writer.flush()
 
-    test.assert_equal(result.get[0](), 10)
+    test.assert_equal(result[0], 10)
     test.assert_equal(str(writer.writer), "0123456789")
 
 
@@ -190,7 +190,7 @@ fn test_write_byte() raises:
     var result = writer.write_byte(32)
     _ = writer.flush()
 
-    test.assert_equal(result.get[0](), 1)
+    test.assert_equal(result[0], 1)
     test.assert_equal(str(writer.writer), "Hello ")
 
 
@@ -205,7 +205,7 @@ fn test_write_string() raises:
     var result = writer.write_string(" World!")
     _ = writer.flush()
 
-    test.assert_equal(result.get[0](), 7)
+    test.assert_equal(result[0], 7)
     test.assert_equal(str(writer.writer), "Hello World!")
 
 
@@ -222,7 +222,7 @@ fn test_read_from() raises:
     var result = writer.read_from(reader_from)
     _ = writer.flush()
 
-    test.assert_equal(result.get[0](), 7)
+    test.assert_equal(int(result[0]), 7)
     test.assert_equal(str(writer.writer), "Hello World!")
 
 
