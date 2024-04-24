@@ -18,7 +18,7 @@ fn test_read_byte() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_byte()
-    test.assert_equal(result.get[0](), 72)
+    test.assert_equal(int(result[0]), 72)
 
 
 fn test_unread_byte() raises:
@@ -26,7 +26,7 @@ fn test_unread_byte() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_byte()
-    test.assert_equal(result.get[0](), 72)
+    test.assert_equal(int(result[0]), 72)
     test.assert_equal(buf.off, 1)
 
     _ = buf.unread_byte()
@@ -38,7 +38,9 @@ fn test_read_bytes() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_bytes(ord("o"))
-    test.assert_equal(result.get[0](), String("Hello").as_bytes())
+    var text = result[0]
+    text.append(0)
+    test.assert_equal(String(text), String("Hello"))
 
 
 fn test_read_slice() raises:
@@ -46,7 +48,9 @@ fn test_read_slice() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_slice(5)
-    test.assert_equal(result.get[0](), String("Hello").as_bytes())
+    var text = result[0]
+    text.append(0)
+    test.assert_equal(String(text), String("Hello"))
 
 
 fn test_read_string() raises:
@@ -54,13 +58,15 @@ fn test_read_string() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_string(ord("o"))
-    test.assert_equal(result.get[0](), String("Hello").as_bytes())
+    test.assert_equal(String(result[0]), String("Hello"))
 
 
 fn test_next() raises:
     var test = MojoTest("Testing bytes.Buffer.next")
     var buf = new_buffer("Hello World!")
-    test.assert_equal(buf.next(5), String("Hello").as_bytes())
+    var text = buf.next(5)
+    text.append(0)
+    test.assert_equal(String(text), String("Hello"))
 
 
 fn test_write() raises:

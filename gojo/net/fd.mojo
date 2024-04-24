@@ -68,7 +68,7 @@ struct FileDescriptor(FileDescriptorBase):
 
     fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Write data from the buffer to the file descriptor."""
-        var header_pointer = Pointer[Int8](src.data.value).bitcast[UInt8]()
+        var header_pointer = Pointer[Int8](src.data.address).bitcast[UInt8]()
 
         var bytes_sent = send(self.fd, header_pointer, strlen(header_pointer), 0)
         if bytes_sent == -1:
