@@ -89,7 +89,7 @@ fn test_read_all() raises:
     var test = MojoTest("Testing io.read_all with bytes.Reader")
     var reader = reader.new_reader("0123456789")
     var result = io.read_all(reader)
-    var bytes = result.get[0]()
+    var bytes = result[0]
     bytes.append(0)
     test.assert_equal(String(bytes), "0123456789")
 
@@ -118,15 +118,17 @@ fn test_read_and_unread_byte() raises:
 
     # Read the first byte from the reader.
     var buffer = List[Byte](capacity=128)
-    var result = reader.read_byte()
-    test.assert_equal(result.get[0](), 48)
+    var byte: Int8
+    var err: Error
+    byte, err = reader.read_byte()
+    test.assert_equal(int(byte), 48)
     var post_read_position = reader.index
 
     # Unread the first byte from the reader. Read position should be moved back by 1
-    var err = reader.unread_byte()
+    err = reader.unread_byte()
     if err:
         raise err
-    test.assert_equal(reader.index, post_read_position - 1)
+    test.assert_equal(int(reader.index), int(post_read_position - 1))
 
 
 fn test_unread_byte_at_beginning() raises:
