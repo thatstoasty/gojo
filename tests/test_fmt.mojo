@@ -16,6 +16,12 @@ fn test_sprintf() raises:
         "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It is True that I like Mojo!",
     )
 
+    s = sprintf("This is a number: %d. In base 16: %x. In base 16 upper: %X.", 42, 42, 42)
+    test.assert_equal(s, "This is a number: 42. In base 16: 2a. In base 16 upper: 2A.")
+
+    s = sprintf("Hello %s", String("world").as_bytes())
+    test.assert_equal(s, "Hello world")
+
 
 fn test_printf() raises:
     var test = MojoTest("Testing printf")
