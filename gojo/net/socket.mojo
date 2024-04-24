@@ -348,7 +348,7 @@ struct Socket(FileDescriptorBase):
             src: The data to send.
             max_attempts: The maximum number of attempts to send the data.
         """
-        var header_pointer = Pointer[Int8](src.data.value).bitcast[UInt8]()
+        var header_pointer = Pointer[Int8](src.data.address).bitcast[UInt8]()
         var total_bytes_sent = 0
         var attempts = 0
 
@@ -377,7 +377,7 @@ struct Socket(FileDescriptorBase):
             address: The IP address to connect to.
             port: The port number to connect to.
         """
-        var header_pointer = Pointer[Int8](src.data.value).bitcast[UInt8]()
+        var header_pointer = Pointer[Int8](src.data.address).bitcast[UInt8]()
         self.connect(address, port)
         var bytes_written: Int
         var err: Error
