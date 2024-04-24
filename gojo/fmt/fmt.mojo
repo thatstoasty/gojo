@@ -153,7 +153,8 @@ alias BadArgCount = "(BAD ARG COUNT)"
 
 fn sprintf(formatting: String, *args: Args) -> String:
     var text = formatting
-    var formatter_count = formatting.count("%")
+    var raw_percent_count = formatting.count("%%") * 2
+    var formatter_count = formatting.count("%") - raw_percent_count
 
     if formatter_count != len(args):
         return BadArgCount
@@ -192,7 +193,8 @@ fn sprintf_str(formatting: String, args: List[String]) raises -> String:
 
 fn printf(formatting: String, *args: Args) raises:
     var text = formatting
-    var formatter_count = formatting.count("%")
+    var raw_percent_count = formatting.count("%%") * 2
+    var formatter_count = formatting.count("%") - raw_percent_count
 
     if formatter_count > len(args):
         raise Error("Not enough arguments for format string")
@@ -203,6 +205,8 @@ fn printf(formatting: String, *args: Args) raises:
         var argument = args[i]
         if argument.isa[String]():
             text = format_string(text, argument.get[String]()[])
+        elif argument.isa[List[Byte]]():
+            text = format_bytes(text, argument.get[List[Byte]]()[])
         elif argument.isa[Int]():
             text = format_integer(text, argument.get[Int]()[])
         elif argument.isa[Float64]():
