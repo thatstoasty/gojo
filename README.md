@@ -2,8 +2,6 @@
 
 Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
-NOTE: This does not work on Mojo 24.2, you must use the nightly build for now. This will be resolved in the next Mojo release.
-
 ## Projects that use Gojo
 
 ### My projects
@@ -11,6 +9,7 @@ NOTE: This does not work on Mojo 24.2, you must use the nightly build for now. T
 - `weave`: A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. [Link to the project.](https://github.com/thatstoasty/weave)
 - `mog`: Terminal text styling library. [Link to the project.](https://github.com/thatstoasty/mog)
 - `stump`: Bound Logger library. [Link to the project.](https://github.com/thatstoasty/stump)
+- `prism`: CLI Library. [Link to the project.](https://github.com/thatstoasty/prism)
 
 ### Community projects
 
