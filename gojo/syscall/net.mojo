@@ -1,5 +1,6 @@
 from .types import c_char, c_int, c_ushort, c_uint, c_void, c_size_t, c_ssize_t, strlen
 from .file import O_CLOEXEC, O_NONBLOCK
+from utils.static_tuple import StaticTuple
 
 alias IPPROTO_IPV6 = 41
 alias IPV6_V6ONLY = 26
@@ -64,7 +65,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 
 fn c_charptr_to_string(s: Pointer[c_char]) -> String:
-    return String(s.bitcast[Int8](), strlen(s))
+    return String(s.bitcast[UInt8](), strlen(s))
 
 
 fn cftob(val: c_int) -> Bool:

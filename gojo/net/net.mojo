@@ -1,4 +1,4 @@
-from memory._arc import Arc
+from memory.arc import Arc
 import ..io
 from ..builtins import Byte
 from .socket import Socket

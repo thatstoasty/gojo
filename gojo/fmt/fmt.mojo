@@ -162,15 +162,15 @@ fn sprintf(formatting: String, *args: Args) -> String:
     for i in range(len(args)):
         var argument = args[i]
         if argument.isa[String]():
-            text = format_string(text, argument.get[String]()[])
+            text = format_string(text, argument[String])
         elif argument.isa[List[Byte]]():
-            text = format_bytes(text, argument.get[List[Byte]]()[])
+            text = format_bytes(text, argument[List[Byte]])
         elif argument.isa[Int]():
-            text = format_integer(text, argument.get[Int]()[])
+            text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
-            text = format_float(text, argument.get[Float64]()[])
+            text = format_float(text, argument[Float64])
         elif argument.isa[Bool]():
-            text = format_boolean(text, argument.get[Bool]()[])
+            text = format_boolean(text, argument[Bool])
 
     return text
 
@@ -204,15 +204,15 @@ fn printf(formatting: String, *args: Args) raises:
     for i in range(len(args)):
         var argument = args[i]
         if argument.isa[String]():
-            text = format_string(text, argument.get[String]()[])
+            text = format_string(text, argument[String])
         elif argument.isa[List[Byte]]():
-            text = format_bytes(text, argument.get[List[Byte]]()[])
+            text = format_bytes(text, argument[List[Byte]])
         elif argument.isa[Int]():
-            text = format_integer(text, argument.get[Int]()[])
+            text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
-            text = format_float(text, argument.get[Float64]()[])
+            text = format_float(text, argument[Float64])
         elif argument.isa[Bool]():
-            text = format_boolean(text, argument.get[Bool]()[])
+            text = format_boolean(text, argument[Bool])
         else:
             raise Error("Unknown for argument #" + String(i))
 

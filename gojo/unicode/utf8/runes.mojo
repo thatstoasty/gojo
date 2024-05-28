@@ -6,7 +6,7 @@ from ...builtins import Rune
 from algorithm.functional import vectorize
 from memory.unsafe import DTypePointer
 from sys.info import simdwidthof
-from math.bit import ctlz
+from bit import countl_zero
 
 
 # The default lowest and highest continuation byte.
@@ -322,32 +322,13 @@ fn rune_count_in_string(s: String) -> Int:
     Returns:
         The number of runes in the string.
     """
-    var p = s._as_ptr().bitcast[DType.uint8]()
+    var p = DTypePointer[DType.uint8](s.unsafe_uint8_ptr())
     var string_byte_length = len(s)
     var result = 0
 
     @parameter
     fn count[simd_width: Int](offset: Int):
-        result += int(((p.load[width=simd_width](offset) >> 6) != 0b10).cast[DType.uint8]().reduce_add())
+        result += int(((p.load[width=simd_width](offset) >> 6) != 0b10).reduce_add())
 
     vectorize[count, simd_width_u8](string_byte_length)
     return result
-
-
-fn string_iterator(s: String, func: fn (String) -> None):
-    """Iterate over the runes in a string and call the given function with each rune.
-
-    Args:
-        s: The string to iterate over.
-        func: The function to call with each rune.
-    """
-    var bytes = len(s)
-    var p = s._as_ptr().bitcast[DType.uint8]()
-    while bytes > 0:
-        var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
-        var sp = DTypePointer[DType.int8].alloc(char_length + 1)
-        memcpy(sp, p.bitcast[DType.int8](), char_length)
-        sp[char_length] = 0
-        func(String(sp, char_length + 1))
-        bytes -= char_length
-        p += char_length

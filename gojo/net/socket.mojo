@@ -348,7 +348,7 @@ struct Socket(FileDescriptorBase):
             src: The data to send.
             max_attempts: The maximum number of attempts to send the data.
         """
-        var header_pointer = Pointer[Int8](src.data.address).bitcast[UInt8]()
+        var header_pointer = src.unsafe_ptr()
         var total_bytes_sent = 0
         var attempts = 0
 

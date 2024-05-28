@@ -1,5 +1,5 @@
 from time import now
-from gojo.strings import StringBuilder
+from gojo.strings.builder import StringBuilder, NewStringBuilder
 from gojo.bytes import buffer
 from goodies import STDWriter
 
@@ -7,8 +7,9 @@ from goodies import STDWriter
 fn test_string_builder() raises:
     print("Testing string builder performance")
     # Create a string from the buffer
+    var builder_write_start_time = now()
     var builder = StringBuilder()
-    for i in range(100):
+    for _ in range(100):
         _ = builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -18,10 +19,33 @@ fn test_string_builder() raises:
             " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
             " mollit anim id est laborum."
         )
+    var builder_write_execution_time = now() - builder_write_start_time
+    print("StringBuilder:", "(", builder_write_execution_time, "ns)")
 
     var builder_start_time = now()
     var output = str(builder)
     var builder_execution_time = now() - builder_start_time
+
+    print("Testing new string builder performance")
+    # Create a string from the buffer
+    var new_builder_write_start_time = now()
+    var new_builder = NewStringBuilder()
+    for _ in range(100):
+        _ = new_builder.write_string(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+            " mollit anim id est laborum."
+        )
+    var new_builder_write_execution_time = now() - new_builder_write_start_time
+    print("NewStringBuilder:", "(", new_builder_write_execution_time, "ns)")
+
+    var new_builder_start_time = now()
+    var new_output = str(new_builder)
+    var new_builder_execution_time = now() - new_builder_start_time
 
     # Create a string using the + operator
     print("Testing string concatenation performance")
@@ -62,6 +86,7 @@ fn test_string_builder() raises:
     var buffer_execution_time = now() - buffer_start_time
 
     print("StringBuilder:", "(", builder_execution_time, "ns)")
+    print("NewStringBuilder:", "(", new_builder_execution_time, "ns)")
     print("String concat:", "(", concat_execution_time, "ns)")
     print("Bytes Buffer:", "(", buffer_execution_time, "ns)")
     print(
@@ -69,6 +94,8 @@ fn test_string_builder() raises:
         str(concat_execution_time - builder_execution_time) + "ns",
         ": StringBuilder is ",
         str(concat_execution_time // builder_execution_time) + "x faster",
+        ": NewStringBuilder is ",
+        str(concat_execution_time // new_builder_execution_time) + "x faster",
         ": Bytes Buffer is ",
         str(concat_execution_time // buffer_execution_time) + "x faster",
     )
@@ -96,3 +123,27 @@ fn test_std_writer_speed() raises:
 fn main() raises:
     # test_std_writer_speed()
     test_string_builder()
+
+    print("Testing new string builder performance")
+    # Create a string from the buffer
+    # var new_builder_write_start_time = now()
+    # var new_builder = NewStringBuilder()
+    # for _ in range(100):
+    #     _ = new_builder.write_string(
+    #         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+    #         " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+    #         " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+    #         " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+    #         " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+    #         " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+    #         " mollit anim id est laborum."
+    #     )
+    # var new_builder_write_execution_time = now() - new_builder_write_start_time
+    # print("NewStringBuilder:", "(", new_builder_write_execution_time, "ns)")
+
+    # var new_builder_start_time = now()
+    # var new_output = str(new_builder)
+    # var new_builder_execution_time = now() - new_builder_start_time
+    # print("NewStringBuilder:", "(", new_builder_execution_time, "ns)")
+    # # print(new_output)
+    # print("done")
