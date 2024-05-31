@@ -1,12 +1,9 @@
-# Adapted from https://github.com/maniartech/mojo-strings/blob/master/strings/builder.mojo
-# Modified to use List[Byte] instead of List[String]
-
 import ..io
 from ..builtins import Byte
 
 
 @value
-struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWriter):
+struct LegacyStringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWriter):
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
@@ -134,7 +131,7 @@ struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWrite
 
 
 @value
-struct NewStringBuilder[growth_factor: Float32 = 2](Stringable, Sized):
+struct StringBuilder[growth_factor: Float32 = 2](Stringable, Sized):
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
