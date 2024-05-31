@@ -39,7 +39,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         )
 
         if write_count == -1:
-            return 0, Error("Failed to write to file descriptor " + String(self.fd))
+            return 0, Error("Failed to write to file descriptor " + str(self.fd))
 
         return write_count, Error()
 

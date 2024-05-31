@@ -9,7 +9,7 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var builder_write_start_time = now()
     var builder = StringBuilder()
-    for _ in range(100):
+    for _ in range(10000):
         _ = builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -30,7 +30,7 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var new_builder_write_start_time = now()
     var new_builder = NewStringBuilder()
-    for _ in range(100):
+    for _ in range(10000):
         _ = new_builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -47,10 +47,16 @@ fn test_string_builder() raises:
     var new_builder_execution_time = now() - new_builder_start_time
     print("NewStringBuilder buffer len", len(new_output), "\n")
 
+    var new_builder_render_start_time = now()
+    var new_output_render = str(new_builder.render())
+    var new_builder_render_execution_time = now() - new_builder_render_start_time
+    print("NewStringBuilder buffer len", len(new_output_render), "\n")
+    # print(new_output_render)
+
     # Create a string using the + operator
     print("Testing string concatenation performance")
     var vec = List[String]()
-    for i in range(100):
+    for i in range(10000):
         vec.append(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -72,7 +78,7 @@ fn test_string_builder() raises:
     var buffer_write_start_time = now()
     print("Testing bytes buffer performance")
     var buf = buffer.new_buffer()
-    for i in range(100):
+    for i in range(10000):
         _ = buf.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -92,11 +98,12 @@ fn test_string_builder() raises:
     print("\nWrite times:")
     print("StringBuilder:", "(", builder_write_execution_time, "ns)")
     print("NewStringBuilder:", "(", new_builder_write_execution_time, "ns)")
-    print("Bytes buffer write time:", "(", buffer_write_execution_time, "ns)", "\n")
+    print("Bytes buffer write time:", "(", buffer_write_execution_time, "ns)")
 
     print("\nExecution times:")
     print("StringBuilder:", "(", builder_execution_time, "ns)")
     print("NewStringBuilder:", "(", new_builder_execution_time, "ns)")
+    print("NewStringBuilder Render:", "(", new_builder_render_execution_time, "ns)")
     print("String concat:", "(", concat_execution_time, "ns)")
     print("Bytes Buffer:", "(", buffer_execution_time, "ns)")
 

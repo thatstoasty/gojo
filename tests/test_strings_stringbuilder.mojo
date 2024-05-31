@@ -13,7 +13,7 @@ fn test_write_string() raises:
         _ = builder.write_string("Lorem ipsum dolor sit amet ")
 
     test.assert_equal(
-        String(builder),
+        str(builder),
         "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet ",
     )
 
@@ -24,7 +24,7 @@ fn test_write() raises:
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
     _ = builder.write(String("Hello").as_bytes())
-    test.assert_equal(String(builder), "Hello")
+    test.assert_equal(str(builder), "Hello")
 
 
 fn test_write_byte() raises:
@@ -33,7 +33,7 @@ fn test_write_byte() raises:
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
     _ = builder.write_byte(32)
-    test.assert_equal(String(builder), " ")
+    test.assert_equal(str(builder), " ")
 
 
 fn main() raises:
