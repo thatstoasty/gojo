@@ -135,8 +135,9 @@ struct StringBuilder[growth_factor: Float32 = 2](Stringable, Sized):
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
-    together. It is around 20-30x faster than using the `+` operator to concatenate
-    strings because it avoids the overhead of creating and destroying many
+    together. The performance increase is not linear. Compared to string concatenation, 
+    I've observed around 20-30x faster for writing and rending ~4KB and up to 2100x-2300x
+    for ~4MB. This is because it avoids the overhead of creating and destroying many
     intermediate strings and performs memcopy operations.
 
     The result is a more efficient when building larger string concatenations. It
