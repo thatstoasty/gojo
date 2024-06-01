@@ -18,25 +18,30 @@ fn test_write_string() raises:
     )
 
 
+fn test_big_write():
+    var test = MojoTest("Testing strings.StringBuilder.write_string with big Write")
+
+    # Create a string from the builder by writing strings to it.
+    var builder = StringBuilder(capacity=8)
+
+    _ = builder.write_string("Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet")
+
+    test.assert_equal(
+        str(builder),
+        "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet",
+    )
+
+
 fn test_write() raises:
     var test = MojoTest("Testing strings.StringBuilder.write")
 
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
-    _ = builder.write(String("Hello").as_bytes())
+    _ = builder.write(String("Hello").as_bytes_slice())
     test.assert_equal(str(builder), "Hello")
-
-
-fn test_write_byte() raises:
-    var test = MojoTest("Testing strings.StringBuilder.write_byte")
-
-    # Create a string from the builder by writing bytes to it.
-    var builder = StringBuilder()
-    _ = builder.write_byte(32)
-    test.assert_equal(str(builder), " ")
 
 
 fn main() raises:
     test_write_string()
     test_write()
-    test_write_byte()
+    test_big_write()

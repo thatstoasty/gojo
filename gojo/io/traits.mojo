@@ -78,7 +78,7 @@ trait Reader(Movable):
 
     Implementations must not retain p."""
 
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: Span[Byte]) -> (Int, Error):
         ...
 
 
@@ -94,7 +94,7 @@ trait Writer(Movable):
     Implementations must not retain p.
     """
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: Span[Byte]) -> (Int, Error):
         ...
 
 
@@ -227,7 +227,7 @@ trait ReaderAt:
 
     Implementations must not retain p."""
 
-    fn read_at(self, inout dest: List[Byte], off: Int64) -> (Int, Error):
+    fn read_at(self, inout dest: Span[Byte], off: Int64) -> (Int, Error):
         ...
 
 
@@ -248,7 +248,7 @@ trait WriterAt:
 
     Implementations must not retain p."""
 
-    fn write_at(self, src: List[Byte], off: Int64) -> (Int, Error):
+    fn write_at(self, src: Span[Byte], off: Int64) -> (Int, Error):
         ...
 
 

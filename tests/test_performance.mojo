@@ -1,5 +1,5 @@
 from time import now
-from gojo.strings.builder import LegacyStringBuilder, StringBuilder
+from gojo.strings.builder import StringBuilder
 from gojo.bytes import buffer
 from goodies import STDWriter
 
