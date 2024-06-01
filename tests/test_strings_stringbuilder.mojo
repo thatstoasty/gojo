@@ -9,7 +9,7 @@ fn test_write_string() raises:
     # Create a string from the builder by writing strings to it.
     var builder = StringBuilder()
 
-    for i in range(3):
+    for _ in range(3):
         _ = builder.write_string("Lorem ipsum dolor sit amet ")
 
     test.assert_equal(
@@ -22,7 +22,7 @@ fn test_big_write():
     var test = MojoTest("Testing strings.StringBuilder.write_string with big Write")
 
     # Create a string from the builder by writing strings to it.
-    var builder = StringBuilder(capacity=8)
+    var builder = StringBuilder(capacity=1)
 
     _ = builder.write_string("Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet")
 
