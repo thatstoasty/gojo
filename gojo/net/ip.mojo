@@ -1,7 +1,7 @@
 from utils.variant import Variant
 from utils.static_tuple import StaticTuple
 from sys.info import os_is_linux, os_is_macos
-from ..syscall.types import (
+from ..syscall import (
     c_int,
     c_char,
     c_void,
@@ -32,8 +32,8 @@ alias AddrInfo = Variant[addrinfo, addrinfo_unix]
 fn get_addr_info(host: String) raises -> AddrInfo:
     var status: Int32 = 0
     if os_is_macos():
-        var servinfo = Pointer[addrinfo]().alloc(1)
-        servinfo.store(addrinfo())
+        var servinfo = UnsafePointer[addrinfo]().alloc(1)
+        servinfo[0] = addrinfo()
         var hints = addrinfo()
         hints.ai_family = AF_INET
         hints.ai_socktype = SOCK_STREAM
@@ -43,27 +43,21 @@ fn get_addr_info(host: String) raises -> AddrInfo:
 
         var status = getaddrinfo(
             host_ptr,
-            Pointer[UInt8](),
-            Pointer.address_of(hints),
-            Pointer.address_of(servinfo),
+            DTypePointer[DType.uint8](),
+            UnsafePointer.address_of(hints),
+            UnsafePointer.address_of(servinfo),
         )
         if status != 0:
             print("getaddrinfo failed to execute with status:", status)
-            var msg_ptr = gai_strerror(c_int(status))
-            _ = external_call["printf", c_int, Pointer[c_char], Pointer[c_char]](
-                to_char_ptr("gai_strerror: %s"), msg_ptr
-            )
-            var msg = c_charptr_to_string(msg_ptr)
-            print("getaddrinfo error message: ", msg)
 
         if not servinfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.load()
+        return move_from_pointee(servinfo)
     elif os_is_linux():
-        var servinfo = Pointer[addrinfo_unix]().alloc(1)
-        servinfo.store(addrinfo_unix())
+        var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
+        servinfo[0] = addrinfo_unix()
         var hints = addrinfo_unix()
         hints.ai_family = AF_INET
         hints.ai_socktype = SOCK_STREAM
@@ -73,24 +67,18 @@ fn get_addr_info(host: String) raises -> AddrInfo:
 
         var status = getaddrinfo_unix(
             host_ptr,
-            Pointer[UInt8](),
-            Pointer.address_of(hints),
-            Pointer.address_of(servinfo),
+            DTypePointer[DType.uint8](),
+            UnsafePointer.address_of(hints),
+            UnsafePointer.address_of(servinfo),
         )
         if status != 0:
             print("getaddrinfo failed to execute with status:", status)
-            var msg_ptr = gai_strerror(c_int(status))
-            _ = external_call["printf", c_int, Pointer[c_char], Pointer[c_char]](
-                to_char_ptr("gai_strerror: %s"), msg_ptr
-            )
-            var msg = c_charptr_to_string(msg_ptr)
-            print("getaddrinfo error message: ", msg)
 
         if not servinfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.load()
+        return move_from_pointee(servinfo)
     else:
         raise Error("Windows is not supported yet! Sorry!")
 
@@ -99,7 +87,7 @@ fn get_ip_address(host: String) raises -> String:
     """Get the IP address of a host."""
     # Call getaddrinfo to get the IP address of the host.
     var result = get_addr_info(host)
-    var ai_addr: Pointer[sockaddr]
+    var ai_addr: UnsafePointer[sockaddr]
     var address_family: Int32 = 0
     var address_length: UInt32 = 0
     if result.isa[addrinfo]():
@@ -118,7 +106,7 @@ fn get_ip_address(host: String) raises -> String:
         raise Error("Failed to get IP address. getaddrinfo was called successfully, but ai_addr is null.")
 
     # Cast sockaddr struct to sockaddr_in struct and convert the binary IP to a string using inet_ntop.
-    var addr_in = ai_addr.bitcast[sockaddr_in]().load()
+    var addr_in = move_from_pointee(ai_addr.bitcast[sockaddr_in]())
 
     return convert_binary_ip_to_string(addr_in.sin_addr.s_addr, address_family, address_length).strip()
 
@@ -167,7 +155,7 @@ fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, 
     return StringRef(string_buf, index)
 
 
-fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) -> Pointer[sockaddr]:
+fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) -> UnsafePointer[sockaddr]:
     """Build a sockaddr pointer from an IP address and port number.
     https://learn.microsoft.com/en-us/windows/win32/winsock/sockaddr-2
     https://learn.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-sockaddr_in.
@@ -176,4 +164,4 @@ fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) ->
     var bin_ip = convert_ip_to_binary(ip_address, address_family)
 
     var ai = sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8]())
-    return Pointer[sockaddr_in].address_of(ai).bitcast[sockaddr]()
+    return UnsafePointer[sockaddr_in].address_of(ai).bitcast[sockaddr]()

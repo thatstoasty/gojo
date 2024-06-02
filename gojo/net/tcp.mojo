@@ -103,7 +103,7 @@ struct TCPConnection(Conn):
 
         return bytes_written, Error()
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: Span[Byte]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:

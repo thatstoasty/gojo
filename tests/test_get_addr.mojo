@@ -15,7 +15,7 @@ fn test_dial() raises:
     var bytes_written: Int = 0
     var err = Error()
     bytes_written, err = connection.write(
-        String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
+        String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes_slice()
     )
     if err:
         raise err
@@ -25,7 +25,7 @@ fn test_dial() raises:
         return
 
     # Read the response from the connection
-    var response = List[Int8](capacity=4096)
+    var response = List[UInt8](capacity=4096)
     var bytes_read: Int = 0
     bytes_read, err = connection.read(response)
     if err:
