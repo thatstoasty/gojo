@@ -39,12 +39,12 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
         """
         return Int64(len(self.string))
 
-    fn read(inout self, inout dest: Span[Byte]) -> (Int, Error):
-        """Reads from the underlying string into the provided Span[Byte] object.
+    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+        """Reads from the underlying string into the provided List[Byte] object.
         Implements the [io.Reader] trait.
 
         Args:
-            dest: The destination Span[Byte] object to read into.
+            dest: The destination List[Byte] object to read into.
 
         Returns:
             The number of bytes read into dest.
@@ -53,21 +53,17 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
             return 0, Error(io.EOF)
 
         self.prev_rune = -1
-        var str_to_read = self.string[int(self.read_pos) :]
-        var bytes_written: Int
-        memcpy(dest.unsafe_ptr().offset(len(dest)), str_to_read.unsafe_uint8_ptr(), len(str_to_read))
-        bytes_written = len(str_to_read)
-
-        self.read_pos += Int64(len(str_to_read))
+        var bytes_written = copy(dest, self.string[int(self.read_pos) :].as_bytes())
+        self.read_pos += Int64(bytes_written)
         return bytes_written, Error()
 
-    fn read_at(self, inout dest: Span[Byte], off: Int64) -> (Int, Error):
-        """Reads from the Reader into the dest Span[Byte] starting at the offset off.
+    fn read_at(self, inout dest: List[Byte], off: Int64) -> (Int, Error):
+        """Reads from the Reader into the dest List[Byte] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
         Implements the [io.ReaderAt] trait.
 
         Args:
-            dest: The destination Span[Byte] object to read into.
+            dest: The destination List[Byte] object to read into.
             off: The byte offset to start reading from.
 
         Returns:
@@ -81,12 +77,11 @@ struct Reader(Sized, io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner, io.S
             return 0, Error(io.EOF)
 
         var error = Error()
-        var str_to_read = self.string[int(off) :]
-        var bytes_written: Int
-        memcpy(dest.unsafe_ptr().offset(len(dest)), str_to_read.unsafe_uint8_ptr(), len(str_to_read))
-        bytes_written = len(str_to_read)
+        var copied_elements_count = copy(dest, self.string[int(off) :].as_bytes())
+        if copied_elements_count < len(dest):
+            error = Error(io.EOF)
 
-        return bytes_written, Error()
+        return copied_elements_count, Error()
 
     fn read_byte(inout self) -> (Byte, Error):
         """Reads the next byte from the underlying string.
