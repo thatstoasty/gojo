@@ -1,6 +1,12 @@
-from external.libc import c_ssize_t, c_size_t, c_int, char_pointer
-from gojo.builtins import Byte
 import gojo.io
+
+
+# `Int` is known to be machine's width
+alias c_size_t = Int
+alias c_ssize_t = Int
+alias c_int = Int32
+alias c_char = UInt8
+alias char_pointer = UnsafePointer[c_char]
 
 
 @value
@@ -25,7 +31,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes the given bytes to the file descriptor.
 
         Args:
@@ -63,6 +69,6 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        var buffer = List[Byte](capacity=io.BUFFER_SIZE)
+        var buffer = List[UInt8](capacity=io.BUFFER_SIZE)
         _ = reader.read(buffer)
         return self.write(buffer)

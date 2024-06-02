@@ -1,4 +1,4 @@
-from gojo.builtins import Byte, copy
+from gojo.builtins import copy
 import gojo.io
 
 
@@ -25,7 +25,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
         return Error()
 
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
@@ -49,7 +49,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
         return elements_copied, err
 
-    fn read(inout self, inout dest: List[Byte], size: Int64) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8], size: Int64) -> (Int, Error):
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var result: String = ""
@@ -72,10 +72,10 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
         return elements_copied, err
 
-    fn read_all(inout self) -> (List[Byte], Error):
-        var bytes = List[Byte](capacity=io.BUFFER_SIZE)
+    fn read_all(inout self) -> (List[UInt8], Error):
+        var bytes = List[UInt8](capacity=io.BUFFER_SIZE)
         while True:
-            var temp = List[Byte](capacity=io.BUFFER_SIZE)
+            var temp = List[UInt8](capacity=io.BUFFER_SIZE)
             _ = self.read(temp, io.BUFFER_SIZE)
 
             # If new bytes will overflow the result, resize it.
@@ -86,7 +86,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
             if len(temp) < io.BUFFER_SIZE:
                 return bytes, Error(io.EOF)
 
-    fn read_byte(inout self) -> (Byte, Error):
+    fn read_byte(inout self) -> (UInt8, Error):
         try:
             var byte = self.read_bytes(1)[0]
             return byte, Error()
@@ -99,7 +99,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn read_bytes(inout self) raises -> List[Int8]:
         return self.handle.read_bytes()
 
-    fn stream_until_delimiter(inout self, inout dest: List[Byte], delimiter: Int8, max_size: Int) raises:
+    fn stream_until_delimiter(inout self, inout dest: List[UInt8], delimiter: Int8, max_size: Int) raises:
         var byte: Int8
         var err: Error
         for i in range(max_size):
@@ -116,9 +116,9 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         except e:
             return Int64(0), Error(e)
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         try:
-            var copy = List[Byte](src)
+            var copy = List[UInt8](src)
             var bytes_length = len(copy)
             self.handle.write(StringRef(copy.steal_data(), bytes_length))
             return len(src), Error(io.EOF)

@@ -73,7 +73,7 @@ fn test_write() raises:
     var test = MojoTest("Testing bytes.Buffer.write")
     var b = List[Byte](capacity=16)
     var buf = new_buffer(b^)
-    _ = buf.write(String("Hello World!").as_bytes())
+    _ = buf.write(String("Hello World!").as_bytes_slice())
     test.assert_equal(str(buf), String("Hello World!"))
 
 
