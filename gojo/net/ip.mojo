@@ -6,13 +6,13 @@ from ..syscall import (
     c_char,
     c_void,
     c_uint,
-)
-from ..syscall.net import (
     addrinfo,
     addrinfo_unix,
-    AF_INET,
-    SOCK_STREAM,
-    AI_PASSIVE,
+    AddressFamily,
+    AddressInformation,
+    SocketOptions,
+    SocketType,
+    ProtocolFamily,
     sockaddr,
     sockaddr_in,
     htons,
@@ -30,14 +30,13 @@ alias AddrInfo = Variant[addrinfo, addrinfo_unix]
 
 
 fn get_addr_info(host: String) raises -> AddrInfo:
-    var status: Int32 = 0
     if os_is_macos():
         var servinfo = UnsafePointer[addrinfo]().alloc(1)
         servinfo[0] = addrinfo()
         var hints = addrinfo()
-        hints.ai_family = AF_INET
-        hints.ai_socktype = SOCK_STREAM
-        hints.ai_flags = AI_PASSIVE
+        hints.ai_family = AddressFamily.AF_INET
+        hints.ai_socktype = SocketType.SOCK_STREAM
+        hints.ai_flags = AddressInformation.AI_PASSIVE
 
         var host_ptr = to_char_ptr(host)
 
@@ -59,9 +58,9 @@ fn get_addr_info(host: String) raises -> AddrInfo:
         var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
         servinfo[0] = addrinfo_unix()
         var hints = addrinfo_unix()
-        hints.ai_family = AF_INET
-        hints.ai_socktype = SOCK_STREAM
-        hints.ai_flags = AI_PASSIVE
+        hints.ai_family = AddressFamily.AF_INET
+        hints.ai_socktype = SocketType.SOCK_STREAM
+        hints.ai_flags = AddressInformation.AI_PASSIVE
 
         var host_ptr = to_char_ptr(host)
 

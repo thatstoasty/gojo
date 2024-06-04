@@ -1,5 +1,5 @@
 from ..builtins import Byte
-from ..syscall.net import SO_REUSEADDR
+from ..syscall import SocketOptions
 from .net import Connection, Conn
 from .address import TCPAddr, NetworkType, split_host_port
 from .socket import Socket
@@ -48,7 +48,7 @@ struct ListenConfig(CollectionElement):
         var tcp_addr = resolve_internet_addr(network, address)
         var socket = Socket(local_address=tcp_addr)
         socket.bind(tcp_addr.ip, tcp_addr.port)
-        socket.set_socket_option(SO_REUSEADDR, 1)
+        socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
         socket.listen()
         print(str("Listening on ") + str(socket.local_address))
         return TCPListener(socket^, self, network, address)

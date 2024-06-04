@@ -1,10 +1,9 @@
-from collections.optional import Optional
 import ..io
 from ..builtins import Byte
-from ..syscall.file import close
-from ..syscall.net import (
+from ..syscall import (
     recv,
     send,
+    close,
     strlen,
 )
 
@@ -51,7 +50,9 @@ struct FileDescriptor(FileDescriptorBase):
     # TODO: Need faster approach to copying data from the file descriptor to the buffer.
     fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
         """Receive data from the file descriptor and write it to the buffer provided."""
-        var bytes_received = recv(self.fd, dest.unsafe_ptr(), dest.capacity, 0)
+        var bytes_received = recv(
+            self.fd, DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size), dest.capacity, 0
+        )
         if bytes_received == -1:
             return 0, Error("Failed to receive message from socket.")
         dest.size += bytes_received

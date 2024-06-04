@@ -28,10 +28,45 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         # Pretty hacky way to force the filehandle read into the defined trait.
         # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
-        var result: String = ""
         var bytes_to_read = dest.capacity - len(dest)
+        var result: List[UInt8]
         try:
-            result = self.handle.read(bytes_to_read)
+            result = self.handle.read_bytes(bytes_to_read)
+        except e:
+            return 0, e
+
+        var bytes_read = len(result)
+        print(
+            "bytes read",
+            bytes_read,
+            "bytes to read",
+            bytes_to_read,
+            "dest size",
+            len(dest),
+            "dest capacity",
+            dest.capacity,
+        )
+        if bytes_read == 0:
+            return 0, Error(io.EOF)
+        for i in range(len(result)):
+            print("result[", i, "]", result[i])
+
+        memcpy(DTypePointer(dest.unsafe_ptr()).offset(len(dest)), result.unsafe_ptr(), bytes_read)
+        dest.size += bytes_read
+        print("dest size", dest.size)
+        for i in range(len(dest)):
+            print("dest[", i, "]", dest[i])
+
+        if bytes_read < bytes_to_read:
+            return bytes_read, Error(io.EOF)
+
+        return bytes_read, Error()
+
+    fn read(inout self, inout dest: List[UInt8], size: Int) -> (Int, Error):
+        # Pretty hacky way to force the filehandle read into the defined trait.
+        var result: List[UInt8]
+        try:
+            result = self.handle.read_bytes(size)
         except e:
             return 0, e
 
@@ -39,38 +74,13 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         if bytes_read == 0:
             return 0, Error(io.EOF)
 
-        var bytes_result = result.as_bytes()
-        var elements_copied = copy(dest, bytes_result[:bytes_read])
-        # dest = dest[:elements_copied]
+        memcpy(DTypePointer(dest.unsafe_ptr()).offset(len(dest)), result.unsafe_ptr(), bytes_read)
+        dest.size += bytes_read
 
-        var err = Error()
-        if elements_copied < bytes_to_read:
-            err = Error(io.EOF)
+        if bytes_read < size:
+            return bytes_read, Error(io.EOF)
 
-        return elements_copied, err
-
-    fn read(inout self, inout dest: List[UInt8], size: Int64) -> (Int, Error):
-        # Pretty hacky way to force the filehandle read into the defined trait.
-        # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
-        var result: String = ""
-        try:
-            result = self.handle.read(size)
-        except e:
-            return 0, Error(e)
-
-        var bytes_read = len(result)
-        if bytes_read == 0:
-            return 0, Error(io.EOF)
-
-        var bytes_result = result.as_bytes()
-        var elements_copied = copy(dest, bytes_result[:bytes_read])
-        dest = dest[:elements_copied]
-
-        var err = Error()
-        if elements_copied < int(size):
-            err = Error(io.EOF)
-
-        return elements_copied, err
+        return bytes_read, Error()
 
     fn read_all(inout self) -> (List[UInt8], Error):
         var bytes = List[UInt8](capacity=io.BUFFER_SIZE)
@@ -91,18 +101,15 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
             var byte = self.read_bytes(1)[0]
             return byte, Error()
         except e:
-            return Int8(0), Error(e)
+            return UInt8(0), Error(str(e))
 
-    fn read_bytes(inout self, size: Int64) raises -> List[Int8]:
+    fn read_bytes(inout self, size: Int = -1) raises -> List[UInt8]:
         return self.handle.read_bytes(size)
 
-    fn read_bytes(inout self) raises -> List[Int8]:
-        return self.handle.read_bytes()
-
-    fn stream_until_delimiter(inout self, inout dest: List[UInt8], delimiter: Int8, max_size: Int) raises:
-        var byte: Int8
+    fn stream_until_delimiter(inout self, inout dest: List[UInt8], delimiter: UInt8, max_size: Int) raises:
+        var byte: UInt8
         var err: Error
-        for i in range(max_size):
+        for _ in range(max_size):
             byte, err = self.read_byte()
             if byte == delimiter:
                 return
@@ -111,16 +118,14 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
     fn seek(inout self, offset: Int64, whence: Int = 0) -> (Int64, Error):
         try:
-            var position = self.handle.seek(offset.cast[DType.uint64]())
-            return position.cast[DType.int64](), Error()
+            var position = self.handle.seek(UInt64(offset))
+            return Int64(position), Error()
         except e:
-            return Int64(0), Error(e)
+            return Int64(0), Error(str(e))
 
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         try:
-            var copy = List[UInt8](src)
-            var bytes_length = len(copy)
-            self.handle.write(StringRef(copy.steal_data(), bytes_length))
+            self.handle.write(data=src.unsafe_ptr())
             return len(src), Error(io.EOF)
         except e:
-            return 0, Error(e)
+            return 0, Error(str(e))

@@ -1,4 +1,3 @@
-from collections.optional import Optional
 from ..builtins import Byte
 from ..syscall.file import close
 from ..syscall import (
@@ -7,7 +6,7 @@ from ..syscall import (
     c_char,
     c_int,
 )
-from ..syscall.net import (
+from ..syscall import (
     sockaddr,
     sockaddr_in,
     addrinfo,
@@ -36,13 +35,12 @@ from ..syscall.net import (
     getsockopt,
     getsockname,
     getpeername,
-    AF_INET,
-    SOCK_STREAM,
+    AddressFamily,
+    AddressInformation,
+    SocketOptions,
+    SocketType,
     SHUT_RDWR,
-    AI_PASSIVE,
     SOL_SOCKET,
-    SO_REUSEADDR,
-    SO_RCVTIMEO,
 )
 from .fd import FileDescriptor, FileDescriptorBase
 from .ip import (
@@ -79,8 +77,8 @@ struct Socket(FileDescriptorBase):
         inout self,
         local_address: TCPAddr = TCPAddr(),
         remote_address: TCPAddr = TCPAddr(),
-        address_family: Int = AF_INET,
-        socket_type: UInt8 = SOCK_STREAM,
+        address_family: Int = AddressFamily.AF_INET,
+        socket_type: UInt8 = SocketType.SOCK_STREAM,
         protocol: UInt8 = 0,
     ) raises:
         """Create a new socket object.
@@ -96,7 +94,7 @@ struct Socket(FileDescriptorBase):
         self.socket_type = socket_type
         self.protocol = protocol
 
-        var fd = socket(address_family, SOCK_STREAM, 0)
+        var fd = socket(address_family, SocketType.SOCK_STREAM, 0)
         if fd == -1:
             raise Error("Socket creation error")
         self.sockfd = FileDescriptor(int(fd))
@@ -246,7 +244,7 @@ struct Socket(FileDescriptorBase):
         var addr_in = move_from_pointee(local_address_ptr.bitcast[sockaddr_in]())
 
         return HostPort(
-            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AF_INET, 16),
+            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
             port=convert_binary_port_to_int(addr_in.sin_port),
         )
 
@@ -270,7 +268,7 @@ struct Socket(FileDescriptorBase):
         var addr_in = move_from_pointee(remote_address_ptr.bitcast[sockaddr_in]())
 
         return HostPort(
-            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AF_INET, 16),
+            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
             port=convert_binary_port_to_int(addr_in.sin_port),
         )
 
@@ -417,7 +415,7 @@ struct Socket(FileDescriptorBase):
     # TODO: Trying to set timeout fails, but some other options don't?
     # fn get_timeout(self) raises -> Seconds:
     #     """Return the timeout value for the socket."""
-    #     return self.get_socket_option(SO_RCVTIMEO)
+    #     return self.get_socket_option(SocketOptions.SO_RCVTIMEO)
 
     # fn set_timeout(self, owned duration: Seconds) raises:
     #     """Set the timeout value for the socket.
@@ -425,7 +423,7 @@ struct Socket(FileDescriptorBase):
     #     Args:
     #         duration: Seconds - The timeout duration in seconds.
     #     """
-    #     self.set_socket_option(SO_RCVTIMEO, duration)
+    #     self.set_socket_option(SocketOptions.SO_RCVTIMEO, duration)
 
     fn send_file(self, file: FileHandle, offset: Int = 0) raises:
         self.send_all(file.read_bytes())
