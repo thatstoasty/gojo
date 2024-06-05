@@ -241,7 +241,7 @@ struct Socket(FileDescriptorBase):
         )
         if status == -1:
             raise Error("Socket.get_sock_name: Failed to get address of local socket.")
-        var addr_in = move_from_pointee(local_address_ptr.bitcast[sockaddr_in]())
+        var addr_in = local_address_ptr.bitcast[sockaddr_in]().take_pointee()
 
         return HostPort(
             host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
@@ -265,7 +265,7 @@ struct Socket(FileDescriptorBase):
             raise Error("Socket.get_peer_name: Failed to get address of remote socket.")
 
         # Cast sockaddr struct to sockaddr_in to convert binary IP to string.
-        var addr_in = move_from_pointee(remote_address_ptr.bitcast[sockaddr_in]())
+        var addr_in = remote_address_ptr.bitcast[sockaddr_in]().take_pointee()
 
         return HostPort(
             host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
@@ -291,7 +291,7 @@ struct Socket(FileDescriptorBase):
         if status == -1:
             raise Error("Socket.get_sock_opt failed with status: " + str(status))
 
-        return move_from_pointee(option_value_pointer.bitcast[Int]())
+        return option_value_pointer.bitcast[Int]().take_pointee()
 
     fn set_socket_option(self, option_name: Int, owned option_value: UInt8 = 1) raises:
         """Return the value of the given socket option.
@@ -322,6 +322,7 @@ struct Socket(FileDescriptorBase):
         var remote = self.get_peer_name()
         self.remote_address = TCPAddr(remote.host, remote.port)
 
+    @always_inline
     fn write(inout self: Self, src: Span[Byte]) -> (Int, Error):
         """Send data to the socket. The socket must be connected to a remote socket.
 
@@ -331,13 +332,7 @@ struct Socket(FileDescriptorBase):
         Returns:
             The number of bytes sent.
         """
-        var bytes_written: Int
-        var err: Error
-        bytes_written, err = self.sockfd.write(src)
-        if err:
-            return 0, err
-
-        return bytes_written, Error()
+        return self.sockfd.write(src)
 
     fn send_all(self, src: List[Byte], max_attempts: Int = 3) raises:
         """Send data to the socket. The socket must be connected to a remote socket.
@@ -383,18 +378,17 @@ struct Socket(FileDescriptorBase):
             raise err
         return bytes_written
 
+    @always_inline
     fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
         """Receive data from the socket."""
-        # Not ideal since we can't use the pointer from the List[Byte] struct directly. So we use a temporary pointer to receive the data.
-        # Then we copy all the data over.
-        var bytes_written: Int
+        var bytes_read: Int
         var err: Error
-        bytes_written, err = self.sockfd.read(dest)
+        bytes_read, err = self.sockfd.read(dest)
         if err:
             if str(err) != "EOF":
-                return 0, err
+                return bytes_read, err
 
-        return bytes_written, Error()
+        return bytes_read, Error()
 
     fn shutdown(self):
         _ = shutdown(self.sockfd.fd, SHUT_RDWR)

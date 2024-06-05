@@ -1,6 +1,15 @@
 alias Byte = UInt8
 
 
+fn equals(left: List[UInt8], right: List[UInt8]) -> Bool:
+    if len(left) != len(right):
+        return False
+    for i in range(len(left)):
+        if left[i] != right[i]:
+            return False
+    return True
+
+
 fn has_prefix(bytes: List[Byte], prefix: List[Byte]) -> Bool:
     """Reports whether the List[Byte] struct begins with prefix.
 

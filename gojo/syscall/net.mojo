@@ -1,5 +1,4 @@
-from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t
-from .types import strlen
+from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t, strlen
 from .file import O_CLOEXEC, O_NONBLOCK
 from utils.static_tuple import StaticTuple
 

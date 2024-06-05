@@ -1,8 +1,8 @@
-from gojo.builtins import copy
 import gojo.io
+from gojo.syscall import FileDescriptorBase
 
 
-struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
+struct FileWrapper(FileDescriptorBase, io.ByteReader):
     var handle: FileHandle
 
     fn __init__(inout self, path: String, mode: String) raises:
@@ -27,7 +27,6 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
 
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         # Pretty hacky way to force the filehandle read into the defined trait.
-        # Call filehandle.read, convert result into bytes, copy into dest (overwrites the first X elements), then return a slice minus all the extra 0 filled elements.
         var bytes_to_read = dest.capacity - len(dest)
         var result: List[UInt8]
         try:
@@ -51,7 +50,7 @@ struct FileWrapper(io.ReadWriteSeeker, io.ByteReader):
         for i in range(len(result)):
             print("result[", i, "]", result[i])
 
-        memcpy(DTypePointer(dest.unsafe_ptr()).offset(len(dest)), result.unsafe_ptr(), bytes_read)
+        memcpy(DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size), result.unsafe_ptr(), bytes_read)
         dest.size += bytes_read
         print("dest size", dest.size)
         for i in range(len(dest)):

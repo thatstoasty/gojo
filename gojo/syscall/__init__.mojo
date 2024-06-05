@@ -36,7 +36,7 @@ from .net import (
     SHUT_RDWR,
     SOL_SOCKET,
 )
-from .file import close
+from .file import close, FileDescriptorBase
 
 # Adapted from https://github.com/crisadamo/mojo-Libc . Huge thanks to Cristian!
 # C types

@@ -1,6 +1,10 @@
 from . import c_int, c_char, c_void, c_size_t, c_ssize_t
 
 
+trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
+    ...
+
+
 # --- ( File Related Syscalls & Structs )---------------------------------------
 alias O_NONBLOCK = 16384
 alias O_ACCMODE = 3

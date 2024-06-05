@@ -5,13 +5,10 @@ from ..syscall import (
     send,
     close,
     strlen,
+    FileDescriptorBase,
 )
 
 alias O_RDWR = 0o2
-
-
-trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
-    ...
 
 
 struct FileDescriptor(FileDescriptorBase):
@@ -47,7 +44,6 @@ struct FileDescriptor(FileDescriptorBase):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    # TODO: Need faster approach to copying data from the file descriptor to the buffer.
     fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
         """Receive data from the file descriptor and write it to the buffer provided."""
         var bytes_received = recv(
