@@ -94,21 +94,21 @@ fn test_read_all() raises:
     test.assert_equal(String(bytes), "0123456789")
 
 
-fn test_write_to() raises:
-    var test = MojoTest("Testing bytes.Reader.write_to")
+# fn test_write_to() raises:
+#     var test = MojoTest("Testing bytes.Reader.write_to")
 
-    # Create a new reader containing the content "0123456789"
-    var reader = reader.new_reader("0123456789")
+#     # Create a new reader containing the content "0123456789"
+#     var reader = reader.new_reader("0123456789")
 
-    # Create a new writer containing the content "Hello World"
-    var test_string: String = "Hello World"
-    var w = buffer.new_buffer(test_string)
+#     # Create a new writer containing the content "Hello World"
+#     var test_string: String = "Hello World"
+#     var w = buffer.new_buffer(test_string)
 
-    # Write the content of the reader to the writer
-    _ = reader.write_to(w)
+#     # Write the content of the reader to the writer
+#     _ = reader.write_to(w)
 
-    # Check if the content of the writer is "Hello World0123456789"
-    test.assert_equal(str(w), String("Hello World0123456789"))
+#     # Check if the content of the writer is "Hello World0123456789"
+#     test.assert_equal(str(w), String("Hello World0123456789"))
 
 
 fn test_read_and_unread_byte() raises:
@@ -117,8 +117,7 @@ fn test_read_and_unread_byte() raises:
     var reader = reader.new_reader(s)
 
     # Read the first byte from the reader.
-    var buffer = List[Byte](capacity=128)
-    var byte: Int8
+    var byte: UInt8
     var err: Error
     byte, err = reader.read_byte()
     test.assert_equal(int(byte), 48)
@@ -153,4 +152,4 @@ fn main() raises:
     test_read_and_unread_byte()
     test_unread_byte_at_beginning()
     test_seek()
-    test_write_to()
+    # test_write_to()

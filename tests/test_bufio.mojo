@@ -74,7 +74,7 @@ fn test_read_slice() raises:
     var buf = buffer.new_buffer("0123456789")
     var reader = Reader(buf)
 
-    var result = reader.read_slice(ord(5))
+    var result = reader.read_slice(ord("5"))
     var bytes = result[0]
     test.assert_equal(to_string(result[0]), "012345")
 
@@ -167,7 +167,7 @@ fn test_big_write() raises:
     var writer = Writer(buf)
 
     # Build a string larger than the size of the Bufio struct's internal buffer.
-    var builder = StringBuilder(size=5000)
+    var builder = StringBuilder(capacity=5000)
     for i in range(500):
         _ = builder.write_string("0123456789")
 

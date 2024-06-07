@@ -37,9 +37,9 @@ fn replace_first(s: String, old: String, new: String) -> String:
     """Replace the first occurrence of a substring in a string.
 
     Args:
-        s: The original string
-        old: The substring to be replaced
-        new: The new substring
+        s: The original string.
+        old: The substring to be replaced.
+        new: The new substring.
 
     Returns:
         The string with the first occurrence of the old substring replaced by the new one.
@@ -59,7 +59,7 @@ fn find_first_verb(s: String, verbs: List[String]) -> String:
     """Find the first occurrence of a verb in a string.
 
     Args:
-        s: The original string
+        s: The original string.
         verbs: The list of verbs to search for.
 
     Returns:
@@ -124,19 +124,19 @@ fn format_bytes(format: String, arg: List[Byte]) -> String:
 
 fn format_integer(format: String, arg: Int) -> String:
     var verb = find_first_verb(format, List[String]("%x", "%X", "%d", "%q"))
-    var arg_to_place = String(arg)
+    var arg_to_place = str(arg)
     if verb == "%x":
-        arg_to_place = String(convert_base10_to_base16(arg)).lower()
+        arg_to_place = str(convert_base10_to_base16(arg)).lower()
     elif verb == "%X":
-        arg_to_place = String(convert_base10_to_base16(arg)).upper()
+        arg_to_place = str(convert_base10_to_base16(arg)).upper()
     elif verb == "%q":
-        arg_to_place = "'" + String(arg) + "'"
+        arg_to_place = "'" + str(arg) + "'"
 
     return replace_first(format, verb, arg_to_place)
 
 
 fn format_float(format: String, arg: Float64) -> String:
-    return replace_first(format, String("%f"), arg)
+    return replace_first(format, str("%f"), str(arg))
 
 
 fn format_boolean(format: String, arg: Bool) -> String:
@@ -162,15 +162,15 @@ fn sprintf(formatting: String, *args: Args) -> String:
     for i in range(len(args)):
         var argument = args[i]
         if argument.isa[String]():
-            text = format_string(text, argument.get[String]()[])
+            text = format_string(text, argument[String])
         elif argument.isa[List[Byte]]():
-            text = format_bytes(text, argument.get[List[Byte]]()[])
+            text = format_bytes(text, argument[List[Byte]])
         elif argument.isa[Int]():
-            text = format_integer(text, argument.get[Int]()[])
+            text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
-            text = format_float(text, argument.get[Float64]()[])
+            text = format_float(text, argument[Float64])
         elif argument.isa[Bool]():
-            text = format_boolean(text, argument.get[Bool]()[])
+            text = format_boolean(text, argument[Bool])
 
     return text
 
@@ -204,16 +204,16 @@ fn printf(formatting: String, *args: Args) raises:
     for i in range(len(args)):
         var argument = args[i]
         if argument.isa[String]():
-            text = format_string(text, argument.get[String]()[])
+            text = format_string(text, argument[String])
         elif argument.isa[List[Byte]]():
-            text = format_bytes(text, argument.get[List[Byte]]()[])
+            text = format_bytes(text, argument[List[Byte]])
         elif argument.isa[Int]():
-            text = format_integer(text, argument.get[Int]()[])
+            text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
-            text = format_float(text, argument.get[Float64]()[])
+            text = format_float(text, argument[Float64])
         elif argument.isa[Bool]():
-            text = format_boolean(text, argument.get[Bool]()[])
+            text = format_boolean(text, argument[Bool])
         else:
-            raise Error("Unknown for argument #" + String(i))
+            raise Error("Unknown for argument #" + str(i))
 
     print(text)
