@@ -9,7 +9,7 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var new_builder_write_start_time = now()
     var new_builder = StringBuilder()
-    for _ in range(10000):
+    for _ in range(100):
         _ = new_builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -35,7 +35,7 @@ fn test_string_builder() raises:
     # Create a string using the + operator
     print("Testing string concatenation performance")
     var vec = List[String]()
-    for i in range(10000):
+    for i in range(100):
         vec.append(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -92,28 +92,28 @@ fn test_string_builder() raises:
 
 fn main() raises:
     # test_std_writer_speed()
-    # test_string_builder()
+    test_string_builder()
 
-    print("Testing new string builder performance")
-    # Create a string from the buffer
-    var new_builder_write_start_time = now()
-    var new_builder = VectorizedStringBuilder()
-    for _ in range(100):
-        _ = new_builder.write_string(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
-            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
-            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
-            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
-            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
-            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
-            " mollit anim id est laborum."
-        )
-    var new_builder_write_execution_time = now() - new_builder_write_start_time
-    print("StringBuilder:", "(", new_builder_write_execution_time, "ns)")
+    # print("Testing new string builder performance")
+    # # Create a string from the buffer
+    # var new_builder_write_start_time = now()
+    # var new_builder = VectorizedStringBuilder()
+    # for _ in range(10000):
+    #     _ = new_builder.write_string(
+    #         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
+    #         " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
+    #         " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
+    #         " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
+    #         " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
+    #         " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
+    #         " mollit anim id est laborum."
+    #     )
+    # var new_builder_write_execution_time = now() - new_builder_write_start_time
+    # print("StringBuilder:", "(", new_builder_write_execution_time, "ns)")
 
-    var new_builder_start_time = now()
-    var new_output = str(new_builder)
-    var new_builder_execution_time = now() - new_builder_start_time
-    print(len(new_output))
+    # var new_builder_start_time = now()
+    # var new_output = str(new_builder)
+    # var new_builder_execution_time = now() - new_builder_start_time
+    # print(len(new_output))
     # print(new_output)
-    print("StringBuilder:", "(", new_builder_execution_time, "ns)")
+    # print("StringBuilder:", "(", new_builder_execution_time, "ns)")
