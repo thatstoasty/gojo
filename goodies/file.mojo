@@ -35,26 +35,13 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
             return 0, e
 
         var bytes_read = len(result)
-        print(
-            "bytes read",
-            bytes_read,
-            "bytes to read",
-            bytes_to_read,
-            "dest size",
-            len(dest),
-            "dest capacity",
-            dest.capacity,
-        )
         if bytes_read == 0:
             return 0, Error(io.EOF)
-        for i in range(len(result)):
-            print("result[", i, "]", result[i])
 
-        memcpy(DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size), result.unsafe_ptr(), bytes_read)
-        dest.size += bytes_read
-        print("dest size", dest.size)
-        for i in range(len(dest)):
-            print("dest[", i, "]", dest[i])
+        # memcpy(DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size), result.unsafe_ptr(), bytes_read)
+        # TODO: memcpy leads to garbage in dest? figure that out later
+        for i in range(bytes_read):
+            dest.append(result[i])
 
         if bytes_read < bytes_to_read:
             return bytes_read, Error(io.EOF)
