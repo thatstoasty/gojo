@@ -122,7 +122,7 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
         except e:
             return Int64(0), Error(str(e))
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         try:
             self.handle.write(data=src.unsafe_ptr())
             return len(src), Error(io.EOF)

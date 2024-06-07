@@ -17,7 +17,7 @@ fn write_string[W: Writer](inout writer: W, string: String) -> (Int, Error):
     Returns:
         The number of bytes written and an error, if any.
     """
-    return writer.write(string.as_bytes_slice())
+    return writer.write(string.as_bytes())
 
 
 fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error):

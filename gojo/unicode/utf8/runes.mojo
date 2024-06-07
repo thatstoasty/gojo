@@ -20,7 +20,7 @@ fn rune_count_in_string(s: String) -> Int:
     Returns:
         The number of runes in the string.
     """
-    var p = DTypePointer[DType.uint8](s.unsafe_ptr())
+    var p = DTypePointer[DType.uint8](s.unsafe_uint8_ptr())
     var string_byte_length = len(s)
     var result = 0
 

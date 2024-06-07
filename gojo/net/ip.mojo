@@ -53,7 +53,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.take_pointee()
+        return move_from_pointee(servinfo)
     elif os_is_linux():
         var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
         servinfo[0] = addrinfo_unix()
@@ -77,7 +77,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.take_pointee()
+        return move_from_pointee(servinfo)
     else:
         raise Error("Windows is not supported yet! Sorry!")
 
@@ -105,7 +105,7 @@ fn get_ip_address(host: String) raises -> String:
         raise Error("Failed to get IP address. getaddrinfo was called successfully, but ai_addr is null.")
 
     # Cast sockaddr struct to sockaddr_in struct and convert the binary IP to a string using inet_ntop.
-    var addr_in = ai_addr.bitcast[sockaddr_in]().take_pointee()
+    var addr_in = move_from_pointee(ai_addr.bitcast[sockaddr_in]())
 
     return convert_binary_ip_to_string(addr_in.sin_addr.s_addr, address_family, address_length).strip()
 

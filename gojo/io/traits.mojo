@@ -94,7 +94,7 @@ trait Writer(Movable):
     Implementations must not retain p.
     """
 
-    fn write(inout self, src: Span[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         ...
 
 

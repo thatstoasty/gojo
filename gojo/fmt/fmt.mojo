@@ -37,9 +37,9 @@ fn replace_first(s: String, old: String, new: String) -> String:
     """Replace the first occurrence of a substring in a string.
 
     Args:
-        s: The original string
-        old: The substring to be replaced
-        new: The new substring
+        s: The original string.
+        old: The substring to be replaced.
+        new: The new substring.
 
     Returns:
         The string with the first occurrence of the old substring replaced by the new one.
@@ -59,7 +59,7 @@ fn find_first_verb(s: String, verbs: List[String]) -> String:
     """Find the first occurrence of a verb in a string.
 
     Args:
-        s: The original string
+        s: The original string.
         verbs: The list of verbs to search for.
 
     Returns:

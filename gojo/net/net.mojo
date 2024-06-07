@@ -87,7 +87,7 @@ struct Connection(Conn):
         """
         return self.fd.read(dest)
 
-    fn write(inout self, src: Span[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:

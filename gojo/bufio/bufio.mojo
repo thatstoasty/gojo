@@ -529,68 +529,68 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         _ = buf.write(Span(frag))
         return str(buf), err
 
-    # fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
-    #     """Writes the internal buffer to the writer. This may make multiple calls to the [Reader.Read] method of the underlying [Reader].
-    #     If the underlying reader supports the [Reader.WriteTo] method,
-    #     this calls the underlying [Reader.WriteTo] without buffering.
-    #     write_to implements io.WriterTo.
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+        """Writes the internal buffer to the writer. This may make multiple calls to the [Reader.Read] method of the underlying [Reader].
+        If the underlying reader supports the [Reader.WriteTo] method,
+        this calls the underlying [Reader.WriteTo] without buffering.
+        write_to implements io.WriterTo.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written.
-    #     """
-    #     self.last_byte = -1
-    #     self.last_rune_size = -1
+        Returns:
+            The number of bytes written.
+        """
+        self.last_byte = -1
+        self.last_rune_size = -1
 
-    #     var bytes_written: Int64
-    #     var err: Error
-    #     bytes_written, err = self.write_buf(writer)
-    #     if err:
-    #         return bytes_written, err
+        var bytes_written: Int64
+        var err: Error
+        bytes_written, err = self.write_buf(writer)
+        if err:
+            return bytes_written, err
 
-    #     # internal buffer not full, fill before writing to writer
-    #     if (self.write_pos - self.read_pos) < self.buf.capacity:
-    #         self.fill()
+        # internal buffer not full, fill before writing to writer
+        if (self.write_pos - self.read_pos) < self.buf.capacity:
+            self.fill()
 
-    #     while self.read_pos < self.write_pos:
-    #         # self.read_pos < self.write_pos => buffer is not empty
-    #         var bw: Int64
-    #         var err: Error
-    #         bw, err = self.write_buf(writer)
-    #         bytes_written += bw
+        while self.read_pos < self.write_pos:
+            # self.read_pos < self.write_pos => buffer is not empty
+            var bw: Int64
+            var err: Error
+            bw, err = self.write_buf(writer)
+            bytes_written += bw
 
-    #         self.fill()  # buffer is empty
+            self.fill()  # buffer is empty
 
-    #     return bytes_written, Error()
+        return bytes_written, Error()
 
-    # fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
-    #     """Writes the [Reader]'s buffer to the writer.
+    fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+        """Writes the [Reader]'s buffer to the writer.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written.
-    #     """
-    #     # Nothing to write
-    #     if self.read_pos == self.write_pos:
-    #         return Int64(0), Error()
+        Returns:
+            The number of bytes written.
+        """
+        # Nothing to write
+        if self.read_pos == self.write_pos:
+            return Int64(0), Error()
 
-    #     # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
-    #     var bytes_written: Int
-    #     var err: Error
-    #     var buf_to_write = self.buf[self.read_pos : self.write_pos]
-    #     bytes_written, err = writer.write(Span(buf_to_write))
-    #     if err:
-    #         return Int64(bytes_written), err
+        # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
+        var bytes_written: Int
+        var err: Error
+        var buf_to_write = self.buf[self.read_pos : self.write_pos]
+        bytes_written, err = writer.write(Span(buf_to_write))
+        if err:
+            return Int64(bytes_written), err
 
-    #     if bytes_written < 0:
-    #         panic(ERR_NEGATIVE_WRITE)
+        if bytes_written < 0:
+            panic(ERR_NEGATIVE_WRITE)
 
-    #     self.read_pos += bytes_written
-    #     return Int64(bytes_written), Error()
+        self.read_pos += bytes_written
+        return Int64(bytes_written), Error()
 
 
 # fn new_reader_size[R: io.Reader](owned reader: R, size: Int) -> Reader[R]:
@@ -628,8 +628,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
 
 # buffered output
-# TODO: Reader and Writer maybe should not take ownership of the underlying reader/writer? Seems okay for now.
-struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter):
+struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
     # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -696,7 +695,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter):
             return err
 
         var bytes_written: Int = 0
-        bytes_written, err = self.writer.write(Span(self.buf[0 : self.bytes_written]))
+        bytes_written, err = self.writer.write(self.buf[0 : self.bytes_written])
 
         # If the write was short, set a short write error and try to shift up the remaining bytes.
         if bytes_written < self.bytes_written and not err:
@@ -738,7 +737,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter):
         """
         return self.bytes_written
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes the contents of src into the buffer.
         It returns the number of bytes written.
         If nn < len(src), it also returns an error explaining

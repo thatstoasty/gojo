@@ -31,7 +31,7 @@ struct STDWriter(Copyable, io.Writer, io.StringWriter):
         var new_fd = external_call["dup", Int, Int](self.fd)
         return Self(new_fd)
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes the given bytes to the file descriptor.
 
         Args:
