@@ -1,14 +1,4 @@
-from ..io import (
-    Reader,
-    Writer,
-    ReadWriter,
-    ByteReader,
-    ByteWriter,
-    WriterTo,
-    StringWriter,
-    ReaderFrom,
-    BUFFER_SIZE,
-)
+import ..io
 from ..builtins import cap, copy, Byte, panic, index_byte
 
 
@@ -45,17 +35,19 @@ alias ERR_NEGATIVE_READ = "buffer.Buffer: reader returned negative count from re
 alias ERR_SHORT_WRITE = "short write"
 
 
+# TODO: Removed read_from and write_to for now. Until the span arg trait issue is resolved.
+# https://github.com/modularml/mojo/issues/2917
 @value
 struct Buffer(
     Copyable,
     Stringable,
     Sized,
-    ReadWriter,
-    StringWriter,
-    ByteReader,
-    ByteWriter,
-    WriterTo,
-    ReaderFrom,
+    io.ReadWriter,
+    io.StringWriter,
+    io.ByteReader,
+    io.ByteWriter,
+    # WriterTo,
+    # ReaderFrom,
 ):
     """A Buffer is a variable-sized buffer of bytes with [Buffer.read] and [Buffer.write] methods.
     The zero value for Buffer is an empty buffer ready to use.
@@ -255,9 +247,9 @@ struct Buffer(
         # if not ok:
         #     m = self.grow(len(src))
         # var b = self.buf[m:]
-        return self.write(src.as_bytes())
+        return self.write(src.as_bytes_slice())
 
-    fn read_from[R: Reader](inout self, inout reader: R) -> (Int64, Error):
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
         """Reads data from r until EOF and appends it to the buffer, growing
         the buffer as needed. The return value n is the number of bytes read. Any
         error except io.EOF encountered during the read is also returned. If the
@@ -318,7 +310,7 @@ struct Buffer(
         # b._vector.reserve(c)
         return resized_buffer[: b.capacity]
 
-    fn write_to[W: Writer](inout self, inout writer: W) -> (Int64, Error):
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
         """Writes data to w until the buffer is drained or an error occurs.
         The return value n is the number of bytes written; it always fits into an
         Int, but it is int64 to match the io.WriterTo trait. Any error
@@ -335,11 +327,10 @@ struct Buffer(
         var total_bytes_written: Int64 = 0
 
         if bytes_to_write > 0:
-            # TODO: Replace usage of this intermeidate slice when normal slicing, once slice references work.
-            var sl = self.buf[self.off : bytes_to_write]
+            # TODO: Replace usage of this intermediate slice when normal slicing, once slice references work.
             var bytes_written: Int
             var err: Error
-            bytes_written, err = writer.write(sl)
+            bytes_written, err = writer.write(self.buf[self.off : bytes_to_write])
             if bytes_written > bytes_to_write:
                 panic("bytes.Buffer.write_to: invalid write count")
 
@@ -543,7 +534,7 @@ struct Buffer(
 
         # return a copy of slice. The buffer's backing array may
         # be overwritten by later calls.
-        var line = List[Byte](capacity=BUFFER_SIZE)
+        var line = List[Byte](capacity=io.BUFFER_SIZE)
         for i in range(len(slice)):
             line.append(slice[i])
         return line, Error()
@@ -606,7 +597,7 @@ fn new_buffer() -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var b = List[Byte](capacity=BUFFER_SIZE)
+    var b = List[Byte](capacity=io.BUFFER_SIZE)
     return Buffer(b^)
 
 

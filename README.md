@@ -25,8 +25,8 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
 - `bytes`
-  - `Buffer`: Buffer backed by `List[Int8]`.
-  - `Reader`: Reader backed by `List[Int8]`.
+  - `Buffer`: Buffer backed by `List[UInt8]`.
+  - `Reader`: Reader backed by `List[UInt8]`.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
@@ -46,7 +46,6 @@ All of these packages are partially implemented and do not support unicode chara
 
 - `FileWrapper`: `FileHandle` Wrapper Reader/Writer
 - `STDOUT/STDERR` Writer (leveraging `libc`).
-- `CSV` Buffered Reader/Writer Wrapper around Maxim's `mojo-csv` library.
 
 ## Usage
 
@@ -74,7 +73,7 @@ fn test_bytes() raises:
     bytes += String(" World").as_bytes()
     test.assert_equal(str(bytes), "hellof World")
 
-    var bytes2 = List[Int8]()
+    var bytes2 = List[UInt8]()
     bytes2.append(104)
     bytes.extend(bytes2)
     test.assert_equal(str(bytes), "hellof Worldh")

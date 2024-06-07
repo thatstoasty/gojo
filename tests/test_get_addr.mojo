@@ -1,12 +1,5 @@
-from gojo.net.socket import Socket
-from gojo.net.ip import get_ip_address
-from gojo.net.tcp import listen_tcp, TCPAddr
-from gojo.syscall.net import SO_REUSEADDR, PF_UNIX, SO_RCVTIMEO
-from gojo.net.dial import dial_tcp
-
-# fn main() raises:
-#     var ip = get_ip_address("localhost")
-#     print(ip)
+from gojo.net import Socket, TCPAddr, get_ip_address, listen_tcp, dial_tcp
+from gojo.syscall import SocketOptions, ProtocolFamily
 
 
 fn test_dial() raises:
@@ -15,7 +8,7 @@ fn test_dial() raises:
     var bytes_written: Int = 0
     var err = Error()
     bytes_written, err = connection.write(
-        String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
+        String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes_slice()
     )
     if err:
         raise err
@@ -25,7 +18,7 @@ fn test_dial() raises:
         return
 
     # Read the response from the connection
-    var response = List[Int8](capacity=4096)
+    var response = List[UInt8](capacity=4096)
     var bytes_read: Int = 0
     bytes_read, err = connection.read(response)
     if err:
@@ -57,7 +50,7 @@ fn test_stuff() raises:
     # with Socket() as socket:
     #     socket.bind("0.0.0.0", 8080)
 
-    var socket = Socket(protocol=PF_UNIX)
+    var socket = Socket(protocol=ProtocolFamily.PF_UNIX)
     socket.bind("0.0.0.0", 8080)
     socket.connect(get_ip_address("www.example.com"), 80)
     print("File number", socket.file_no())
@@ -65,8 +58,8 @@ fn test_stuff() raises:
     var remote = socket.get_peer_name()
     print("Local address", str(local), socket.local_address)
     print("Remote address", str(remote), socket.remote_address)
-    socket.set_socket_option(SO_REUSEADDR, 1)
-    print("REUSE_ADDR value", socket.get_socket_option(SO_REUSEADDR))
+    socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
+    print("REUSE_ADDR value", socket.get_socket_option(SocketOptions.SO_REUSEADDR))
     var timeout = 30
     # socket.set_timeout(timeout)
     # print(socket.get_timeout())
@@ -77,7 +70,7 @@ fn test_stuff() raises:
     if err:
         print("err returned")
         raise err
-    # var option_value = socket.get_sock_opt(SO_REUSEADDR)
+    # var option_value = socket.get_sock_opt(SocketOptions.SO_REUSEADDR)
     # print(option_value)
     # socket.connect(self.ip, self.port)
     # socket.send(message)
