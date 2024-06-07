@@ -247,7 +247,7 @@ struct Buffer(
         # if not ok:
         #     m = self.grow(len(src))
         # var b = self.buf[m:]
-        return self.write(src.as_bytes_slice())
+        return self.write(src.as_bytes())
 
     fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
         """Reads data from r until EOF and appends it to the buffer, growing
