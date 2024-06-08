@@ -102,7 +102,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         return None
 
     @always_inline
-    fn write(inout self, src: Span[Byte]) -> (Int, Error):
+    fn _write(inout self, src: Span[Byte]) -> (Int, Error):
         """
         Appends a byte Span to the builder buffer.
 
@@ -121,6 +121,17 @@ struct StringBuilder[growth_factor: Float32 = 2](
         return len(src), Error()
 
     @always_inline
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
+        """
+        Appends a byte Span to the builder buffer.
+
+        Args:
+          src: The byte array to append.
+        """
+        var span = Span(src)
+        return self._write(span)
+
+    @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
@@ -128,4 +139,4 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Args:
           src: The string to append.
         """
-        return self.write(src.as_bytes_slice())
+        return self._write(src.as_bytes_slice())

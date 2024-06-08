@@ -8,7 +8,8 @@ from sys.info import simdwidthof
 from bit import countl_zero
 
 
-alias simd_width_u8 = simdwidthof[DType.uint8]()
+# alias simd_width_u8 = simdwidthof[DType.uint8]()
+alias simd_width_u8 = 1
 
 
 fn rune_count_in_string(s: String) -> Int:
