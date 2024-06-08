@@ -168,7 +168,11 @@ struct Socket(FileDescriptorBase):
         """
         var their_addr_ptr = UnsafePointer[sockaddr].alloc(1)
         var sin_size = socklen_t(sizeof[socklen_t]())
-        var new_sockfd = accept(self.sockfd.fd, their_addr_ptr, UnsafePointer[socklen_t].address_of(sin_size))
+        var new_sockfd = accept(
+            self.sockfd.fd,
+            their_addr_ptr,
+            UnsafePointer[socklen_t].address_of(sin_size),
+        )
         if new_sockfd == -1:
             raise Error("Failed to accept connection")
 
@@ -302,7 +306,13 @@ struct Socket(FileDescriptorBase):
         """
         var option_value_pointer = UnsafePointer[c_void].address_of(option_value)
         var option_len = sizeof[socklen_t]()
-        var status = setsockopt(self.sockfd.fd, SOL_SOCKET, option_name, option_value_pointer, option_len)
+        var status = setsockopt(
+            self.sockfd.fd,
+            SOL_SOCKET,
+            option_name,
+            option_value_pointer,
+            option_len,
+        )
         if status == -1:
             raise Error("Socket.set_sock_opt failed with status: " + str(status))
 
