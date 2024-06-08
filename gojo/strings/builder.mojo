@@ -1,15 +1,14 @@
-from algorithm.functional import vectorize
 import ..io
 from ..builtins import Byte
 
 
-# TODO: Commented out writer until the Span trait issue is fixed. https://github.com/modularml/mojo/issues/2917
 @value
 struct StringBuilder[growth_factor: Float32 = 2](
     Stringable,
     Sized,
-    # io.Writer,
+    io.Writer,
     io.StringWriter,
+    io.ByteWriter,
 ):
     """
     A string builder class that allows for efficient string management and concatenation.
@@ -25,14 +24,14 @@ struct StringBuilder[growth_factor: Float32 = 2](
     builder and appending the strings is not worth the performance gain.
 
     Example:
-      ```
-      from strings.builder import StringBuilder
+                    ```
+                    from strings.builder import StringBuilder
 
-      var sb = StringBuilder()
-      sb.write_string("Hello ")
-      sb.write_string("World!")
-      print(sb) # Hello World!
-      ```
+                    var sb = StringBuilder()
+                    sb.write_string("Hello ")
+                    sb.write_string("World!")
+                    print(sb) # Hello World!
+                    ```
     """
 
     var data: DTypePointer[DType.uint8]
@@ -57,7 +56,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Returns the length of the string builder.
 
         Returns:
-          The length of the string builder.
+                The length of the string builder.
         """
         return self.size
 
@@ -67,21 +66,23 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Converts the string builder to a string.
 
         Returns:
-          The string representation of the string builder. Returns an empty
-          string if the string builder is empty.
+                The string representation of the string builder. Returns an empty
+                string if the string builder is empty.
         """
         var copy = DTypePointer[DType.uint8]().alloc(self.size)
         memcpy(copy, self.data, self.size)
         return StringRef(copy, self.size)
 
     @always_inline
-    fn render(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn render(
+        self: Reference[Self],
+    ) -> StringSlice[self.is_mutable, self.lifetime]:
         """
         Return a StringSlice view of the data owned by the builder.
         Slightly faster than __str__, 10-20% faster in limited testing.
 
         Returns:
-          The string representation of the string builder. Returns an empty string if the string builder is empty.
+                The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
         return StringSlice[self.is_mutable, self.lifetime](unsafe_from_utf8_strref=StringRef(self[].data, self[].size))
 
@@ -91,7 +92,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Resizes the string builder buffer.
 
         Args:
-          capacity: The new capacity of the string builder buffer.
+                capacity: The new capacity of the string builder buffer.
         """
         var new_data = DTypePointer[DType.uint8]().alloc(capacity)
         memcpy(new_data, self.data, self.size)
@@ -107,7 +108,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Appends a byte Span to the builder buffer.
 
         Args:
-          src: The byte array to append.
+                src: The byte array to append.
         """
         if len(src) > self.capacity - self.size:
             var new_capacity = int(self.capacity * growth_factor)
@@ -126,7 +127,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Appends a byte Span to the builder buffer.
 
         Args:
-          src: The byte array to append.
+                src: The byte array to append.
         """
         var span = Span(src)
         return self._write(span)
@@ -137,6 +138,11 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Appends a string to the builder buffer.
 
         Args:
-          src: The string to append.
+                src: The string to append.
         """
         return self._write(src.as_bytes_slice())
+
+    @always_inline
+    fn write_byte(inout self, byte: UInt8) -> (Int, Error):
+        var span = Span(List[UInt8](byte))
+        return self._write(span)

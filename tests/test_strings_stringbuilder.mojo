@@ -41,7 +41,17 @@ fn test_write() raises:
     test.assert_equal(str(builder), "Hello")
 
 
+fn test_write_byte() raises:
+    var test = MojoTest("Testing strings.StringBuilder.write_byte")
+
+    # Create a string from the builder by writing bytes to it.
+    var builder = StringBuilder()
+    _ = builder.write_byte(ord("H"))
+    test.assert_equal(str(builder), "H")
+
+
 fn main() raises:
     test_write_string()
     test_write()
+    test_write_byte()
     test_big_write()

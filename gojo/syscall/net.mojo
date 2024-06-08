@@ -462,7 +462,10 @@ fn ntohs(netshort: c_ushort) -> c_ushort:
 
 
 fn inet_ntop(
-    af: c_int, src: DTypePointer[DType.uint8], dst: DTypePointer[DType.uint8], size: socklen_t
+    af: c_int,
+    src: DTypePointer[DType.uint8],
+    dst: DTypePointer[DType.uint8],
+    size: socklen_t,
 ) -> DTypePointer[DType.uint8]:
     """Libc POSIX `inet_ntop` function
     Reference: https://man7.org/linux/man-pages/man3/inet_ntop.3p.html.
@@ -600,7 +603,11 @@ fn getsockopt(
     ](socket, level, option_name, option_value, option_len)
 
 
-fn getsockname(socket: c_int, address: UnsafePointer[sockaddr], address_len: UnsafePointer[socklen_t]) -> c_int:
+fn getsockname(
+    socket: c_int,
+    address: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> c_int:
     """Libc POSIX `getsockname` function
     Reference: https://man7.org/linux/man-pages/man3/getsockname.3p.html
     Fn signature: int getsockname(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len).
@@ -619,7 +626,11 @@ fn getsockname(socket: c_int, address: UnsafePointer[sockaddr], address_len: Uns
     ](socket, address, address_len)
 
 
-fn getpeername(sockfd: c_int, addr: UnsafePointer[sockaddr], address_len: UnsafePointer[socklen_t]) -> c_int:
+fn getpeername(
+    sockfd: c_int,
+    addr: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> c_int:
     """Libc POSIX `getpeername` function
     Reference: https://man7.org/linux/man-pages/man2/getpeername.2.html
     Fn signature:   int getpeername(int socket, struct sockaddr *restrict addr, socklen_t *restrict address_len).
@@ -660,7 +671,11 @@ fn listen(socket: c_int, backlog: c_int) -> c_int:
     return external_call["listen", c_int, c_int, c_int](socket, backlog)
 
 
-fn accept(socket: c_int, address: UnsafePointer[sockaddr], address_len: UnsafePointer[socklen_t]) -> c_int:
+fn accept(
+    socket: c_int,
+    address: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> c_int:
     """Libc POSIX `accept` function
     Reference: https://man7.org/linux/man-pages/man3/accept.3p.html
     Fn signature: int accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len).
@@ -694,7 +709,12 @@ fn connect(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen
     )
 
 
-fn recv(socket: c_int, buffer: DTypePointer[DType.uint8], length: c_size_t, flags: c_int) -> c_ssize_t:
+fn recv(
+    socket: c_int,
+    buffer: DTypePointer[DType.uint8],
+    length: c_size_t,
+    flags: c_int,
+) -> c_ssize_t:
     """Libc POSIX `recv` function
     Reference: https://man7.org/linux/man-pages/man3/recv.3p.html
     Fn signature: ssize_t recv(int socket, void *buffer, size_t length, int flags).
@@ -709,7 +729,12 @@ fn recv(socket: c_int, buffer: DTypePointer[DType.uint8], length: c_size_t, flag
     ](socket, buffer, length, flags)
 
 
-fn send(socket: c_int, buffer: DTypePointer[DType.uint8], length: c_size_t, flags: c_int) -> c_ssize_t:
+fn send(
+    socket: c_int,
+    buffer: DTypePointer[DType.uint8],
+    length: c_size_t,
+    flags: c_int,
+) -> c_ssize_t:
     """Libc POSIX `send` function
     Reference: https://man7.org/linux/man-pages/man3/send.3p.html
     Fn signature: ssize_t send(int socket, const void *buffer, size_t length, int flags).

@@ -286,7 +286,11 @@ struct Scanner[R: io.Reader]():
 # The function is never called with an empty data slice unless at_eof
 # is True. If at_eof is True, however, data may be non-empty and,
 # as always, holds unprocessed text.
-alias SplitFunction = fn (data: List[Byte], at_eof: Bool) -> (Int, List[Byte], Error)
+alias SplitFunction = fn (data: List[Byte], at_eof: Bool) -> (
+    Int,
+    List[Byte],
+    Error,
+)
 
 # # Errors returned by Scanner.
 alias ERR_TOO_LONG = Error("bufio.Scanner: token too long")
