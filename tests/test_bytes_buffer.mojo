@@ -1,6 +1,7 @@
 from tests.wrapper import MojoTest
 from gojo.builtins.bytes import Byte
 from gojo.bytes import new_buffer
+from gojo.bytes.buffer import Buffer
 
 
 fn test_read() raises:
@@ -27,10 +28,10 @@ fn test_unread_byte() raises:
     var buf = new_buffer(s)
     var result = buf.read_byte()
     test.assert_equal(int(result[0]), 72)
-    test.assert_equal(buf.off, 1)
+    test.assert_equal(buf.offset, 1)
 
     _ = buf.unread_byte()
-    test.assert_equal(buf.off, 0)
+    test.assert_equal(buf.offset, 0)
 
 
 fn test_read_bytes() raises:
@@ -47,7 +48,7 @@ fn test_read_slice() raises:
     var test = MojoTest("Testing bytes.Buffer.read_slice")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var result = buf.read_slice(5)
+    var result = buf.read_slice(ord("o"))
     var text = result[0]
     text.append(0)
     test.assert_equal(String(text), String("Hello"))
@@ -111,6 +112,7 @@ fn main() raises:
     test_read()
     test_read_byte()
     test_unread_byte()
+    test_read_slice()
     test_read_bytes()
     test_read_string()
     test_next()

@@ -57,6 +57,24 @@ fn index_byte(bytes: List[Byte], delim: Byte) -> Int:
     return -1
 
 
+fn index_byte(bytes: DTypePointer[DType.uint8], size: Int, delim: Byte) -> Int:
+    """Return the index of the first occurrence of the byte delim.
+
+    Args:
+        bytes: The DTypePointer[DType.int8] struct to search.
+        size: The size of the bytes pointer.
+        delim: The byte to search for.
+
+    Returns:
+        The index of the first occurrence of the byte delim.
+    """
+    for i in range(size):
+        if UInt8(bytes[i]) == delim:
+            return i
+
+    return -1
+
+
 fn to_string(bytes: List[Byte]) -> String:
     """Makes a deepcopy of the List[Byte] supplied and converts it to a string. If it's not null terminated, it will append a null byte.
 
