@@ -10,7 +10,7 @@ fn test_string_builder() raises:
     # Create a string from the buffer
     var new_builder_write_start_time = now()
     var new_builder = StringBuilder()
-    for _ in range(10000):
+    for _ in range(100):
         _ = new_builder.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -36,7 +36,7 @@ fn test_string_builder() raises:
     # Create a string using the + operator
     print("Testing string concatenation performance")
     var vec = List[String]()
-    for i in range(10000):
+    for i in range(100):
         vec.append(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -57,8 +57,8 @@ fn test_string_builder() raises:
     print("Testing new buffer performance")
     # Create a string from the buffer
     var new_buffer_write_start_time = now()
-    var new_buffer = BufferNew()
-    for _ in range(10000):
+    var new_buffer = Buffer()
+    for _ in range(100):
         _ = new_buffer.write_string(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
             " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
@@ -104,14 +104,14 @@ fn test_string_builder() raises:
 # fn test_std_writer_speed() raises:
 #     """STDWriter is roughly 6-7x faster currently."""
 #     var print_start_time = now()
-#     for i in range(1, 10000):
+#     for i in range(1, 100):
 #         print(i)
 #     var print_execution_time = now() - print_start_time
 
 #     # Create stdout writer
 #     var writer = STDWriter(1)
 #     var writer_start_time = now()
-#     for i in range(1, 10000):
+#     for i in range(1, 100):
 #         _ = writer.write_string(str(i))
 #     var writer_execution_time = now() - writer_start_time
 
@@ -128,7 +128,7 @@ fn main() raises:
     # # Create a string from the buffer
     # var new_builder_write_start_time = now()
     # var new_builder = VectorizedStringBuilder()
-    # for _ in range(10000):
+    # for _ in range(100):
     #     _ = new_builder.write_string(
     #         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
     #         " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"

@@ -80,9 +80,16 @@ struct Buffer(
         return self.size - self.offset
 
     @always_inline
-    fn bytes(self) -> DTypePointer[DType.uint8]:
+    fn bytes_ptr(self) -> DTypePointer[DType.uint8]:
         """Returns a pointer holding the unread portion of the buffer."""
         return self.data.offset(self.offset)
+
+    @always_inline
+    fn bytes(self) -> List[UInt8]:
+        """Returns a list of bytes holding a copy of the unread portion of the buffer."""
+        var copy = UnsafePointer[UInt8]().alloc(self.size)
+        memcpy(copy, self.data.offset(self.offset), self.size)
+        return List[UInt8](unsafe_pointer=copy, size=self.size - self.offset, capacity=self.size - self.offset)
 
     @always_inline
     fn _resize(inout self, capacity: Int) -> None:
@@ -308,7 +315,7 @@ struct Buffer(
             A List[Byte] struct containing the data up to and including the delimiter.
         """
         var at_eof = False
-        var i = index_byte(bytes=self.bytes(), size=self.size, delim=delim)
+        var i = index_byte(bytes=self.bytes_ptr(), size=self.size, delim=delim)
         var end = self.offset + i + 1
 
         if i < 0:
@@ -374,6 +381,50 @@ struct Buffer(
             self.last_read = OP_READ
 
         return line
+
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+        """Writes data to w until the buffer is drained or an error occurs.
+        The return value n is the number of bytes written; it always fits into an
+        Int, but it is int64 to match the io.WriterTo trait. Any error
+        encountered during the write is also returned.
+
+        Args:
+            writer: The writer to write to.
+
+        Returns:
+            The number of bytes written to the writer.
+        """
+        self.last_read = OP_INVALID
+        var bytes_to_write = len(self)
+        var total_bytes_written: Int64 = 0
+
+        if bytes_to_write > 0:
+            # TODO: Replace usage of this intermediate slice when normal slicing, once slice references work.
+            var byte_count = bytes_to_write - self.offset
+            var bytes_written: Int
+            var err: Error
+            var copy = UnsafePointer[UInt8]().alloc(byte_count)
+            memcpy(copy, self.data.offset(self.offset), byte_count)
+            var line = List[Byte](unsafe_pointer=copy, size=byte_count, capacity=byte_count)
+
+            bytes_written, err = writer.write(line)
+            if bytes_written > bytes_to_write:
+                panic("bytes.Buffer.write_to: invalid write count")
+
+            self.offset += bytes_written
+            total_bytes_written = Int64(bytes_written)
+
+            var err_message = str(err)
+            if err_message != "":
+                return total_bytes_written, err
+
+            # all bytes should have been written, by definition of write method in io.Writer
+            if bytes_written != bytes_to_write:
+                return total_bytes_written, Error(ERR_SHORT_WRITE)
+
+        # Buffer is now empty; reset.
+        self.reset()
+        return total_bytes_written, Error()
 
 
 @value
