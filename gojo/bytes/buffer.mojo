@@ -44,6 +44,7 @@ struct Buffer(
     io.Writer,
     io.StringWriter,
     io.ByteWriter,
+    io.ByteReader,
 ):
     var data: DTypePointer[DType.uint8]  # contents are the bytes buf[off : len(buf)]
     var size: Int
@@ -317,7 +318,6 @@ struct Buffer(
         var copy = UnsafePointer[UInt8]().alloc(end - self.offset)
         memcpy(copy, self.data.offset(self.offset), end - self.offset)
         var line = List[Byte](unsafe_pointer=copy, size=end - self.offset, capacity=end - self.offset)
-        # var line = self.data[self.offset : end]
         self.offset = end
         self.last_read = OP_READ
 
@@ -346,6 +346,34 @@ struct Buffer(
         slice, err = self.read_slice(delim)
         slice.append(0)
         return String(slice), err
+
+    @always_inline
+    fn next(inout self, number_of_bytes: Int) raises -> List[Byte]:
+        """Returns a slice containing the next n bytes from the buffer,
+        advancing the buffer as if the bytes had been returned by [Buffer.read].
+        If there are fewer than n bytes in the buffer, next returns the entire buffer.
+        The slice is only valid until the next call to a read or write method.
+
+        Args:
+            number_of_bytes: The number of bytes to read from the buffer.
+
+        Returns:
+            A slice containing the next n bytes from the buffer.
+        """
+        self.last_read = OP_INVALID
+        var m = len(self)
+        var bytes_to_read = number_of_bytes
+        if bytes_to_read > m:
+            bytes_to_read = m
+
+        var copy = UnsafePointer[UInt8]().alloc(bytes_to_read)
+        memcpy(copy, self.data.offset(self.offset), bytes_to_read)
+        var line = List[Byte](unsafe_pointer=copy, size=bytes_to_read, capacity=bytes_to_read)
+        self.offset += bytes_to_read
+        if bytes_to_read > 0:
+            self.last_read = OP_READ
+
+        return line
 
 
 @value

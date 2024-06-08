@@ -62,12 +62,12 @@ fn test_read_string() raises:
     test.assert_equal(String(result[0]), String("Hello"))
 
 
-# fn test_next() raises:
-#     var test = MojoTest("Testing bytes.Buffer.next")
-#     var buf = new_buffer("Hello World!")
-#     var text = buf.next(5)
-#     text.append(0)
-#     test.assert_equal(String(text), String("Hello"))
+fn test_next() raises:
+    var test = MojoTest("Testing bytes.Buffer.next")
+    var buf = new_buffer("Hello World!")
+    var text = buf.next(5)
+    text.append(0)
+    test.assert_equal(String(text), String("Hello"))
 
 
 fn test_write() raises:
@@ -115,8 +115,8 @@ fn main() raises:
     test_read_slice()
     test_read_bytes()
     test_read_string()
-    # test_next()
+    test_next()
     test_write()
     test_write_string()
     test_write_byte()
-    # test_new_buffer()
+    test_new_buffer()
