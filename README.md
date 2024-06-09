@@ -25,8 +25,8 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
 - `bytes`
-  - `Buffer`: Buffer backed by `List[UInt8]`.
-  - `Reader`: Reader backed by `List[UInt8]`.
+  - `Buffer`: Buffer backed by `DTypePointer[DType.uint8]`.
+  - `Reader`: Reader backed by `DTypePointer[DType.uint8]`.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
