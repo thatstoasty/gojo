@@ -11,7 +11,7 @@ fn test_scan_words() raises:
     # Create a reader from a string buffer
     var s: String = "Testing this string!"
     var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
+    var r = Reader(buf^)
 
     # Create a scanner from the reader
     var scanner = Scanner(r^)
@@ -34,7 +34,7 @@ fn test_scan_lines() raises:
     # Create a reader from a string buffer
     var s: String = "Testing\nthis\nstring!"
     var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
+    var r = Reader(buf^)
 
     # Create a scanner from the reader
     var scanner = Scanner(r^)
@@ -53,7 +53,7 @@ fn test_scan_lines() raises:
 fn scan_no_newline_test(test_case: String, result_lines: List[String], test: MojoTest) raises:
     # Create a reader from a string buffer
     var buf = buffer.new_buffer(test_case)
-    var r = Reader(buf)
+    var r = Reader(buf^)
 
     # Create a scanner from the reader
     var scanner = Scanner(r^)
@@ -118,7 +118,7 @@ fn test_scan_bytes() raises:
         var test_case = test_cases[i]
         # Create a reader from a string buffer
         var buf = buffer.new_buffer(test_case)
-        var reader = Reader(buf)
+        var reader = Reader(buf^)
 
         # Create a scanner from the reader
         var scanner = Scanner(reader^)
