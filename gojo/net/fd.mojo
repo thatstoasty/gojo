@@ -49,7 +49,7 @@ struct FileDescriptor(FileDescriptorBase):
         var bytes_received = recv(
             self.fd,
             DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size),
-            dest.capacity,
+            dest.capacity - dest.size,
             0,
         )
         if bytes_received == -1:
