@@ -392,13 +392,10 @@ struct Socket(FileDescriptorBase):
     fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
         """Receive data from the socket."""
         var bytes_read: Int
-        var err: Error
+        var err = Error()
         bytes_read, err = self.sockfd.read(dest)
-        if err:
-            if str(err) != "EOF":
-                return bytes_read, err
 
-        return bytes_read, Error()
+        return bytes_read, err
 
     fn shutdown(self):
         _ = shutdown(self.sockfd.fd, SHUT_RDWR)
