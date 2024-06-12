@@ -3,13 +3,11 @@ from ..builtins import cap, copy, Byte, panic
 import ..io
 
 
-@value
 struct Reader(
-    Copyable,
     Sized,
     io.Reader,
-    io.ReaderAt,
-    io.WriterTo,
+    # io.ReaderAt,
+    # io.WriterTo,
     io.Seeker,
     io.ByteReader,
     io.ByteScanner,
@@ -21,25 +19,42 @@ struct Reader(
     The zero value for Reader operates like a Reader of an empty slice.
     """
 
-    var buffer: List[Byte]
+    var data: UnsafePointer[UInt8]  # contents are the bytes buf[off : len(buf)]
+    var size: Int
+    var capacity: Int
     var index: Int64  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
+
+    fn __init__(inout self, owned buffer: List[Byte]):
+        """Initializes a new [Reader.Reader] struct."""
+        self.capacity = buffer.capacity
+        self.size = buffer.size
+        self.data = buffer.steal_data()
+        self.index = 0
+        self.prev_rune = -1
+
+    fn __moveinit__(inout self, owned other: Reader):
+        """Initializes a new [Reader.Reader] struct by moving the data from another [Reader.Reader] struct."""
+        self.capacity = other.capacity
+        self.size = other.size
+        self.data = other.data
+        self.index = other.index
+        self.prev_rune = other.prev_rune
+
+        other.data = UnsafePointer[UInt8]()
+        other.size = 0
+        other.capacity = 0
+        other.index = 0
+        other.prev_rune = -1
 
     fn __len__(self) -> Int:
         """len returns the number of bytes of the unread portion of the
         slice."""
-        if self.index >= len(self.buffer):
-            return 0
+        return self.size - int(self.index)
 
-        return int(len(self.buffer) - self.index)
-
-    fn size(self) -> Int:
-        """Returns the original length of the underlying byte slice.
-        Size is the number of bytes available for reading via [Reader.ReadAt].
-        The result is unaffected by any method calls except [Reader.Reset]."""
-        return len(self.buffer)
-
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read[
+        is_mutable: Bool, lifetime: AnyLifetime[is_mutable].type
+    ](inout self, inout dest: Span[Byte]) -> (Int, Error):
         """Reads from the internal buffer into the dest List[Byte] struct.
         Implements the [io.Reader] Interface.
 
@@ -48,17 +63,27 @@ struct Reader(
 
         Returns:
             Int: The number of bytes read into dest."""
-        if self.index >= len(self.buffer):
+
+        if self.index >= self.size:
             return 0, Error(io.EOF)
 
+        var span = Span[UInt8, is_mutable, lifetime](unsafe_ptr=self.data, len=self.size)
+        var unread_bytes = span[self.index : self.size]
+
+        # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
-        var unread_bytes = self.buffer[int(self.index) : len(self.buffer)]
-        var bytes_read = copy(dest, unread_bytes)
+        var bytes_written = copy(dest, unread_bytes)
+        # var bytes_read = copy(
+        #     target=dest, source=self.data, source_start=int(self.index), source_end=self.size, target_start=len(dest)
+        # )
+        # self.index += bytes_read
+        self.index += bytes_written
 
-        self.index += bytes_read
-        return bytes_read, Error()
+        return bytes_written, Error()
 
-    fn read_at(self, inout dest: List[Byte], off: Int64) -> (Int, Error):
+    fn read_at[
+        is_mutable: Bool, lifetime: AnyLifetime[is_mutable].type
+    ](self, inout dest: List[Byte], off: Int64) -> (Int, Error):
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
 
@@ -73,10 +98,12 @@ struct Reader(
         if off < 0:
             return 0, Error("bytes.Reader.read_at: negative offset")
 
-        if off >= Int64(len(self.buffer)):
+        if off >= Int64(self.size):
             return 0, Error(io.EOF)
 
-        var unread_bytes = self.buffer[int(off) : len(self.buffer)]
+        var span = Span[UInt8, is_mutable, lifetime](unsafe_ptr=self.data, len=self.size)
+        var unread_bytes = span[int(off) : self.size]
+        # var unread_bytes = self.buffer[int(off) : self.size]
         var bytes_written = copy(dest, unread_bytes)
         if bytes_written < len(dest):
             return 0, Error(io.EOF)
@@ -86,10 +113,10 @@ struct Reader(
     fn read_byte(inout self) -> (Byte, Error):
         """Reads and returns a single byte from the internal buffer. Implements the [io.ByteReader] Interface."""
         self.prev_rune = -1
-        if self.index >= len(self.buffer):
+        if self.index >= self.size:
             return UInt8(0), Error(io.EOF)
 
-        var byte = self.buffer[int(self.index)]
+        var byte = self.data[int(self.index)]
         self.index += 1
         return byte, Error()
 
@@ -107,7 +134,7 @@ struct Reader(
 
     # # read_rune implements the [io.RuneReader] Interface.
     # fn read_rune(self) (ch rune, size Int, err error):
-    #     if self.index >= Int64(len(self.buffer)):
+    #     if self.index >= Int64(self.size):
     #         self.prev_rune = -1
     #         return 0, 0, io.EOF
 
@@ -151,7 +178,7 @@ struct Reader(
         elif whence == io.SEEK_CURRENT:
             position = self.index + offset
         elif whence == io.SEEK_END:
-            position = len(self.buffer) + offset
+            position = self.size + offset
         else:
             return Int64(0), Error("bytes.Reader.seek: invalid whence")
 
@@ -161,56 +188,56 @@ struct Reader(
         self.index = position
         return position, Error()
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
-        """Writes data to w until the buffer is drained or an error occurs.
-        implements the [io.WriterTo] Interface.
+    # fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+    #     """Writes data to w until the buffer is drained or an error occurs.
+    #     implements the [io.WriterTo] Interface.
 
-        Args:
-            writer: The writer to write to.
-        """
-        self.prev_rune = -1
-        if self.index >= len(self.buffer):
-            return Int64(0), Error()
+    #     Args:
+    #         writer: The writer to write to.
+    #     """
+    #     self.prev_rune = -1
+    #     if self.index >= self.size:
+    #         return Int64(0), Error()
 
-        var bytes = self.buffer[int(self.index) : len(self.buffer)]
-        var write_count: Int
-        var err: Error
-        write_count, err = writer.write(bytes)
-        if write_count > len(bytes):
-            panic("bytes.Reader.write_to: invalid Write count")
+    #     var bytes = self.buffer[int(self.index) : self.size]
+    #     var write_count: Int
+    #     var err: Error
+    #     write_count, err = writer.write(bytes)
+    #     if write_count > len(bytes):
+    #         panic("bytes.Reader.write_to: invalid Write count")
 
-        self.index += write_count
-        if write_count != len(bytes):
-            return Int64(write_count), Error(io.ERR_SHORT_WRITE)
+    #     self.index += write_count
+    #     if write_count != len(bytes):
+    #         return Int64(write_count), Error(io.ERR_SHORT_WRITE)
 
-        return Int64(write_count), Error()
+    #     return Int64(write_count), Error()
 
-    fn reset(inout self, buffer: List[Byte]):
+    fn reset(inout self, owned buffer: List[Byte]):
         """Resets the [Reader.Reader] to be reading from b.
 
         Args:
             buffer: The new buffer to read from.
         """
-        self.buffer = buffer
+        self.data = buffer.steal_data()
         self.index = 0
         self.prev_rune = -1
 
 
-fn new_reader(buffer: List[Byte]) -> Reader:
+fn new_reader(owned buffer: List[Byte]) -> Reader:
     """Returns a new [Reader.Reader] reading from b.
 
     Args:
         buffer: The new buffer to read from.
 
     """
-    return Reader(buffer, 0, -1)
+    return Reader(buffer)
 
 
-fn new_reader(buffer: String) -> Reader:
+fn new_reader(owned buffer: String) -> Reader:
     """Returns a new [Reader.Reader] reading from b.
 
     Args:
         buffer: The new buffer to read from.
 
     """
-    return Reader(buffer.as_bytes(), 0, -1)
+    return Reader(buffer.as_bytes())

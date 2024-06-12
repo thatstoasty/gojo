@@ -60,12 +60,12 @@ struct ErrnoConstants:
     alias EWOULDBLOCK = 11
 
 
-fn to_char_ptr(s: String) -> DTypePointer[DType.uint8]:
-    """Only ASCII-based strings."""
-    var ptr = DTypePointer[DType.uint8]().alloc(len(s))
-    for i in range(len(s)):
-        ptr.store(i, ord(s[i]))
-    return ptr
+# fn to_char_ptr(s: String) -> DTypePointer[DType.uint8]:
+#     """Only ASCII-based strings."""
+#     var ptr = DTypePointer[DType.uint8]().alloc(len(s))
+#     for i in range(len(s)):
+#         ptr.store(i, ord(s[i]))
+#     return ptr
 
 
 fn c_charptr_to_string(s: DTypePointer[DType.uint8]) -> String:

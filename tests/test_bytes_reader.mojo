@@ -8,7 +8,8 @@ fn test_read() raises:
     var test = MojoTest("Testing bytes.Reader.read")
     var reader = reader.new_reader("0123456789")
     var dest = List[Byte](capacity=128)
-    _ = reader.read(dest)
+    var span = Span(dest)
+    _ = reader.read(span)
     dest.append(0)
     test.assert_equal(String(dest), "0123456789")
 
