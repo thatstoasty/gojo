@@ -529,7 +529,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         _ = buf.write(Span(frag))
         return str(buf), err
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
         """Writes the internal buffer to the writer. This may make multiple calls to the [Reader.Read] method of the underlying [Reader].
         If the underlying reader supports the [Reader.WriteTo] method,
         this calls the underlying [Reader.WriteTo] without buffering.
@@ -544,7 +544,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_byte = -1
         self.last_rune_size = -1
 
-        var bytes_written: Int64
+        var bytes_written: Int
         var err: Error
         bytes_written, err = self.write_buf(writer)
         if err:
@@ -556,7 +556,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         while self.read_pos < self.write_pos:
             # self.read_pos < self.write_pos => buffer is not empty
-            var bw: Int64
+            var bw: Int
             var err: Error
             bw, err = self.write_buf(writer)
             bytes_written += bw
@@ -565,7 +565,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         return bytes_written, Error()
 
-    fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int64, Error):
+    fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
         """Writes the [Reader]'s buffer to the writer.
 
         Args:
@@ -576,7 +576,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         """
         # Nothing to write
         if self.read_pos == self.write_pos:
-            return Int64(0), Error()
+            return Int(0), Error()
 
         # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
         var bytes_written: Int
@@ -584,13 +584,13 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         var buf_to_write = self.buf[self.read_pos : self.write_pos]
         bytes_written, err = writer.write(Span(buf_to_write))
         if err:
-            return Int64(bytes_written), err
+            return Int(bytes_written), err
 
         if bytes_written < 0:
             panic(ERR_NEGATIVE_WRITE)
 
         self.read_pos += bytes_written
-        return Int64(bytes_written), Error()
+        return Int(bytes_written), Error()
 
 
 # fn new_reader_size[R: io.Reader](owned reader: R, size: Int) -> Reader[R]:
@@ -835,7 +835,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         """
         return self.write(src.as_bytes_slice())
 
-    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int, Error):
         """Implements [io.ReaderFrom]. If the underlying writer
         supports the read_from method, this calls the underlying read_from.
         If there is buffered data and an underlying read_from, this fills
@@ -848,10 +848,10 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             The number of bytes read.
         """
         if self.err:
-            return Int64(0), self.err
+            return Int(0), self.err
 
         var bytes_read: Int = 0
-        var total_bytes_written: Int64 = 0
+        var total_bytes_written: Int = 0
         var err = Error()
         while True:
             if self.available() == 0:
@@ -874,10 +874,10 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                 nr += 1
 
             if nr == MAX_CONSECUTIVE_EMPTY_READS:
-                return Int64(bytes_read), Error(io.ERR_NO_PROGRESS)
+                return Int(bytes_read), Error(io.ERR_NO_PROGRESS)
 
             self.bytes_written += bytes_read
-            total_bytes_written += Int64(bytes_read)
+            total_bytes_written += Int(bytes_read)
             if err:
                 break
 

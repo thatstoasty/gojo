@@ -8,7 +8,7 @@ fn test_read() raises:
     var test = MojoTest("Testing bytes.Buffer.read")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var dest = List[Byte](capacity=256)
+    var dest = List[Byte](capacity=16)
     _ = buf.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), s)
@@ -49,7 +49,7 @@ fn test_read_slice() raises:
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_slice(ord("o"))
-    var text = result[0]
+    var text = List[UInt8](result[0])
     text.append(0)
     test.assert_equal(String(text), String("Hello"))
 
@@ -65,7 +65,7 @@ fn test_read_string() raises:
 fn test_next() raises:
     var test = MojoTest("Testing bytes.Buffer.next")
     var buf = new_buffer("Hello World!")
-    var text = buf.next(5)
+    var text = List[UInt8](buf.next(5))
     text.append(0)
     test.assert_equal(String(text), String("Hello"))
 

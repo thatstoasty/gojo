@@ -102,12 +102,12 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
             dest.append(byte)
         raise Error("Stream too long")
 
-    fn seek(inout self, offset: Int64, whence: Int = 0) -> (Int64, Error):
+    fn seek(inout self, offset: Int, whence: Int = 0) -> (Int, Error):
         try:
             var position = self.handle.seek(UInt64(offset))
-            return Int64(position), Error()
+            return Int(position), Error()
         except e:
-            return Int64(0), Error(str(e))
+            return Int(0), Error(str(e))
 
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         try:
