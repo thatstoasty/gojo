@@ -1,7 +1,7 @@
 from collections import InlineList
 import ..io
 from ..builtins import copy, panic
-from ..builtins.bytes import UInt8, index_byte
+from ..builtins.bytes import index_byte
 from ..strings import StringBuilder
 
 alias MIN_READ_BUFFER_SIZE = 16
@@ -30,12 +30,16 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     fn __init__(
         inout self,
         owned reader: R,
+        buf: InlineList[UInt8, io.BUFFER_SIZE] = InlineList[UInt8, io.BUFFER_SIZE](),
         read_pos: Int = 0,
         write_pos: Int = 0,
         last_byte: Int = -1,
         last_rune_size: Int = -1,
     ):
         self.buf = InlineList[UInt8, io.BUFFER_SIZE]()
+        for element in buf:
+            self.buf.append(element[])
+
         self.reader = reader^
         self.read_pos = read_pos
         self.write_pos = write_pos
@@ -81,25 +85,25 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         """Returns the internal buffer data as a Span[UInt8]."""
         return Span[UInt8, True, __lifetime_of(self)](array=Reference(self.buf._array))
 
-    # fn reset(inout self, buf: InlineList[UInt8, io.BUFFER_SIZE], owned reader: R):
-    #     """Discards any buffered data, resets all state, and switches
-    #     the buffered reader to read from r.
-    #     Calling reset on the zero value of [Reader] initializes the internal buffer
-    #     to the default size.
-    #     Calling self.reset(b) (that is, resetting a [Reader] to itself) does nothing."""
-    #     self = Reader[R](
-    #         buf=InlineList[UInt8, io.BUFFER_SIZE](),
-    #         reader=reader^,
-    #         last_byte=-1,
-    #         last_rune_size=-1,
-    #     )
+    fn reset(inout self, buf: InlineList[UInt8, io.BUFFER_SIZE], owned reader: R):
+        """Discards any buffered data, resets all state, and switches
+        the buffered reader to read from r.
+        Calling reset on the zero value of [Reader] initializes the internal buffer
+        to the default size.
+        Calling self.reset(b) (that is, resetting a [Reader] to itself) does nothing."""
+        self = Reader[R](
+            buf=buf,
+            reader=reader^,
+            last_byte=-1,
+            last_rune_size=-1,
+        )
 
     fn fill(inout self):
         """Reads a new chunk into the buffer."""
         # Slide existing data to beginning.
         if self.read_pos > 0:
             var data_to_slide = self.as_bytes_slice()[self.read_pos : self.write_pos]
-            # TODO: Temp copying of elements until I figure out a better pattern
+            # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
             for i in range(len(self.buf)):
                 if i > len(self.buf):
                     self.buf[i] = data_to_slide[i]
@@ -126,10 +130,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
-            # TODO: Temp copying of elements until I figure out a better pattern
+            # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
             for i in range(len(temp)):
-                if i > len(temp):
-                    self.buf[i] = temp[i]
+                if i + self.write_pos > len(temp):
+                    self.buf[i + self.write_pos] = temp[i]
                 else:
                     self.buf.append(temp[i])
             self.write_pos += bytes_read
@@ -411,7 +415,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         return line, err
 
-    fn read_line(inout self: Self) raises -> (List[UInt8], Bool):
+    fn read_line(inout self: Self) -> (List[UInt8], Bool):
         """Low-level line-reading primitive. Most callers should use
         [Reader.read_bytes]('\n') or [Reader.read_string]('\n') instead or use a [Scanner].
 
@@ -440,7 +444,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
                 # Let the next call to read_line check for "\r\n".
                 if self.read_pos == 0:
                     # should be unreachable
-                    raise Error("bufio: tried to rewind past start of buffer")
+                    panic("bufio: tried to rewind past start of buffer")
 
                 self.read_pos -= 1
                 line = line[: len(line) - 1]
@@ -655,311 +659,331 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 #     return new_reader_size(reader, io.BUFFER_SIZE)
 
 
-# # buffered output
-# struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
-#     """Implements buffering for an [io.Writer] object.
-#     # If an error occurs writing to a [Writer], no more data will be
-#     # accepted and all subsequent writes, and [Writer.flush], will return the error.
-#     # After all data has been written, the client should call the
-#     # [Writer.flush] method to guarantee all data has been forwarded to
-#     # the underlying [io.Writer]."""
+# buffered output
+# TODO: Readd io.ReaderFrom later.
+struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.ByteWriter, io.StringWriter):
+    """Implements buffering for an [io.Writer] object.
+    # If an error occurs writing to a [Writer], no more data will be
+    # accepted and all subsequent writes, and [Writer.flush], will return the error.
+    # After all data has been written, the client should call the
+    # [Writer.flush] method to guarantee all data has been forwarded to
+    # the underlying [io.Writer]."""
 
-#     var buf: InlineList[UInt8, io.BUFFER_SIZE]
-#     var bytes_written: Int
-#     var writer: W
-#     var err: Error
+    var buf: InlineList[UInt8, size]
+    var bytes_written: Int
+    var writer: W
+    var err: Error
 
-#     fn __init__(
-#         inout self,
-#         owned writer: W,
-#         buf: InlineList[UInt8, io.BUFFER_SIZE] = InlineList[UInt8, io.BUFFER_SIZE](capacity=io.BUFFER_SIZE),
-#         bytes_written: Int = 0,
-#     ):
-#         self.buf = buf
-#         self.bytes_written = bytes_written
-#         self.writer = writer^
-#         self.err = Error()
+    fn __init__(
+        inout self,
+        owned writer: W,
+        buf: InlineList[UInt8, size] = InlineList[UInt8, size](),
+        bytes_written: Int = 0,
+    ):
+        self.buf = InlineList[UInt8, size]()
+        for element in buf:
+            self.buf.append(element[])
+        self.bytes_written = bytes_written
+        self.writer = writer^
+        self.err = Error()
 
-#     fn __moveinit__(inout self, owned existing: Self):
-#         self.buf = existing.buf^
-#         self.bytes_written = existing.bytes_written
-#         self.writer = existing.writer^
-#         self.err = existing.err^
+    fn __moveinit__(inout self, owned existing: Self):
+        self.buf = InlineList[UInt8, size]()
+        for element in existing.buf:
+            self.buf.append(element[])
+        self.bytes_written = existing.bytes_written
+        self.writer = existing.writer^
+        self.err = existing.err^
 
-#     fn __len__(self) -> Int:
-#         """Returns the size of the underlying buffer in bytes."""
-#         return len(self.buf)
+    fn __len__(self) -> Int:
+        """Returns the size of the underlying buffer in bytes."""
+        return len(self.buf)
 
-#     fn reset(inout self, owned writer: W):
-#         """Discards any unflushed buffered data, clears any error, and
-#         resets b to write its output to w.
-#         Calling reset on the zero value of [Writer] initializes the internal buffer
-#         to the default size.
-#         Calling w.reset(w) (that is, resetting a [Writer] to itself) does nothing.
+    @always_inline
+    fn as_bytes_slice(inout self) -> Span[UInt8, True, __lifetime_of(self)]:
+        """Returns the internal buffer data as a Span[UInt8]."""
+        return Span[UInt8, True, __lifetime_of(self)](array=Reference(self.buf._array))
 
-#         Args:
-#             writer: The writer to write to.
-#         """
-#         # # If a Writer w is passed to new_writer, new_writer will return w.
-#         # # Different layers of code may do that, and then later pass w
-#         # # to reset. Avoid infinite recursion in that case.
-#         # if self == writer:
-#         #     return
+    fn reset(inout self, owned writer: W):
+        """Discards any unflushed buffered data, clears any error, and
+        resets b to write its output to w.
+        Calling reset on the zero value of [Writer] initializes the internal buffer
+        to the default size.
+        Calling w.reset(w) (that is, resetting a [Writer] to itself) does nothing.
 
-#         # if self.buf == nil:
-#         #     self.buf = make(InlineList[UInt8, io.BUFFER_SIZE], io.BUFFER_SIZE)
+        Args:
+            writer: The writer to write to.
+        """
+        # # If a Writer w is passed to new_writer, new_writer will return w.
+        # # Different layers of code may do that, and then later pass w
+        # # to reset. Avoid infinite recursion in that case.
+        # if self == writer:
+        #     return
 
-#         self.err = Error()
-#         self.bytes_written = 0
-#         self.writer = writer^
+        # if self.buf == nil:
+        #     self.buf = make(InlineList[UInt8, io.BUFFER_SIZE], io.BUFFER_SIZE)
 
-#     fn flush(inout self) -> Error:
-#         """Writes any buffered data to the underlying [io.Writer]."""
-#         # Prior to attempting to flush, check if there's a pre-existing error or if there's nothing to flush.
-#         var err = Error()
-#         if self.err:
-#             return self.err
-#         if self.bytes_written == 0:
-#             return err
+        self.err = Error()
+        self.bytes_written = 0
+        self.writer = writer^
 
-#         var bytes_written: Int = 0
-#         bytes_written, err = self.writer.write(self.as_bytes_slice()[0 : self.bytes_written])
+    fn flush(inout self) -> Error:
+        """Writes any buffered data to the underlying [io.Writer]."""
+        # Prior to attempting to flush, check if there's a pre-existing error or if there's nothing to flush.
+        var err = Error()
+        if self.err:
+            return self.err
+        if self.bytes_written == 0:
+            return err
 
-#         # If the write was short, set a short write error and try to shift up the remaining bytes.
-#         if bytes_written < self.bytes_written and not err:
-#             err = Error(io.ERR_SHORT_WRITE)
+        var bytes_written: Int = 0
+        bytes_written, err = self.writer.write(self.as_bytes_slice()[0 : self.bytes_written])
 
-#         if err:
-#             if bytes_written > 0 and bytes_written < self.bytes_written:
-#                 _ = copy(self.buf, self.as_bytes_slice()[bytes_written : self.bytes_written])
+        # If the write was short, set a short write error and try to shift up the remaining bytes.
+        if bytes_written < self.bytes_written and not err:
+            err = Error(io.ERR_SHORT_WRITE)
 
-#             self.bytes_written -= bytes_written
-#             self.err = err
-#             return err
+        if err:
+            if bytes_written > 0 and bytes_written < self.bytes_written:
+                # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
+                var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
+                for i in range(len(temp)):
+                    if i > len(temp):
+                        self.buf[i] = temp[i]
+                    else:
+                        self.buf.append(temp[i])
 
-#         # Reset the buffer
-#         self.buf = InlineList[UInt8, io.BUFFER_SIZE](capacity=self.buf.capacity)
-#         self.bytes_written = 0
-#         return err
+            self.bytes_written -= bytes_written
+            self.err = err
+            return err
 
-#     fn available(self) -> Int:
-#         """Returns how many bytes are unused in the buffer."""
-#         return self.buf.capacity - len(self.buf)
+        # Reset the buffer
+        self.buf = InlineList[UInt8, size]()
+        self.bytes_written = 0
+        return err
 
-#     fn available_buffer(self) raises -> InlineList[UInt8, io.BUFFER_SIZE]:
-#         """Returns an empty buffer with self.available() capacity.
-#         This buffer is intended to be appended to and
-#         passed to an immediately succeeding [Writer.write] call.
-#         The buffer is only valid until the next write operation on self.
+    fn available(self) -> Int:
+        """Returns how many bytes are unused in the buffer."""
+        return self.buf.capacity - len(self.buf)
 
-#         Returns:
-#             An empty buffer with self.available() capacity.
-#         """
-#         return self.as_bytes_slice()[self.bytes_written :][:0]
+    fn buffered(self) -> Int:
+        """Returns the number of bytes that have been written into the current buffer.
 
-#     fn buffered(self) -> Int:
-#         """Returns the number of bytes that have been written into the current buffer.
+        Returns:
+            The number of bytes that have been written into the current buffer.
+        """
+        return self.bytes_written
 
-#         Returns:
-#             The number of bytes that have been written into the current buffer.
-#         """
-#         return self.bytes_written
+    # TODO: Something broken about multiple writes
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
+        """Writes the contents of src into the buffer.
+        It returns the number of bytes written.
+        If nn < len(src), it also returns an error explaining
+        why the write is short.
 
-#     fn write(inout self, src: InlineList[UInt8, io.BUFFER_SIZE]) -> (Int, Error):
-#         """Writes the contents of src into the buffer.
-#         It returns the number of bytes written.
-#         If nn < len(src), it also returns an error explaining
-#         why the write is short.
+        Args:
+            src: The bytes to write.
 
-#         Args:
-#             src: The bytes to write.
+        Returns:
+            The number of bytes written.
+        """
+        var total_bytes_written: Int = 0
+        var src_copy = src
+        var err = Error()
+        while len(src_copy) > self.available() and not self.err:
+            var bytes_written: Int = 0
+            if self.buffered() == 0:
+                # Large write, empty buffer.
+                # write directly from p to avoid copy.
+                bytes_written, err = self.writer.write(src_copy)
+                self.err = err
+            else:
+                # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
+                var temp = Span(src_copy)
+                for i in range(len(temp)):
+                    if i + self.bytes_written > len(temp):
+                        self.buf[i + self.bytes_written] = temp[i]
+                    else:
+                        self.buf.append(temp[i])
+                    bytes_written += 1
 
-#         Returns:
-#             The number of bytes written.
-#         """
-#         var total_bytes_written: Int = 0
-#         var src_copy = src
-#         var err = Error()
-#         while len(src_copy) > self.available() and not self.err:
-#             var bytes_written: Int = 0
-#             if self.buffered() == 0:
-#                 # Large write, empty buffer.
-#                 # write directly from p to avoid copy.
-#                 bytes_written, err = self.writer.write(src_copy)
-#                 self.err = err
-#             else:
-#                 bytes_written = copy(self.buf, src_copy, self.bytes_written)
-#                 self.bytes_written += bytes_written
-#                 _ = self.flush()
+                self.bytes_written += bytes_written
+                _ = self.flush()
 
-#             total_bytes_written += bytes_written
-#             src_copy = src_copy[bytes_written : len(src_copy)]
+            total_bytes_written += bytes_written
+            src_copy = src_copy[bytes_written : len(src_copy)]
 
-#         if self.err:
-#             return total_bytes_written, self.err
+        if self.err:
+            return total_bytes_written, self.err
 
-#         var n = copy(self.buf, src_copy, self.bytes_written)
-#         self.bytes_written += n
-#         total_bytes_written += n
-#         return total_bytes_written, err
+        # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
+        var temp = Span(src_copy)
+        var n = 0
+        for i in range(len(temp)):
+            if i + self.bytes_written > len(temp):
+                self.buf[i + self.bytes_written] = temp[i]
+            else:
+                self.buf.append(temp[i])
+            n += 1
+        self.bytes_written += n
+        total_bytes_written += n
+        return total_bytes_written, err
 
-#     fn write_byte(inout self, src: UInt8) -> (Int, Error):
-#         """Writes a single byte to the internal buffer.
+    fn write_byte(inout self, src: UInt8) -> (Int, Error):
+        """Writes a single byte to the internal buffer.
 
-#         Args:
-#             src: The byte to write.
-#         """
-#         if self.err:
-#             return 0, self.err
-#         # If buffer is full, flush to the underlying writer.
-#         var err = self.flush()
-#         if self.available() <= 0 and err:
-#             return 0, self.err
+        Args:
+            src: The byte to write.
+        """
+        if self.err:
+            return 0, self.err
+        # If buffer is full, flush to the underlying writer.
+        var err = self.flush()
+        if self.available() <= 0 and err:
+            return 0, self.err
 
-#         self.buf.append(src)
-#         self.bytes_written += 1
+        self.buf.append(src)
+        self.bytes_written += 1
 
-#         return 1, Error()
+        return 1, Error()
 
-#     # # WriteRune writes a single Unicode code point, returning
-#     # # the number of bytes written and any error.
-#     # fn WriteRune(r rune) (size int, err error):
-#     #     # Compare as uint32 to correctly handle negative runes.
-#     #     if uint32(r) < utf8.RuneSelf:
-#     #         err = self.write_posriteByte(byte(r))
-#     #         if err != nil:
-#     #             return 0, err
+    # # WriteRune writes a single Unicode code point, returning
+    # # the number of bytes written and any error.
+    # fn WriteRune(r rune) (size int, err error):
+    #     # Compare as uint32 to correctly handle negative runes.
+    #     if uint32(r) < utf8.RuneSelf:
+    #         err = self.write_posriteByte(byte(r))
+    #         if err != nil:
+    #             return 0, err
 
-#     #         return 1, nil
+    #         return 1, nil
 
-#     #     if self.err != nil:
-#     #         return 0, self.err
+    #     if self.err != nil:
+    #         return 0, self.err
 
-#     #     n := self.available()
-#     #     if n < utf8.UTFMax:
-#     #         if self.flush(); self.err != nil:
-#     #             return 0, self.err
+    #     n := self.available()
+    #     if n < utf8.UTFMax:
+    #         if self.flush(); self.err != nil:
+    #             return 0, self.err
 
-#     #         n = self.available()
-#     #         if n < utf8.UTFMax:
-#     #             # Can only happen if buffer is silly small.
-#     #             return self.write_posriteString(string(r))
+    #         n = self.available()
+    #         if n < utf8.UTFMax:
+    #             # Can only happen if buffer is silly small.
+    #             return self.write_posriteString(string(r))
 
-#     #     size = utf8.EncodeRune(self.as_bytes_slice()[self.bytes_written:], r)
-#     #     self.bytes_written += size
-#     #     return size, nil
+    #     size = utf8.EncodeRune(self.as_bytes_slice()[self.bytes_written:], r)
+    #     self.bytes_written += size
+    #     return size, nil
 
-#     fn write_string(inout self, src: String) -> (Int, Error):
-#         """Writes a string to the internal buffer.
-#         It returns the number of bytes written.
-#         If the count is less than len(s), it also returns an error explaining
-#         why the write is short.
+    fn write_string(inout self, src: String) -> (Int, Error):
+        """Writes a string to the internal buffer.
+        It returns the number of bytes written.
+        If the count is less than len(s), it also returns an error explaining
+        why the write is short.
 
-#         Args:
-#             src: The string to write.
+        Args:
+            src: The string to write.
 
-#         Returns:
-#             The number of bytes written.
-#         """
-#         return self.write(src.as_bytes_slice())
+        Returns:
+            The number of bytes written.
+        """
+        return self.write(src.as_bytes_slice())
 
-#     fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
-#         """Implements [io.ReaderFrom]. If the underlying writer
-#         supports the read_from method, this calls the underlying read_from.
-#         If there is buffered data and an underlying read_from, this fills
-#         the buffer and writes it before calling read_from.
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
+        """Implements [io.ReaderFrom]. If the underlying writer
+        supports the read_from method, this calls the underlying read_from.
+        If there is buffered data and an underlying read_from, this fills
+        the buffer and writes it before calling read_from.
 
-#         Args:
-#             reader: The reader to read from.
+        Args:
+            reader: The reader to read from.
 
-#         Returns:
-#             The number of bytes read.
-#         """
-#         if self.err:
-#             return Int64(0), self.err
+        Returns:
+            The number of bytes read.
+        """
+        if self.err:
+            return Int64(0), self.err
 
-#         var bytes_read: Int = 0
-#         var total_bytes_written: Int64 = 0
-#         var err = Error()
-#         while True:
-#             if self.available() == 0:
-#                 var err = self.flush()
-#                 if err:
-#                     return total_bytes_written, err
+        var bytes_read: Int = 0
+        var total_bytes_written: Int64 = 0
+        var err = Error()
+        while True:
+            if self.available() == 0:
+                var err = self.flush()
+                if err:
+                    return total_bytes_written, err
 
-#             var nr = 0
-#             while nr < MAX_CONSECUTIVE_EMPTY_READS:
-#                 # TODO: should really be using a slice that returns refs and not a copy.
-#                 # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
-#                 var sl = self.as_bytes_slice()[self.bytes_written : len(self.buf)]
-#                 sl.reserve(self.buf.capacity)
-#                 bytes_read, err = reader.read(sl)
-#                 if bytes_read > 0:
-#                     bytes_read = copy(self.buf, sl, self.bytes_written)
+            var nr = 0
+            while nr < MAX_CONSECUTIVE_EMPTY_READS:
+                # TODO: should really be using a slice that returns refs and not a copy.
+                # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
+                var sl = List[UInt8](self.as_bytes_slice()[self.bytes_written : len(self.buf)])
+                sl.reserve(self.buf.capacity)
+                bytes_read, err = reader.read(sl)
+                if bytes_read > 0:
+                    # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
+                    var bytes_read = 0
+                    for i in range(len(sl)):
+                        if i + self.bytes_written > len(sl):
+                            self.buf[i + self.bytes_written] = sl[i]
+                        else:
+                            self.buf.append(sl[i])
+                        bytes_read += 1
 
-#                 if bytes_read != 0 or err:
-#                     break
-#                 nr += 1
+                if bytes_read != 0 or err:
+                    break
+                nr += 1
 
-#             if nr == MAX_CONSECUTIVE_EMPTY_READS:
-#                 return Int64(bytes_read), Error(io.ERR_NO_PROGRESS)
+            if nr == MAX_CONSECUTIVE_EMPTY_READS:
+                return Int64(bytes_read), Error(io.ERR_NO_PROGRESS)
 
-#             self.bytes_written += bytes_read
-#             total_bytes_written += Int64(bytes_read)
-#             if err:
-#                 break
+            self.bytes_written += bytes_read
+            total_bytes_written += Int64(bytes_read)
+            if err:
+                break
 
-#         if err and str(err) == io.EOF:
-#             # If we filled the buffer exactly, flush preemptively.
-#             if self.available() == 0:
-#                 err = self.flush()
-#             else:
-#                 err = Error()
+        if err and str(err) == io.EOF:
+            # If we filled the buffer exactly, flush preemptively.
+            if self.available() == 0:
+                err = self.flush()
+            else:
+                err = Error()
 
-#         return total_bytes_written, Error()
-
-
-# fn new_writer_size[W: io.Writer](owned writer: W, size: Int) -> Writer[W]:
-#     """Returns a new [Writer] whose buffer has at least the specified
-#     size. If the argument io.Writer is already a [Writer] with large enough
-#     size, it returns the underlying [Writer]."""
-#     # Is it already a Writer?
-#     # b, ok := w.(*Writer)
-#     # if ok and self.buf.capacity >= size:
-#     # 	return b
-
-#     var buf_size = size
-#     if buf_size <= 0:
-#         buf_size = io.BUFFER_SIZE
-
-#     return Writer[W](
-#         buf=InlineList[UInt8, io.BUFFER_SIZE](capacity=size),
-#         writer=writer^,
-#         bytes_written=0,
-#     )
-
-
-# fn new_writer[W: io.Writer](owned writer: W) -> Writer[W]:
-#     """Returns a new [Writer] whose buffer has the default size.
-#     # If the argument io.Writer is already a [Writer] with large enough buffer size,
-#     # it returns the underlying [Writer]."""
-#     return new_writer_size[W](writer^, io.BUFFER_SIZE)
-
-
-# # buffered input and output
-# struct ReadWriter[R: io.Reader, W: io.Writer]():
-#     """ReadWriter stores pointers to a [Reader] and a [Writer].
-#     It implements [io.ReadWriter]."""
-
-#     var reader: R
-#     var writer: W
-
-#     fn __init__(inout self, owned reader: R, owned writer: W):
-#         self.reader = reader^
-#         self.writer = writer^
+        return total_bytes_written, Error()
 
 
-# # new_read_writer
-# fn new_read_writer[R: io.Reader, W: io.Writer](owned reader: R, owned writer: W) -> ReadWriter[R, W]:
-#     """Allocates a new [ReadWriter] that dispatches to r and w."""
-#     return ReadWriter[R, W](reader^, writer^)
+fn new_writer[W: io.Writer, size: Int = io.BUFFER_SIZE](owned writer: W) -> Writer[W, size]:
+    """Returns a new [Writer] whose buffer has at least the specified
+    size. If the argument io.Writer is already a [Writer] with large enough
+    size, it returns the underlying [Writer]."""
+    # Is it already a Writer?
+    # b, ok := w.(*Writer)
+    # if ok and self.buf.capacity >= size:
+    # 	return b
+
+    constrained[size > 0, "bufio: invalid buffer size. Must be greater than 0."]()
+
+    return Writer[W, size](
+        buf=InlineList[UInt8, size](),
+        writer=writer^,
+        bytes_written=0,
+    )
+
+
+# buffered input and output
+struct ReadWriter[R: io.Reader, W: io.Writer]():
+    """ReadWriter stores pointers to a [Reader] and a [Writer].
+    It implements [io.ReadWriter]."""
+
+    var reader: R
+    var writer: W
+
+    fn __init__(inout self, owned reader: R, owned writer: W):
+        self.reader = reader^
+        self.writer = writer^
+
+
+# new_read_writer
+fn new_read_writer[R: io.Reader, W: io.Writer](owned reader: R, owned writer: W) -> ReadWriter[R, W]:
+    """Allocates a new [ReadWriter] that dispatches to r and w."""
+    return ReadWriter[R, W](reader^, writer^)
