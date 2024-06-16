@@ -1,4 +1,3 @@
-from ..builtins import Byte
 from ..syscall import SocketOptions
 from .net import Connection, Conn
 from .address import TCPAddr, NetworkType, split_host_port
@@ -84,7 +83,7 @@ struct TCPConnection(Conn):
     fn __moveinit__(inout self, owned existing: Self):
         self._connection = existing._connection^
 
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -102,7 +101,7 @@ struct TCPConnection(Conn):
 
         return bytes_read, Error()
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:

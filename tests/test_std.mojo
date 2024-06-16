@@ -1,11 +1,11 @@
 from tests.wrapper import MojoTest
 from gojo.syscall import FD
-from goodies import STDWriter
+from gojo.io import STDWriter
 
 
 fn test_writer() raises:
-    var test = MojoTest("Testing goodies.STDWriter")
-    var writer = STDWriter(int(FD.FD_STDOUT))
+    var test = MojoTest("Testing STDWriter.write")
+    var writer = STDWriter[FD.STDOUT]()
     _ = writer.write_string("")
 
 

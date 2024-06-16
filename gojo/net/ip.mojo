@@ -22,7 +22,6 @@ from ..syscall import (
     getaddrinfo,
     getaddrinfo_unix,
     gai_strerror,
-    c_charptr_to_string,
 )
 
 alias AddrInfo = Variant[addrinfo, addrinfo_unix]
@@ -32,16 +31,15 @@ fn get_addr_info(host: String) raises -> AddrInfo:
     if os_is_macos():
         var servinfo = UnsafePointer[addrinfo]().alloc(1)
         servinfo[0] = addrinfo()
-        var hints = addrinfo()
-        hints.ai_family = AddressFamily.AF_INET
-        hints.ai_socktype = SocketType.SOCK_STREAM
-        hints.ai_flags = AddressInformation.AI_PASSIVE
-
-        var host_ptr = host.unsafe_ptr()
+        var hints = addrinfo(
+            ai_family=AddressFamily.AF_INET,
+            ai_socktype=SocketType.SOCK_STREAM,
+            ai_flags=AddressInformation.AI_PASSIVE,
+        )
 
         var status = getaddrinfo(
-            host_ptr,
-            DTypePointer[DType.uint8](),
+            host.unsafe_uint8_ptr(),
+            UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
         )
@@ -52,20 +50,19 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.take_pointee()
+        return move_from_pointee(servinfo)
     elif os_is_linux():
         var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
         servinfo[0] = addrinfo_unix()
-        var hints = addrinfo_unix()
-        hints.ai_family = AddressFamily.AF_INET
-        hints.ai_socktype = SocketType.SOCK_STREAM
-        hints.ai_flags = AddressInformation.AI_PASSIVE
-
-        var host_ptr = host.unsafe_ptr()
+        var hints = addrinfo_unix(
+            ai_family=AddressFamily.AF_INET,
+            ai_socktype=SocketType.SOCK_STREAM,
+            ai_flags=AddressInformation.AI_PASSIVE,
+        )
 
         var status = getaddrinfo_unix(
-            host_ptr,
-            DTypePointer[DType.uint8](),
+            host.unsafe_uint8_ptr(),
+            UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
         )
@@ -76,7 +73,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return servinfo.take_pointee()
+        return move_from_pointee(servinfo)
     else:
         raise Error("Windows is not supported yet! Sorry!")
 
@@ -104,7 +101,7 @@ fn get_ip_address(host: String) raises -> String:
         raise Error("Failed to get IP address. getaddrinfo was called successfully, but ai_addr is null.")
 
     # Cast sockaddr struct to sockaddr_in struct and convert the binary IP to a string using inet_ntop.
-    var addr_in = ai_addr.bitcast[sockaddr_in]().take_pointee()
+    var addr_in = move_from_pointee(ai_addr.bitcast[sockaddr_in]())
 
     return convert_binary_ip_to_string(addr_in.sin_addr.s_addr, address_family, address_length).strip()
 
@@ -118,12 +115,12 @@ fn convert_binary_port_to_int(port: UInt16) -> Int:
 
 
 fn convert_ip_to_binary(ip_address: String, address_family: Int) -> UInt32:
-    var ip_buffer = Pointer[c_void].alloc(4)
-    var status = inet_pton(address_family, ip_address.unsafe_ptr(), ip_buffer)
+    var ip_buffer = UnsafePointer[UInt8].alloc(4)
+    var status = inet_pton(address_family, ip_address.unsafe_uint8_ptr(), ip_buffer)
     if status == -1:
         print("Failed to convert IP address to binary")
 
-    return ip_buffer.bitcast[c_uint]().load()
+    return move_from_pointee(ip_buffer.bitcast[c_uint]())
 
 
 fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, address_length: UInt32) -> String:
@@ -143,14 +140,13 @@ fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, 
     var ip_address_ptr = UnsafePointer.address_of(ip_address).bitcast[c_void]()
     _ = inet_ntop(address_family, ip_address_ptr, ip_buffer, 16)
 
-    var string_buf = ip_buffer.bitcast[Int8]()
     var index = 0
     while True:
-        if string_buf[index] == 0:
+        if ip_buffer[index] == 0:
             break
         index += 1
 
-    return StringRef(string_buf, index)
+    return StringRef(ip_buffer, index)
 
 
 fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) -> UnsafePointer[sockaddr]:

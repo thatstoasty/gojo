@@ -7,6 +7,7 @@ from .address import split_host_port
 struct Dialer:
     var local_address: TCPAddr
 
+    @always_inline
     fn dial(self, network: String, address: String) raises -> TCPConnection:
         var tcp_addr = resolve_internet_addr(network, address)
         var socket = Socket(local_address=self.local_address)

@@ -1,17 +1,13 @@
-from ..builtins import Byte
-from ..syscall.file import close
-from ..syscall import (
-    c_void,
-    c_uint,
-    c_char,
-    c_int,
-)
 from ..syscall import (
     sockaddr,
     sockaddr_in,
     addrinfo,
     addrinfo_unix,
     socklen_t,
+    c_void,
+    c_uint,
+    c_char,
+    c_int,
     socket,
     connect,
     recv,
@@ -20,14 +16,11 @@ from ..syscall import (
     inet_pton,
     inet_ntoa,
     inet_ntop,
-    to_char_ptr,
     htons,
     ntohs,
-    strlen,
     getaddrinfo,
     getaddrinfo_unix,
     gai_strerror,
-    c_charptr_to_string,
     bind,
     listen,
     accept,
@@ -41,6 +34,7 @@ from ..syscall import (
     SocketType,
     SHUT_RDWR,
     SOL_SOCKET,
+    close,
 )
 from .fd import FileDescriptor, FileDescriptorBase
 from .ip import (
@@ -333,7 +327,7 @@ struct Socket(FileDescriptorBase):
         self.remote_address = TCPAddr(remote.host, remote.port)
 
     @always_inline
-    fn write(inout self: Self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self: Self, src: List[UInt8]) -> (Int, Error):
         """Send data to the socket. The socket must be connected to a remote socket.
 
         Args:
@@ -344,14 +338,15 @@ struct Socket(FileDescriptorBase):
         """
         return self.sockfd.write(src)
 
-    fn send_all(self, src: List[Byte], max_attempts: Int = 3) raises:
+    fn send_all(self, src: List[UInt8], max_attempts: Int = 3) raises:
         """Send data to the socket. The socket must be connected to a remote socket.
 
         Args:
             src: The data to send.
             max_attempts: The maximum number of attempts to send the data.
         """
-        var header_pointer = DTypePointer(src.unsafe_ptr())
+        var data = src.unsafe_ptr()
+        var bytes_to_send = len(src)
         var total_bytes_sent = 0
         var attempts = 0
 
@@ -362,8 +357,8 @@ struct Socket(FileDescriptorBase):
 
             var bytes_sent = send(
                 self.sockfd.fd,
-                header_pointer.offset(total_bytes_sent),
-                strlen(header_pointer.offset(total_bytes_sent)),
+                data.offset(total_bytes_sent),
+                bytes_to_send - total_bytes_sent,
                 0,
             )
             if bytes_sent == -1:
@@ -371,7 +366,7 @@ struct Socket(FileDescriptorBase):
             total_bytes_sent += bytes_sent
             attempts += 1
 
-    fn send_to(inout self, src: List[Byte], address: String, port: Int) raises -> Int:
+    fn send_to(inout self, src: List[UInt8], address: String, port: Int) raises -> Int:
         """Send data to the a remote address by connecting to the remote socket before sending.
         The socket must be not already be connected to a remote socket.
 
@@ -389,7 +384,7 @@ struct Socket(FileDescriptorBase):
         return bytes_written
 
     @always_inline
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Receive data from the socket."""
         var bytes_read: Int
         var err = Error()

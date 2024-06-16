@@ -624,7 +624,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
         bytes_written, err = writer.write(buf_to_write)
         if err:
-            return Int(bytes_written), err
+            return bytes_written, err
 
         if bytes_written < 0:
             panic(ERR_NEGATIVE_WRITE)
@@ -668,8 +668,9 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
 
 # buffered output
-# TODO: Readd io.ReaderFrom later.
-struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.ByteWriter, io.StringWriter):
+struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
+    Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom
+):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
     # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -801,7 +802,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
             The number of bytes written.
         """
         var total_bytes_written: Int = 0
-        var src_copy = src
+        var src_copy = src  # TODO: Make a copy, maybe try a non owning Span
         var err = Error()
         while len(src_copy) > self.available() and not self.err:
             var bytes_written: Int = 0
@@ -812,12 +813,11 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
                 self.err = err
             else:
                 # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-                var temp = Span(src_copy)
-                for i in range(len(temp)):
-                    if i + self.bytes_written > len(temp):
-                        self.buf[i + self.bytes_written] = temp[i]
+                for i in range(len(src_copy)):
+                    if i + self.bytes_written > len(src_copy):
+                        self.buf[i + self.bytes_written] = src_copy[i]
                     else:
-                        self.buf.append(temp[i])
+                        self.buf.append(src_copy[i])
                     bytes_written += 1
 
                 self.bytes_written += bytes_written
@@ -830,13 +830,12 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
             return total_bytes_written, self.err
 
         # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-        var temp = Span(src_copy)
         var n = 0
-        for i in range(len(temp)):
-            if i + self.bytes_written > len(temp):
-                self.buf[i + self.bytes_written] = temp[i]
+        for i in range(len(src_copy)):
+            if i + self.bytes_written > len(src_copy):
+                self.buf[i + self.bytes_written] = src_copy[i]
             else:
-                self.buf.append(temp[i])
+                self.buf.append(src_copy[i])
             n += 1
         self.bytes_written += n
         total_bytes_written += n
@@ -904,7 +903,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         """
         return self.write(src.as_bytes_slice())
 
-    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int64, Error):
+    fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int, Error):
         """Implements [io.ReaderFrom]. If the underlying writer
         supports the read_from method, this calls the underlying read_from.
         If there is buffered data and an underlying read_from, this fills
@@ -917,10 +916,10 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
             The number of bytes read.
         """
         if self.err:
-            return Int64(0), self.err
+            return 0, self.err
 
         var bytes_read: Int = 0
-        var total_bytes_written: Int64 = 0
+        var total_bytes_written: Int = 0
         var err = Error()
         while True:
             if self.available() == 0:
@@ -950,10 +949,10 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
                 nr += 1
 
             if nr == MAX_CONSECUTIVE_EMPTY_READS:
-                return Int64(bytes_read), Error(io.ERR_NO_PROGRESS)
+                return bytes_read, Error(io.ERR_NO_PROGRESS)
 
             self.bytes_written += bytes_read
-            total_bytes_written += Int64(bytes_read)
+            total_bytes_written += bytes_read
             if err:
                 break
 

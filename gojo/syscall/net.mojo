@@ -1,4 +1,4 @@
-from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t, strlen
+from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t
 from .file import O_CLOEXEC, O_NONBLOCK
 from utils.static_tuple import StaticTuple
 
@@ -10,15 +10,15 @@ alias EPROTONOSUPPORT = 93
 
 
 struct FD:
-    alias FD_STDIN = 0
-    alias FD_STDOUT = 1
-    alias FD_STDERR = 2
+    alias STDIN = 0
+    alias STDOUT = 1
+    alias STDERR = 2
 
 
 alias SUCCESS = 0
 alias GRND_NONBLOCK: UInt8 = 1
 
-alias char_pointer = DTypePointer[DType.uint8]
+alias char_pointer = UnsafePointer[UInt8]
 
 
 # --- ( error.h Constants )-----------------------------------------------------
@@ -60,16 +60,12 @@ struct ErrnoConstants:
     alias EWOULDBLOCK = 11
 
 
-# fn to_char_ptr(s: String) -> DTypePointer[DType.uint8]:
+# fn to_char_ptr(s: String) -> UnsafePointer[UInt8]:
 #     """Only ASCII-based strings."""
-#     var ptr = DTypePointer[DType.uint8]().alloc(len(s))
+#     var ptr = UnsafePointer[UInt8]().alloc(len(s))
 #     for i in range(len(s)):
 #         ptr.store(i, ord(s[i]))
 #     return ptr
-
-
-fn c_charptr_to_string(s: DTypePointer[DType.uint8]) -> String:
-    return String(s, strlen(s))
 
 
 fn cftob(val: c_int) -> Bool:
@@ -348,7 +344,7 @@ struct addrinfo:
     var ai_socktype: c_int
     var ai_protocol: c_int
     var ai_addrlen: socklen_t
-    var ai_canonname: DTypePointer[DType.uint8]
+    var ai_canonname: UnsafePointer[UInt8]
     var ai_addr: UnsafePointer[sockaddr]
     var ai_next: UnsafePointer[addrinfo]
 
@@ -359,7 +355,7 @@ struct addrinfo:
         ai_socktype: c_int = 0,
         ai_protocol: c_int = 0,
         ai_addrlen: socklen_t = 0,
-        ai_canonname: DTypePointer[DType.uint8] = DTypePointer[DType.uint8](),
+        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
@@ -373,7 +369,7 @@ struct addrinfo:
         self.ai_next = ai_next
 
     # fn __init__() -> Self:
-    #     return Self(0, 0, 0, 0, 0, DTypePointer[DType.uint8](), UnsafePointer[sockaddr](), UnsafePointer[addrinfo]())
+    #     return Self(0, 0, 0, 0, 0, UnsafePointer[UInt8](), UnsafePointer[sockaddr](), UnsafePointer[addrinfo]())
 
 
 @value
@@ -390,7 +386,7 @@ struct addrinfo_unix:
     var ai_protocol: c_int
     var ai_addrlen: socklen_t
     var ai_addr: UnsafePointer[sockaddr]
-    var ai_canonname: DTypePointer[DType.uint8]
+    var ai_canonname: UnsafePointer[UInt8]
     var ai_next: UnsafePointer[addrinfo]
 
     fn __init__(
@@ -400,7 +396,7 @@ struct addrinfo_unix:
         ai_socktype: c_int = 0,
         ai_protocol: c_int = 0,
         ai_addrlen: socklen_t = 0,
-        ai_canonname: DTypePointer[DType.uint8] = DTypePointer[DType.uint8](),
+        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
@@ -463,10 +459,10 @@ fn ntohs(netshort: c_ushort) -> c_ushort:
 
 fn inet_ntop(
     af: c_int,
-    src: DTypePointer[DType.uint8],
-    dst: DTypePointer[DType.uint8],
+    src: UnsafePointer[UInt8],
+    dst: UnsafePointer[UInt8],
     size: socklen_t,
-) -> DTypePointer[DType.uint8]:
+) -> UnsafePointer[UInt8]:
     """Libc POSIX `inet_ntop` function
     Reference: https://man7.org/linux/man-pages/man3/inet_ntop.3p.html.
     Fn signature: const char *inet_ntop(int af, const void *restrict src, char *restrict dst, socklen_t size).
@@ -482,15 +478,15 @@ fn inet_ntop(
     """
     return external_call[
         "inet_ntop",
-        DTypePointer[DType.uint8],  # FnName, RetType
+        UnsafePointer[UInt8],  # FnName, RetType
         c_int,
-        DTypePointer[DType.uint8],
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
+        UnsafePointer[UInt8],
         socklen_t,  # Args
     ](af, src, dst, size)
 
 
-fn inet_pton(af: c_int, src: DTypePointer[DType.uint8], dst: DTypePointer[DType.uint8]) -> c_int:
+fn inet_pton(af: c_int, src: UnsafePointer[UInt8], dst: UnsafePointer[UInt8]) -> c_int:
     """Libc POSIX `inet_pton` function
     Reference: https://man7.org/linux/man-pages/man3/inet_ntop.3p.html
     Fn signature: int inet_pton(int af, const char *restrict src, void *restrict dst).
@@ -504,12 +500,12 @@ fn inet_pton(af: c_int, src: DTypePointer[DType.uint8], dst: DTypePointer[DType.
         "inet_pton",
         c_int,  # FnName, RetType
         c_int,
-        DTypePointer[DType.uint8],
-        DTypePointer[DType.uint8],  # Args
+        UnsafePointer[UInt8],
+        UnsafePointer[UInt8],  # Args
     ](af, src, dst)
 
 
-fn inet_addr(cp: DTypePointer[DType.uint8]) -> in_addr_t:
+fn inet_addr(cp: UnsafePointer[UInt8]) -> in_addr_t:
     """Libc POSIX `inet_addr` function
     Reference: https://man7.org/linux/man-pages/man3/inet_addr.3p.html
     Fn signature: in_addr_t inet_addr(const char *cp).
@@ -517,10 +513,10 @@ fn inet_addr(cp: DTypePointer[DType.uint8]) -> in_addr_t:
     Args: cp: A pointer to a string containing the address.
     Returns: The address in network byte order.
     """
-    return external_call["inet_addr", in_addr_t, DTypePointer[DType.uint8]](cp)
+    return external_call["inet_addr", in_addr_t, UnsafePointer[UInt8]](cp)
 
 
-fn inet_ntoa(addr: in_addr) -> DTypePointer[DType.uint8]:
+fn inet_ntoa(addr: in_addr) -> UnsafePointer[UInt8]:
     """Libc POSIX `inet_ntoa` function
     Reference: https://man7.org/linux/man-pages/man3/inet_addr.3p.html
     Fn signature: char *inet_ntoa(struct in_addr in).
@@ -528,7 +524,7 @@ fn inet_ntoa(addr: in_addr) -> DTypePointer[DType.uint8]:
     Args: in: A pointer to a string containing the address.
     Returns: The address in network byte order.
     """
-    return external_call["inet_ntoa", DTypePointer[DType.uint8], in_addr](addr)
+    return external_call["inet_ntoa", UnsafePointer[UInt8], in_addr](addr)
 
 
 fn socket(domain: c_int, type: c_int, protocol: c_int) -> c_int:
@@ -548,7 +544,7 @@ fn setsockopt(
     socket: c_int,
     level: c_int,
     option_name: c_int,
-    option_value: DTypePointer[DType.uint8],
+    option_value: UnsafePointer[UInt8],
     option_len: socklen_t,
 ) -> c_int:
     """Libc POSIX `setsockopt` function
@@ -569,7 +565,7 @@ fn setsockopt(
         c_int,
         c_int,
         c_int,
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
         socklen_t,  # Args
     ](socket, level, option_name, option_value, option_len)
 
@@ -578,7 +574,7 @@ fn getsockopt(
     socket: c_int,
     level: c_int,
     option_name: c_int,
-    option_value: DTypePointer[DType.uint8],
+    option_value: UnsafePointer[UInt8],
     option_len: UnsafePointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockopt` function
@@ -598,7 +594,7 @@ fn getsockopt(
         c_int,
         c_int,
         c_int,
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
         UnsafePointer[socklen_t],  # Args
     ](socket, level, option_name, option_value, option_len)
 
@@ -711,7 +707,7 @@ fn connect(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen
 
 fn recv(
     socket: c_int,
-    buffer: DTypePointer[DType.uint8],
+    buffer: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
 ) -> c_ssize_t:
@@ -723,7 +719,7 @@ fn recv(
         "recv",
         c_ssize_t,  # FnName, RetType
         c_int,
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
         c_size_t,
         c_int,  # Args
     ](socket, buffer, length, flags)
@@ -731,7 +727,7 @@ fn recv(
 
 fn send(
     socket: c_int,
-    buffer: DTypePointer[DType.uint8],
+    buffer: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
 ) -> c_ssize_t:
@@ -749,7 +745,7 @@ fn send(
         "send",
         c_ssize_t,  # FnName, RetType
         c_int,
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
         c_size_t,
         c_int,  # Args
     ](socket, buffer, length, flags)
@@ -768,8 +764,8 @@ fn shutdown(socket: c_int, how: c_int) -> c_int:
 
 
 fn getaddrinfo(
-    nodename: DTypePointer[DType.uint8],
-    servname: DTypePointer[DType.uint8],
+    nodename: UnsafePointer[UInt8],
+    servname: UnsafePointer[UInt8],
     hints: UnsafePointer[addrinfo],
     res: UnsafePointer[UnsafePointer[addrinfo]],
 ) -> c_int:
@@ -780,16 +776,16 @@ fn getaddrinfo(
     return external_call[
         "getaddrinfo",
         c_int,  # FnName, RetType
-        DTypePointer[DType.uint8],
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
+        UnsafePointer[UInt8],
         UnsafePointer[addrinfo],  # Args
         UnsafePointer[UnsafePointer[addrinfo]],  # Args
     ](nodename, servname, hints, res)
 
 
 fn getaddrinfo_unix(
-    nodename: DTypePointer[DType.uint8],
-    servname: DTypePointer[DType.uint8],
+    nodename: UnsafePointer[UInt8],
+    servname: UnsafePointer[UInt8],
     hints: UnsafePointer[addrinfo_unix],
     res: UnsafePointer[UnsafePointer[addrinfo_unix]],
 ) -> c_int:
@@ -800,14 +796,14 @@ fn getaddrinfo_unix(
     return external_call[
         "getaddrinfo",
         c_int,  # FnName, RetType
-        DTypePointer[DType.uint8],
-        DTypePointer[DType.uint8],
+        UnsafePointer[UInt8],
+        UnsafePointer[UInt8],
         UnsafePointer[addrinfo_unix],  # Args
         UnsafePointer[UnsafePointer[addrinfo_unix]],  # Args
     ](nodename, servname, hints, res)
 
 
-fn gai_strerror(ecode: c_int) -> DTypePointer[DType.uint8]:
+fn gai_strerror(ecode: c_int) -> UnsafePointer[UInt8]:
     """Libc POSIX `gai_strerror` function
     Reference: https://man7.org/linux/man-pages/man3/gai_strerror.3p.html
     Fn signature: const char *gai_strerror(int ecode).
@@ -815,7 +811,7 @@ fn gai_strerror(ecode: c_int) -> DTypePointer[DType.uint8]:
     Args: ecode: The error code.
     Returns: A pointer to a string describing the error.
     """
-    return external_call["gai_strerror", DTypePointer[DType.uint8], c_int](ecode)  # FnName, RetType  # Args
+    return external_call["gai_strerror", UnsafePointer[UInt8], c_int](ecode)  # FnName, RetType  # Args
 
 
 # fn inet_pton(address_family: Int, address: String) -> Int:
@@ -823,6 +819,6 @@ fn gai_strerror(ecode: c_int) -> DTypePointer[DType.uint8]:
 #     if address_family == AF_INET6:
 #         ip_buf_size = 16
 
-#     var ip_buf = DTypePointer[DType.uint8].alloc(ip_buf_size)
+#     var ip_buf = UnsafePointer[UInt8].alloc(ip_buf_size)
 #     var conv_status = inet_pton(rebind[c_int](address_family), to_char_ptr(address), ip_buf)
 #     return int(ip_buf.bitcast[c_uint]().load())

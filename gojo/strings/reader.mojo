@@ -1,5 +1,5 @@
 import ..io
-from ..builtins import Byte, copy, panic
+from ..builtins import copy, panic
 
 
 @value
@@ -20,22 +20,25 @@ struct Reader(
     var read_pos: Int  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
 
+    @always_inline
     fn __init__(inout self, string: String = ""):
         self.string = string
         self.read_pos = 0
         self.prev_rune = -1
 
+    @always_inline
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the string.
 
         Returns:
             int: the number of bytes of the unread portion of the string.
         """
-        if self.read_pos >= Int(len(self.string)):
+        if self.read_pos >= len(self.string):
             return 0
 
-        return int(Int(len(self.string)) - self.read_pos)
+        return len(self.string) - self.read_pos
 
+    @always_inline
     fn size(self) -> Int:
         """Returns the original length of the underlying string.
         size is the number of bytes available for reading via [Reader.read_at].
@@ -45,33 +48,33 @@ struct Reader(
         Returns:
             The original length of the underlying string.
         """
-        return Int(len(self.string))
+        return len(self.string)
 
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
-        """Reads from the underlying string into the provided List[Byte] object.
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Reads from the underlying string into the provided List[UInt8] object.
         Implements the [io.Reader] trait.
 
         Args:
-            dest: The destination List[Byte] object to read into.
+            dest: The destination List[UInt8] object to read into.
 
         Returns:
             The number of bytes read into dest.
         """
-        if self.read_pos >= Int(len(self.string)):
+        if self.read_pos >= len(self.string):
             return 0, Error(io.EOF)
 
         self.prev_rune = -1
-        var bytes_written = copy(dest, self.string[int(self.read_pos) :].as_bytes())
-        self.read_pos += Int(bytes_written)
+        var bytes_written = copy(dest, self.string.as_bytes_slice()[self.read_pos :])
+        self.read_pos += bytes_written
         return bytes_written, Error()
 
-    fn read_at(self, inout dest: List[Byte], off: Int) -> (Int, Error):
-        """Reads from the Reader into the dest List[Byte] starting at the offset off.
+    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
+        """Reads from the Reader into the dest List[UInt8] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
-        Implements the [io.ReaderAt] trait.
 
         Args:
-            dest: The destination List[Byte] object to read into.
+            dest: The destination List[UInt8] object to read into.
             off: The byte offset to start reading from.
 
         Returns:
@@ -81,35 +84,30 @@ struct Reader(
         if off < 0:
             return 0, Error("strings.Reader.read_at: negative offset")
 
-        if off >= Int(len(self.string)):
+        if off >= len(self.string):
             return 0, Error(io.EOF)
 
         var error = Error()
-        var copied_elements_count = copy(dest, self.string[int(off) :].as_bytes())
+        var copied_elements_count = copy(dest, self.string.as_bytes_slice()[off:])
         if copied_elements_count < len(dest):
             error = Error(io.EOF)
 
         return copied_elements_count, error
 
-    fn read_byte(inout self) -> (Byte, Error):
-        """Reads the next byte from the underlying string.
-        Implements the [io.ByteReader] trait.
-
-        Returns:
-            The next byte from the underlying string.
-        """
+    @always_inline
+    fn read_byte(inout self) -> (UInt8, Error):
+        """Reads the next byte from the underlying string."""
         self.prev_rune = -1
-        if self.read_pos >= Int(len(self.string)):
-            return Byte(0), Error(io.EOF)
+        if self.read_pos >= len(self.string):
+            return UInt8(0), Error(io.EOF)
 
-        var b = self.string[int(self.read_pos)]
+        var b = self.string.as_bytes_slice()[self.read_pos]
         self.read_pos += 1
-        return Byte(ord(b)), Error()
+        return UInt8(b), Error()
 
+    @always_inline
     fn unread_byte(inout self) -> Error:
-        """Unreads the last byte read. Only the most recent byte read can be unread.
-        Implements the [io.ByteScanner] trait.
-        """
+        """Unreads the last byte read. Only the most recent byte read can be unread."""
         if self.read_pos <= 0:
             return Error("strings.Reader.unread_byte: at beginning of string")
 
@@ -147,7 +145,6 @@ struct Reader(
 
     fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
         """Seeks to a new position in the underlying string. The next read will start from that position.
-        Implements the [io.Seeker] trait.
 
         Args:
             offset: The offset to seek to.
@@ -185,23 +182,23 @@ struct Reader(
             The number of bytes written to the writer.
         """
         self.prev_rune = -1
-        if self.read_pos >= Int(len(self.string)):
-            return Int(0), Error()
+        var err = Error()
+        if self.read_pos >= len(self.string):
+            return Int(0), err
 
-        var chunk_to_write = self.string[int(self.read_pos) :]
+        var chunk_to_write = self.string.as_bytes_slice()[self.read_pos :]
         var bytes_written: Int
-        var err: Error
-        bytes_written, err = io.write_string(writer, chunk_to_write)
+        bytes_written, err = writer.write(chunk_to_write)
         if bytes_written > len(chunk_to_write):
             panic("strings.Reader.write_to: invalid write_string count")
 
-        self.read_pos += Int(bytes_written)
+        self.read_pos += bytes_written
         if bytes_written != len(chunk_to_write) and not err:
             err = Error(io.ERR_SHORT_WRITE)
 
-        return Int(bytes_written), err
+        return bytes_written, err
 
-    # TODO: How can I differentiate between the two write_to methods when the writer implements both traits?
+    # # TODO: How can I differentiate between the two write_to methods when the writer implements both traits?
     # fn write_to[W: io.StringWriter](inout self, inout writer: W) raises -> Int:
     #     """Writes the remaining portion of the underlying string to the provided writer.
     #     Implements the [io.WriterTo] trait.
@@ -227,6 +224,7 @@ struct Reader(
 
     #     return Int(bytes_written)
 
+    @always_inline
     fn reset(inout self, string: String):
         """Resets the [Reader] to be reading from the beginning of the provided string.
 

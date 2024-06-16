@@ -169,7 +169,6 @@ struct Reader(
     @always_inline
     fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
         """Moves the read position to the specified offset from the specified whence.
-        Implements the [io.Seeker] Interface.
 
         Args:
             offset: The offset to move to.
@@ -206,7 +205,7 @@ struct Reader(
         """
         self.prev_rune = -1
         if self.index >= self.size:
-            return Int(0), Error()
+            return 0, Error()
 
         var bytes = self.as_bytes_slice()[self.index : self.size]
         var write_count: Int
@@ -217,9 +216,9 @@ struct Reader(
 
         self.index += write_count
         if write_count != len(bytes):
-            return Int(write_count), Error(io.ERR_SHORT_WRITE)
+            return write_count, Error(io.ERR_SHORT_WRITE)
 
-        return Int(write_count), Error()
+        return write_count, Error()
 
     @always_inline
     fn reset(inout self, owned buffer: List[Byte]):
