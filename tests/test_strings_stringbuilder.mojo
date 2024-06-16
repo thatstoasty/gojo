@@ -1,6 +1,5 @@
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder
-from gojo.builtins import Byte
 
 
 fn test_write_string() raises:

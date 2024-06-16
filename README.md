@@ -25,11 +25,13 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
 - `bytes`
-  - `Buffer`: Buffer backed by `DTypePointer[DType.uint8]`.
-  - `Reader`: Reader backed by `DTypePointer[DType.uint8]`.
+  - `Buffer`: Buffer backed by `UnsafePointer[UInt8]`.
+  - `Reader`: Reader backed by `UnsafePointer[UInt8]`.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
+  - `FileWrapper`: `FileHandle` Wrapper Reader/Writer
+  - `STDOUT/STDERR` Writer (leveraging `libc`).
 - `strings`
   - `StringBuilder`: String builder for fast string concatenation.
   - `Reader`: String reader.
@@ -42,51 +44,21 @@ All of these packages are partially implemented and do not support unicode chara
   - `FileDescriptor`: File Descriptor wrapper that implements `io.Writer`, `io.Reader`, and `io.Closer`.
   - `Dial` and `Listen` interfaces (for TCP only atm).
 
-### Goodies
-
-- `FileWrapper`: `FileHandle` Wrapper Reader/Writer
-- `STDOUT/STDERR` Writer (leveraging `libc`).
-
 ## Usage
 
 Some basic usage examples. These examples may fall out of sync, so please check out the tests for usage of the various packages!
 
 You can copy over the modules you want to use from the `gojo` or `goodies` directories, or you can build the package by running:
 For `gojo`: `mojo package gojo -I .`
-For `goodies`: `mojo package goodies -I .`
-
-`builtins.Bytes`
-
-```py
-from tests.wrapper import MojoTest
-from gojo.builtins.bytes import Bytes
-
-
-fn test_bytes() raises:
-    var test = MojoTest("Testing builtins.Bytes extend, append, and iadd")
-    var bytes = Bytes("hello")
-    test.assert_equal(str(bytes), "hello")
-
-    bytes.append(102)
-    test.assert_equal(str(bytes), "hellof")
-
-    bytes += String(" World").as_bytes()
-    test.assert_equal(str(bytes), "hellof World")
-
-    var bytes2 = List[UInt8]()
-    bytes2.append(104)
-    bytes.extend(bytes2)
-    test.assert_equal(str(bytes), "hellof Worldh")
-```
 
 `bufio.Scanner`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins.bytes import Bytes
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
 from gojo.io import FileWrapper
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
+
 
 fn test_scan_words() raises:
     var test = MojoTest("Testing scan_words")
@@ -94,10 +66,10 @@ fn test_scan_words() raises:
     # Create a reader from a string buffer
     var s: String = "Testing this string!"
     var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
+    var r = Reader(buf^)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r ^)
+    var scanner = Scanner(r^)
     scanner.split = scan_words
 
     var expected_results = List[String]()
@@ -109,198 +81,133 @@ fn test_scan_words() raises:
     while scanner.scan():
         test.assert_equal(scanner.current_token(), expected_results[i])
         i += 1
-
-
-fn test_scan_lines() raises:
-    var test = MojoTest("Testing scan_lines")
-
-    # Create a reader from a string buffer
-    var s: String = "Testing\nthis\nstring!"
-    var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
-
-    # Create a scanner from the reader
-    var scanner = Scanner(r ^)
-
-    var expected_results = List[String]()
-    expected_results.append("Testing")
-    expected_results.append("this")
-    expected_results.append("string!")
-    var i = 0
-
-    while scanner.scan():
-        test.assert_equal(scanner.current_token(), expected_results[i])
-        i += 1
-
-
-fn test_scan_bytes() raises:
-    var test = MojoTest("Testing scan_bytes")
-
-    # Create a reader from a string buffer
-    var s: String = "abc"
-    var buf = buffer.new_buffer(s)
-    var r = Reader(buf)
-
-    # Create a scanner from the reader
-    var scanner = Scanner(r ^)
-    scanner.split = scan_bytes
-
-    var expected_results = List[String]()
-    expected_results.append("a")
-    expected_results.append("b")
-    expected_results.append("c")
-    var i = 0
-
-    while scanner.scan():
-        test.assert_equal(scanner.current_token_as_bytes(), Bytes(expected_results[i]))
-        i += 1
-
-
-fn test_file_wrapper_scanner() raises:
-    var test = MojoTest("testing io.FileWrapper and bufio.Scanner")
-    var file = FileWrapper("test_multiple_lines.txt", "r")
-
-    # Create a scanner from the reader
-    var scanner = Scanner(file ^)
-    var expected_results = List[String]()
-    expected_results.append("11111")
-    expected_results.append("22222")
-    expected_results.append("33333")
-    expected_results.append("44444")
-    expected_results.append("55555")
-    var i = 0
-
-    while scanner.scan():
-        test.assert_equal(scanner.current_token(), expected_results[i])
-        i += 1
 ```
 
 `bufio.Reader`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
-from gojo.builtins.bytes import Bytes
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
-from gojo.io import FileWrapper
+from gojo.builtins.bytes import to_string
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
+from gojo.io import read_all, FileWrapper
+from gojo.strings import StringBuilder
 
 
-fn test_reader() raises:
+fn test_read():
     var test = MojoTest("Testing bufio.Reader.read")
 
     # Create a reader from a string buffer
     var s: String = "Hello"
     var buf = buffer.new_buffer(s)
-    var reader = Reader(buf)
+    var reader = Reader(buf^)
 
-    # Read the buffer into Bytes and then add more to Bytes
-    var dest = Bytes(256)
+    # Read the buffer into List[UInt8] and then add more to List[UInt8]
+    var dest = List[UInt8](capacity=256)
     _ = reader.read(dest)
-    dest.extend(" World!")
+    dest.extend(String(" World!").as_bytes())
 
-    test.assert_equal(dest, "Hello World!")
+    test.assert_equal(to_string(dest), "Hello World!")
 ```
 
 `bytes.Buffer`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from gojo.builtins.bytes import Bytes
-from gojo.bytes.buffer import new_buffer, Buffer
+from gojo.bytes import new_buffer
+from gojo.bytes.buffer import Buffer
 
 
 fn test_read() raises:
-    var test = MojoTest("Testing read")
+    var test = MojoTest("Testing bytes.Buffer.read")
     var s: String = "Hello World!"
     var buf = new_buffer(s)
-    var dest = Bytes(256)
+    var dest = List[UInt8](capacity=16)
     _ = buf.read(dest)
-    test.assert_equal(str(dest), s)
+    dest.append(0)
+    test.assert_equal(String(dest), s)
 
 
 fn test_write() raises:
-    var test = MojoTest("Testing write")
-    var b = Bytes(256)
-    var buf = new_buffer(b ^)
-    _ = buf.write(Bytes("Hello World!"))
+    var test = MojoTest("Testing bytes.Buffer.write")
+    var b = List[UInt8](capacity=16)
+    var buf = new_buffer(b^)
+    _ = buf.write(String("Hello World!").as_bytes_slice())
     test.assert_equal(str(buf), String("Hello World!"))
-
-    print("Testing write_string")
-    _ = buf.write_string("\nGoodbye World!")
-    test.assert_equal(str(buf), String("Hello World!\nGoodbye World!"))
-
-    print("Testing write_byte")
-    _ = buf.write_byte(0x41)
-    test.assert_equal(str(buf), String("Hello World!\nGoodbye World!A"))
 ```
 
 `bytes.Reader`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from gojo.builtins.bytes import Bytes
-from gojo.bytes.buffer import new_buffer, new_buffer, Buffer
+from gojo.bytes import reader, buffer
+import gojo.io
 
 
-fn test_reader() raises:
-    var test = MojoTest("Testing bytes.Reader")
+fn test_read() raises:
+    var test = MojoTest("Testing bytes.Reader.read")
+    var reader = reader.new_reader("0123456789")
+    var dest = List[UInt8](capacity=16)
+    _ = reader.read(dest)
+    dest.append(0)
+    test.assert_equal(String(dest), "0123456789")
 
-    # Create a new reader from string s. It is converted to Bytes upon init.
-    var s: String = "Hello World!"
-    var buf = new_reader(s)
+    # Test negative seek
+    alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
+    var position: Int
+    var err: Error
+    position, err = reader.seek(-1, io.SEEK_START)
 
-    # Read the contents of reader into dest
-    var dest = Bytes()
-    _ = buf.read(dest)
-    test.assert_equal(str(dest), s)
+    if not err:
+        raise Error("Expected error not raised while testing negative seek.")
+
+    if str(err) != NEGATIVE_POSITION_ERROR:
+        raise err
+
+    test.assert_equal(str(err), NEGATIVE_POSITION_ERROR)
 ```
 
-`goodies.FileWrapper`
+`io.FileWrapper`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from gojo.io.reader import Reader
-from goodies import FileWrapper
-from gojo.builtins import Bytes
+from gojo.io import read_all, FileWrapper
 
 
-fn test_file_wrapper() raises:
-    var test = MojoTest("Testing io.FileWrapper")
-    var file = FileWrapper("test.txt", "r")
-    var dest = Bytes(1200)
+fn test_read() raises:
+    var test = MojoTest("Testing FileWrapper.read")
+    var file = FileWrapper("tests/data/test.txt", "r")
+    var dest = List[UInt8](capacity=16)
     _ = file.read(dest)
-    test.assert_equal(String(dest), String(Bytes("12345")))
+    dest.append(0)
+    test.assert_equal(String(dest), "12345")
 ```
 
-`goodies.STDWriter`
+`io.STDWriter`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from goodies import STDWriter
-from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
-from gojo.builtins import Bytes
+from gojo.syscall import FD
+from gojo.io import STDWriter
 
 
 fn test_writer() raises:
-    var test = MojoTest("Testing io.STDWriter")
-    var writer = STDWriter(int(FD_STDOUT))
+    var test = MojoTest("Testing STDWriter.write")
+    var writer = STDWriter[FD.STDOUT]()
     _ = writer.write_string("")
 ```
 
 `fmt.sprintf`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from gojo.fmt import sprintf
+from gojo.fmt import sprintf, printf
 
 
 fn test_sprintf() raises:
     var test = MojoTest("Testing sprintf")
     var s = sprintf(
-        (
-            "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t"
-            " that I like Mojo!"
-        ),
+        "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),
         29,
         Float64(29.5),
@@ -308,59 +215,43 @@ fn test_sprintf() raises:
     )
     test.assert_equal(
         s,
-        (
-            "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It"
-            " is True that I like Mojo!"
-        ),
+        "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It is True that I like Mojo!",
     )
+
+    s = sprintf("This is a number: %d. In base 16: %x. In base 16 upper: %X.", 42, 42, 42)
+    test.assert_equal(s, "This is a number: 42. In base 16: 2a. In base 16 upper: 2A.")
+
+    s = sprintf("Hello %s", String("world").as_bytes())
+    test.assert_equal(s, "Hello world")
 ```
 
 `strings.Reader`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder, Reader, new_reader
-from gojo.builtins import Bytes
 import gojo.io
 
-fn test_string_reader() raises:
-    var test = MojoTest("Testing strings.Reader")
+
+fn test_read() raises:
+    var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
 
     # Test reading from the reader.
-    var buffer = Bytes()
+    var buffer = List[UInt8](capacity=16)
     var bytes_read = reader.read(buffer)
+    buffer.append(0)
 
-    test.assert_equal(bytes_read.value, len(example))
-    test.assert_equal(str(buffer), "Hello, World!")
-
-    # Seek to the beginning of the reader.
-    var position = reader.seek(0, io.SEEK_START)
-    test.assert_equal(position.value, 0)
-
-    # Read the first byte from the reader.
-    buffer = Bytes()
-    var byte = reader.read_byte()
-    test.assert_equal(byte.value, 72)
-
-    # Unread the first byte from the reader. Remaining bytes to be read should be the same as the length of the example string.
-    reader.unread_byte()
-    test.assert_equal(len(reader), len(example))
-
-    # Write from the string reader to a StringBuilder.
-    var builder = StringBuilder()
-    _ = reader.write_to(builder)
-    test.assert_equal(str(builder), example)
+    test.assert_equal(bytes_read[0], len(example))
+    test.assert_equal(String(buffer), "Hello, World!")
 ```
 
 `strings.StringBuilder`
 
-```py
+```mojo
 from tests.wrapper import MojoTest
-from gojo.strings import StringBuilder, Reader, new_reader
-from gojo.builtins import Bytes
-import gojo.io
+from gojo.strings import StringBuilder
 
 fn test_string_builder() raises:
     var test = MojoTest("Testing strings.StringBuilder")
@@ -379,11 +270,6 @@ fn test_string_builder() raises:
         ),
     )
 
-    # Create a string from the builder by writing bytes to it. In this case, we throw away the Result response and don't check if has an error.
-    builder = StringBuilder()
-    _ = builder.write(Bytes("Hello"))
-    _ = builder.write_byte(32)
-    test.assert_equal(str(builder), "Hello ")
 ```
 
 ## Sharp Edges & Bugs

@@ -129,7 +129,7 @@ trait Seeker(Movable):
     is implementation-dependent.
     """
 
-    fn seek(inout self, offset: Int64, whence: Int) -> (Int64, Error):
+    fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
         ...
 
 
@@ -174,7 +174,7 @@ trait ReaderFrom:
 
     The [copy] function uses [ReaderFrom] if available."""
 
-    fn read_from[R: Reader](inout self, inout reader: R) -> (Int64, Error):
+    fn read_from[R: Reader](inout self, inout reader: R) -> (Int, Error):
         ...
 
 
@@ -191,7 +191,7 @@ trait WriterTo:
 
     The copy function uses WriterTo if available."""
 
-    fn write_to[W: Writer](inout self, inout writer: W) -> (Int64, Error):
+    fn write_to[W: Writer](inout self, inout writer: W) -> (Int, Error):
         ...
 
 
@@ -227,7 +227,7 @@ trait ReaderAt:
 
     Implementations must not retain p."""
 
-    fn read_at(self, inout dest: List[Byte], off: Int64) -> (Int, Error):
+    fn read_at(self, inout dest: List[Byte], off: Int) -> (Int, Error):
         ...
 
 
@@ -248,7 +248,7 @@ trait WriterAt:
 
     Implementations must not retain p."""
 
-    fn write_at(self, src: Span[Byte], off: Int64) -> (Int, Error):
+    fn write_at(self, src: Span[Byte], off: Int) -> (Int, Error):
         ...
 
 
