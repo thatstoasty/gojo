@@ -485,5 +485,4 @@ fn new_buffer(owned s: String) -> Buffer:
     Returns:
         A new [Buffer] initialized with the provided string.
     """
-    var bytes_buffer = List[Byte](s.as_bytes())
-    return Buffer(bytes_buffer^)
+    return Buffer(s.as_bytes())

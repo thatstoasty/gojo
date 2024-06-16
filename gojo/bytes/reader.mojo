@@ -57,6 +57,11 @@ struct Reader(
         return self.size - int(self.index)
 
     @always_inline
+    fn __del__(owned self):
+        if self.data:
+            self.data.free()
+
+    @always_inline
     fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, self.is_mutable, self.lifetime](unsafe_ptr=self[].data, len=self[].size)

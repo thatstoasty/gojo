@@ -1,5 +1,4 @@
-from collections.optional import Optional
-from ..builtins import cap, copy, Byte, panic
+from ..builtins import copy, Byte, panic
 from .traits import ERR_UNEXPECTED_EOF
 
 alias BUFFER_SIZE = 4096
