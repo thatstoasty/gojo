@@ -27,6 +27,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     var last_rune_size: Int  # size of last rune read for unread_rune; -1 means invalid
     var err: Error
 
+    @always_inline
     fn __init__(
         inout self,
         owned reader: R,
@@ -47,6 +48,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_rune_size = last_rune_size
         self.err = Error()
 
+    @always_inline
     fn __moveinit__(inout self, owned existing: Self):
         self.buf = InlineList[UInt8, io.BUFFER_SIZE]()
         for element in existing.buf:
@@ -60,6 +62,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.err = existing.err^
 
     # size returns the size of the underlying buffer in bytes.
+    @always_inline
     fn __len__(self) -> Int:
         return len(self.buf)
 
@@ -85,6 +88,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         """Returns the internal buffer data as a Span[UInt8]."""
         return Span[UInt8, True, __lifetime_of(self)](array=Reference(self.buf._array))
 
+    @always_inline
     fn reset(inout self, buf: InlineList[UInt8, io.BUFFER_SIZE], owned reader: R):
         """Discards any buffered data, resets all state, and switches
         the buffered reader to read from r.
@@ -149,6 +153,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         self.err = Error(io.ERR_NO_PROGRESS)
 
+    @always_inline
     fn read_error(inout self) -> Error:
         if not self.err:
             return Error()
@@ -284,6 +289,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_rune_size = -1
         return bytes_read, Error()
 
+    @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
         """Reads and returns a single byte from the internal buffer. If no byte is available, returns an error."""
         self.last_rune_size = -1
@@ -297,6 +303,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_byte = int(c)
         return c, Error()
 
+    @always_inline
     fn unread_byte(inout self) -> Error:
         """Unreads the last byte. Only the most recently read byte can be unread.
 
@@ -352,6 +359,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     #     self.last_rune_size = -1
     #     return nil
 
+    @always_inline
     fn buffered(self) -> Int:
         """Returns the number of bytes that can be read from the current buffer.
 
@@ -674,6 +682,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
     var writer: W
     var err: Error
 
+    @always_inline
     fn __init__(
         inout self,
         owned writer: W,
@@ -687,6 +696,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         self.writer = writer^
         self.err = Error()
 
+    @always_inline
     fn __moveinit__(inout self, owned existing: Self):
         self.buf = InlineList[UInt8, size]()
         for element in existing.buf:
@@ -695,6 +705,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         self.writer = existing.writer^
         self.err = existing.err^
 
+    @always_inline
     fn __len__(self) -> Int:
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
@@ -704,6 +715,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         """Returns the internal buffer data as a Span[UInt8]."""
         return Span[UInt8, True, __lifetime_of(self)](array=Reference(self.buf._array))
 
+    @always_inline
     fn reset(inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
         resets b to write its output to w.
@@ -762,10 +774,12 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         self.bytes_written = 0
         return err
 
+    @always_inline
     fn available(self) -> Int:
         """Returns how many bytes are unused in the buffer."""
         return self.buf.capacity - len(self.buf)
 
+    @always_inline
     fn buffered(self) -> Int:
         """Returns the number of bytes that have been written into the current buffer.
 
@@ -774,7 +788,6 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         """
         return self.bytes_written
 
-    # TODO: Something broken about multiple writes
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes the contents of src into the buffer.
         It returns the number of bytes written.
@@ -829,6 +842,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
         total_bytes_written += n
         return total_bytes_written, err
 
+    @always_inline
     fn write_byte(inout self, src: UInt8) -> (Int, Error):
         """Writes a single byte to the internal buffer.
 
@@ -875,6 +889,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](Sized, io.Writer, io.Byt
     #     self.bytes_written += size
     #     return size, nil
 
+    @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):
         """Writes a string to the internal buffer.
         It returns the number of bytes written.
