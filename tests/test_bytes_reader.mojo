@@ -1,5 +1,4 @@
 from tests.wrapper import MojoTest
-from gojo.builtins import Byte
 from gojo.bytes import reader, buffer
 import gojo.io
 
@@ -7,14 +6,14 @@ import gojo.io
 fn test_read() raises:
     var test = MojoTest("Testing bytes.Reader.read")
     var reader = reader.new_reader("0123456789")
-    var dest = List[Byte](capacity=128)
+    var dest = List[UInt8](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "0123456789")
 
     # Test negative seek
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
-    var position: Int64
+    var position: Int
     var err: Error
     position, err = reader.seek(-1, io.SEEK_START)
 
@@ -31,7 +30,7 @@ fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
     var reader = reader.new_reader("0123456789")
     _ = reader.seek(123456789, io.SEEK_START)
-    var dest = List[Byte](capacity=128)
+    var dest = List[UInt8](capacity=16)
 
     var bytes_read: Int
     var err: Error
@@ -49,12 +48,12 @@ fn test_read_at() raises:
     var test = MojoTest("Testing bytes.Reader.read_at")
     var reader = reader.new_reader("0123456789")
 
-    var dest = List[Byte](capacity=128)
+    var dest = List[UInt8](capacity=16)
     var pos = reader.read_at(dest, 0)
     dest.append(0)
     test.assert_equal(String(dest), "0123456789")
 
-    dest = List[Byte](capacity=128)
+    dest = List[UInt8](capacity=16)
     pos = reader.read_at(dest, 1)
     dest.append(0)
     test.assert_equal(String(dest), "123456789")
@@ -65,21 +64,21 @@ fn test_seek() raises:
     var reader = reader.new_reader("0123456789")
     var pos = reader.seek(5, io.SEEK_START)
 
-    var dest = List[Byte](capacity=16)
+    var dest = List[UInt8](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "56789")
 
     # Test SEEK_END relative seek
     pos = reader.seek(-2, io.SEEK_END)
-    dest = List[Byte](capacity=16)
+    dest = List[UInt8](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "89")
 
     # Test SEEK_CURRENT relative seek (should be at the end of the reader, ie [:-4])
     pos = reader.seek(-4, io.SEEK_CURRENT)
-    dest = List[Byte](capacity=16)
+    dest = List[UInt8](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "6789")
@@ -113,8 +112,7 @@ fn test_read_all() raises:
 
 fn test_read_and_unread_byte() raises:
     var test = MojoTest("Testing bytes.Reader.read_byte and bytes.Reader.unread_byte")
-    var s: String = "0123456789"
-    var reader = reader.new_reader(s)
+    var reader = reader.new_reader("0123456789")
 
     # Read the first byte from the reader.
     var byte: UInt8
@@ -131,9 +129,8 @@ fn test_read_and_unread_byte() raises:
 
 
 fn test_unread_byte_at_beginning() raises:
-    var test = MojoTest("Testing bytes.Reader.read_byte and bytes.Reader.unread_byte")
-    var s: String = "0123456789"
-    var reader = reader.new_reader(s)
+    var test = MojoTest("Testing bytes.Reader.unread_byte before reading any bytes")
+    var reader = reader.new_reader("0123456789")
 
     alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of slice"
 

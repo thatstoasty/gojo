@@ -1,6 +1,4 @@
-from memory.arc import Arc
 import ..io
-from ..builtins import Byte
 from .socket import Socket
 from .address import Addr, TCPAddr
 
@@ -70,13 +68,16 @@ struct Connection(Conn):
 
     var fd: Socket
 
+    @always_inline
     fn __init__(inout self, owned socket: Socket):
         self.fd = socket^
 
+    @always_inline
     fn __moveinit__(inout self, owned existing: Self):
         self.fd = existing.fd^
 
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -87,7 +88,8 @@ struct Connection(Conn):
         """
         return self.fd.read(dest)
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    @always_inline
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -98,6 +100,7 @@ struct Connection(Conn):
         """
         return self.fd.write(src)
 
+    @always_inline
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
 
@@ -106,12 +109,14 @@ struct Connection(Conn):
         """
         return self.fd.close()
 
+    @always_inline
     fn local_address(self) -> TCPAddr:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
         """
         return self.fd.local_address
 
+    @always_inline
     fn remote_address(self) -> TCPAddr:
         """Returns the remote network address.
         The Addr returned is shared by all invocations of remote_address, so do not modify it.

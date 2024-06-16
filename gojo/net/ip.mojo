@@ -22,8 +22,6 @@ from ..syscall import (
     getaddrinfo,
     getaddrinfo_unix,
     gai_strerror,
-    to_char_ptr,
-    c_charptr_to_string,
 )
 
 alias AddrInfo = Variant[addrinfo, addrinfo_unix]
@@ -33,16 +31,15 @@ fn get_addr_info(host: String) raises -> AddrInfo:
     if os_is_macos():
         var servinfo = UnsafePointer[addrinfo]().alloc(1)
         servinfo[0] = addrinfo()
-        var hints = addrinfo()
-        hints.ai_family = AddressFamily.AF_INET
-        hints.ai_socktype = SocketType.SOCK_STREAM
-        hints.ai_flags = AddressInformation.AI_PASSIVE
-
-        var host_ptr = to_char_ptr(host)
+        var hints = addrinfo(
+            ai_family=AddressFamily.AF_INET,
+            ai_socktype=SocketType.SOCK_STREAM,
+            ai_flags=AddressInformation.AI_PASSIVE,
+        )
 
         var status = getaddrinfo(
-            host_ptr,
-            DTypePointer[DType.uint8](),
+            host.unsafe_uint8_ptr(),
+            UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
         )
@@ -57,16 +54,15 @@ fn get_addr_info(host: String) raises -> AddrInfo:
     elif os_is_linux():
         var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
         servinfo[0] = addrinfo_unix()
-        var hints = addrinfo_unix()
-        hints.ai_family = AddressFamily.AF_INET
-        hints.ai_socktype = SocketType.SOCK_STREAM
-        hints.ai_flags = AddressInformation.AI_PASSIVE
-
-        var host_ptr = to_char_ptr(host)
+        var hints = addrinfo_unix(
+            ai_family=AddressFamily.AF_INET,
+            ai_socktype=SocketType.SOCK_STREAM,
+            ai_flags=AddressInformation.AI_PASSIVE,
+        )
 
         var status = getaddrinfo_unix(
-            host_ptr,
-            DTypePointer[DType.uint8](),
+            host.unsafe_uint8_ptr(),
+            UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
         )
@@ -119,12 +115,12 @@ fn convert_binary_port_to_int(port: UInt16) -> Int:
 
 
 fn convert_ip_to_binary(ip_address: String, address_family: Int) -> UInt32:
-    var ip_buffer = Pointer[c_void].alloc(4)
-    var status = inet_pton(address_family, to_char_ptr(ip_address), ip_buffer)
+    var ip_buffer = UnsafePointer[UInt8].alloc(4)
+    var status = inet_pton(address_family, ip_address.unsafe_uint8_ptr(), ip_buffer)
     if status == -1:
         print("Failed to convert IP address to binary")
 
-    return ip_buffer.bitcast[c_uint]().load()
+    return move_from_pointee(ip_buffer.bitcast[c_uint]())
 
 
 fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, address_length: UInt32) -> String:
@@ -140,18 +136,17 @@ fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, 
     """
     # It seems like the len of the buffer depends on the length of the string IP.
     # Allocating 10 works for localhost (127.0.0.1) which I suspect is 9 bytes + 1 null terminator byte. So max should be 16 (15 + 1).
-    var ip_buffer = Pointer[c_void].alloc(16)
-    var ip_address_ptr = Pointer.address_of(ip_address).bitcast[c_void]()
+    var ip_buffer = UnsafePointer[c_void].alloc(16)
+    var ip_address_ptr = UnsafePointer.address_of(ip_address).bitcast[c_void]()
     _ = inet_ntop(address_family, ip_address_ptr, ip_buffer, 16)
 
-    var string_buf = ip_buffer.bitcast[Int8]()
     var index = 0
     while True:
-        if string_buf[index] == 0:
+        if ip_buffer[index] == 0:
             break
         index += 1
 
-    return StringRef(string_buf, index)
+    return StringRef(ip_buffer, index)
 
 
 fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) -> UnsafePointer[sockaddr]:

@@ -1,10 +1,8 @@
 import ..io
-from ..builtins import Byte
 from ..syscall import (
     recv,
     send,
     close,
-    strlen,
     FileDescriptorBase,
 )
 
@@ -15,21 +13,24 @@ struct FileDescriptor(FileDescriptorBase):
     var fd: Int
     var is_closed: Bool
 
-    # This takes ownership of a POSIX file descriptor.
-    fn __moveinit__(inout self, owned existing: Self):
-        self.fd = existing.fd
-        self.is_closed = existing.is_closed
-
+    @always_inline
     fn __init__(inout self, fd: Int):
         self.fd = fd
         self.is_closed = False
 
+    @always_inline
+    fn __moveinit__(inout self, owned existing: Self):
+        self.fd = existing.fd
+        self.is_closed = existing.is_closed
+
+    @always_inline
     fn __del__(owned self):
         if not self.is_closed:
             var err = self.close()
             if err:
                 print(str(err))
 
+    @always_inline
     fn close(inout self) -> Error:
         """Mark the file descriptor as closed."""
         var close_status = close(self.fd)
@@ -39,16 +40,12 @@ struct FileDescriptor(FileDescriptorBase):
         self.is_closed = True
         return Error()
 
-    fn dup(self) -> Self:
-        """Duplicate the file descriptor."""
-        var new_fd = external_call["dup", Int, Int](self.fd)
-        return Self(new_fd)
-
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Receive data from the file descriptor and write it to the buffer provided."""
         var bytes_received = recv(
             self.fd,
-            DTypePointer[DType.uint8](dest.unsafe_ptr()).offset(dest.size),
+            dest.unsafe_ptr() + dest.size,
             dest.capacity - dest.size,
             0,
         )
@@ -61,9 +58,15 @@ struct FileDescriptor(FileDescriptorBase):
 
         return bytes_received, Error()
 
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    @always_inline
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Write data from the buffer to the file descriptor."""
-        var bytes_sent = send(self.fd, src.unsafe_ptr(), strlen(src.unsafe_ptr()), 0)
+        return self._write(Span(src))
+
+    @always_inline
+    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+        """Write data from the buffer to the file descriptor."""
+        var bytes_sent = send(self.fd, src.unsafe_ptr(), len(src), 0)
         if bytes_sent == -1:
             return 0, Error("Failed to send message")
 
