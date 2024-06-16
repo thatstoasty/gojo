@@ -25,11 +25,13 @@ All of these packages are partially implemented and do not support unicode chara
   - `Reader`: Buffered `io.Reader`
   - `Scanner`: Scanner interface to read data via tokens.
 - `bytes`
-  - `Buffer`: Buffer backed by `DTypePointer[DType.uint8]`.
-  - `Reader`: Reader backed by `DTypePointer[DType.uint8]`.
+  - `Buffer`: Buffer backed by `UnsafePointer[UInt8]`.
+  - `Reader`: Reader backed by `UnsafePointer[UInt8]`.
 - `io`
   - Traits: `Reader`, `Writer`, `Seeker`, `Closer`, `ReadWriter`, `ReadCloser`, `WriteCloser`, `ReadWriteCloser`, `ReadSeeker`, `ReadSeekCloser`, `WriteSeeker`, `ReadWriteSeeker`, `ReaderFrom`, `WriterReadFrom`, `WriterTo`, `ReaderWriteTo`, `ReaderAt`, `WriterAt`, `ByteReader`, `ByteScanner`, `ByteWriter`, `StringWriter`
   - `Reader` and `Writer` wrapper functions.
+  - `FileWrapper`: `FileHandle` Wrapper Reader/Writer
+  - `STDOUT/STDERR` Writer (leveraging `libc`).
 - `strings`
   - `StringBuilder`: String builder for fast string concatenation.
   - `Reader`: String reader.
@@ -42,18 +44,12 @@ All of these packages are partially implemented and do not support unicode chara
   - `FileDescriptor`: File Descriptor wrapper that implements `io.Writer`, `io.Reader`, and `io.Closer`.
   - `Dial` and `Listen` interfaces (for TCP only atm).
 
-### Goodies
-
-- `FileWrapper`: `FileHandle` Wrapper Reader/Writer
-- `STDOUT/STDERR` Writer (leveraging `libc`).
-
 ## Usage
 
 Some basic usage examples. These examples may fall out of sync, so please check out the tests for usage of the various packages!
 
 You can copy over the modules you want to use from the `gojo` or `goodies` directories, or you can build the package by running:
 For `gojo`: `mojo package gojo -I .`
-For `goodies`: `mojo package goodies -I .`
 
 `builtins.Bytes`
 
@@ -255,12 +251,12 @@ fn test_reader() raises:
     test.assert_equal(str(dest), s)
 ```
 
-`goodies.FileWrapper`
+`io.FileWrapper`
 
 ```py
 from tests.wrapper import MojoTest
 from gojo.io.reader import Reader
-from goodies import FileWrapper
+from gojo.io import FileWrapper
 from gojo.builtins import Bytes
 
 
@@ -272,11 +268,11 @@ fn test_file_wrapper() raises:
     test.assert_equal(String(dest), String(Bytes("12345")))
 ```
 
-`goodies.STDWriter`
+`io.STDWriter`
 
 ```py
 from tests.wrapper import MojoTest
-from goodies import STDWriter
+from gojo.io import STDWriter
 from gojo.external.libc import FD_STDOUT, FD_STDIN, FD_STDERR
 from gojo.builtins import Bytes
 
