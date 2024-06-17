@@ -16,42 +16,12 @@ struct NetworkType:
 
 
 trait Addr(CollectionElement, Stringable):
+    fn __init__(inout self):
+        ...
+
     fn network(self) -> String:
         """Name of the network (for example, "tcp", "udp")."""
         ...
-
-
-@value
-struct TCPAddr(Addr):
-    """Addr struct representing a TCP address.
-
-    Args:
-        ip: IP address.
-        port: Port number.
-        zone: IPv6 addressing zone.
-    """
-
-    var ip: String
-    var port: Int
-    var zone: String  # IPv6 addressing zone
-
-    fn __init__(inout self):
-        self.ip = String("127.0.0.1")
-        self.port = 8000
-        self.zone = ""
-
-    fn __init__(inout self, ip: String, port: Int):
-        self.ip = ip
-        self.port = port
-        self.zone = ""
-
-    fn __str__(self) -> String:
-        if self.zone != "":
-            return join_host_port(str(self.ip) + "%" + self.zone, str(self.port))
-        return join_host_port(self.ip, str(self.port))
-
-    fn network(self) -> String:
-        return NetworkType.tcp.value
 
 
 fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:

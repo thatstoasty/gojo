@@ -1,21 +1,18 @@
 import ..io
 from .socket import Socket
-from .address import Addr, TCPAddr
+from .address import Addr
 
 alias DEFAULT_BUFFER_SIZE = 4096
 
 
 trait Conn(io.Writer, io.Reader, io.Closer):
-    fn __init__(inout self, owned socket: Socket):
-        ...
-
     """Conn is a generic stream-oriented network connection."""
 
-    fn local_address(self) -> TCPAddr:
+    fn local_address[T: Addr](self) -> T:
         """Returns the local network address, if known."""
         ...
 
-    fn remote_address(self) -> TCPAddr:
+    fn remote_address[T: Addr](self) -> T:
         """Returns the local network address, if known."""
         ...
 
@@ -110,14 +107,14 @@ struct Connection(Conn):
         return self.fd.close()
 
     @always_inline
-    fn local_address(self) -> TCPAddr:
+    fn local_address[T: Addr](self) -> T:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
         """
         return self.fd.local_address
 
     @always_inline
-    fn remote_address(self) -> TCPAddr:
+    fn remote_address[T: Addr](self) -> T:
         """Returns the remote network address.
         The Addr returned is shared by all invocations of remote_address, so do not modify it.
         """

@@ -79,7 +79,7 @@ fn test_stuff() raises:
     # socket.close()
 
 
-fn main() raises:
-    # test_stuff()
-    # test_listener()
-    test_dial()
+# fn main() raises:
+#     # test_stuff()
+#     # test_listener()
+#     test_dial()

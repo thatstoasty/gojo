@@ -1,13 +1,41 @@
 from ..syscall import SocketOptions
 from .net import Connection, Conn
-from .address import TCPAddr, NetworkType, split_host_port
+from .address import NetworkType, split_host_port, join_host_port
 from .socket import Socket
+from .listen import ListenConfig
 
 
-# Time in nanoseconds
-alias Duration = Int
-alias DEFAULT_BUFFER_SIZE = 4096
-alias DEFAULT_TCP_KEEP_ALIVE = Duration(15 * 1000 * 1000 * 1000)  # 15 seconds
+@value
+struct TCPAddr(Addr):
+    """Addr struct representing a TCP address.
+
+    Args:
+        ip: IP address.
+        port: Port number.
+        zone: IPv6 addressing zone.
+    """
+
+    var ip: String
+    var port: Int
+    var zone: String  # IPv6 addressing zone
+
+    fn __init__(inout self):
+        self.ip = String("127.0.0.1")
+        self.port = 8000
+        self.zone = ""
+
+    fn __init__(inout self, ip: String, port: Int):
+        self.ip = ip
+        self.port = port
+        self.zone = ""
+
+    fn __str__(self) -> String:
+        if self.zone != "":
+            return join_host_port(str(self.ip) + "%" + self.zone, str(self.port))
+        return join_host_port(self.ip, str(self.port))
+
+    fn network(self) -> String:
+        return NetworkType.tcp.value
 
 
 fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
@@ -26,7 +54,7 @@ fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
             var host_port = split_host_port(address)
             host = host_port.host
             port = str(host_port.port)
-            portnum = atol(port.__str__())
+            portnum = atol(str(port))
     elif network == NetworkType.ip.value or network == NetworkType.ip4.value or network == NetworkType.ip6.value:
         if address != "":
             host = address
@@ -35,34 +63,6 @@ fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
     else:
         raise Error("unsupported network type: " + network)
     return TCPAddr(host, portnum)
-
-
-# TODO: For now listener is paired with TCP until we need to support
-# more than one type of Connection or Listener
-@value
-struct ListenConfig(CollectionElement):
-    var keep_alive: Duration
-
-    fn listen(self, network: String, address: String) raises -> TCPListener:
-        var tcp_addr = resolve_internet_addr(network, address)
-        var socket = Socket(local_address=tcp_addr)
-        socket.bind(tcp_addr.ip, tcp_addr.port)
-        socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
-        socket.listen()
-        print(str("Listening on ") + str(socket.local_address))
-        return TCPListener(socket^, self, network, address)
-
-
-trait Listener(Movable):
-    # Raising here because a Result[Optional[Connection], Error] is funky.
-    fn accept(self) raises -> Connection:
-        ...
-
-    fn close(inout self) -> Error:
-        ...
-
-    fn addr(self) raises -> TCPAddr:
-        ...
 
 
 struct TCPConnection(Conn):
@@ -197,3 +197,33 @@ struct TCPListener(Listener):
 
     fn addr(self) raises -> TCPAddr:
         return resolve_internet_addr(self.network_type, self.address)
+
+
+fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "tcp", "tcp4", or "tcp6".
+    Args:
+        network: The network type.
+        remote_address: The remote address to connect to.
+
+    Returns:
+        The TCP connection.
+    """
+    # TODO: Add conversion of domain name to ip address
+    return Dialer(remote_address).dial(network, remote_address.ip + ":" + str(remote_address.port))
+
+
+fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "tcp", "tcp4", or "tcp6".
+    Args:
+        network: The network type.
+        remote_address: The remote address to connect to.
+
+    Returns:
+        The TCP connection.
+    """
+    var address = split_host_port(remote_address)
+    return Dialer(TCPAddr(address.host, address.port)).dial(network, remote_address)

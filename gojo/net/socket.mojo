@@ -1,3 +1,4 @@
+from sys.intrinsics import _type_is_eq
 from ..syscall import (
     sockaddr,
     sockaddr_in,
@@ -42,12 +43,12 @@ from .ip import (
     build_sockaddr_pointer,
     convert_binary_port_to_int,
 )
-from .address import Addr, TCPAddr, HostPort
+from .address import Addr, HostPort
 
 alias SocketClosedError = Error("Socket: Socket is already closed")
 
 
-struct Socket(FileDescriptorBase):
+struct Socket[T: Addr](FileDescriptorBase):
     """Represents a network file descriptor. Wraps around a file descriptor and provides network functions.
 
     Args:
@@ -62,15 +63,15 @@ struct Socket(FileDescriptorBase):
     var address_family: Int
     var socket_type: UInt8
     var protocol: UInt8
-    var local_address: TCPAddr
-    var remote_address: TCPAddr
+    var local_address: Optional[T]
+    var remote_address: Optional[T]
     var _closed: Bool
     var _is_connected: Bool
 
     fn __init__(
         inout self,
-        local_address: TCPAddr = TCPAddr(),
-        remote_address: TCPAddr = TCPAddr(),
+        local_address: Optional[T] = None,
+        remote_address: Optional[T] = None,
         address_family: Int = AddressFamily.AF_INET,
         socket_type: UInt8 = SocketType.SOCK_STREAM,
         protocol: UInt8 = 0,
@@ -103,8 +104,8 @@ struct Socket(FileDescriptorBase):
         address_family: Int,
         socket_type: UInt8,
         protocol: UInt8,
-        local_address: TCPAddr = TCPAddr(),
-        remote_address: TCPAddr = TCPAddr(),
+        local_address: Optional[T] = None,
+        remote_address: Optional[T] = None,
     ):
         """
         Create a new socket object when you already have a socket file descriptor. Typically through socket.accept().
@@ -114,8 +115,6 @@ struct Socket(FileDescriptorBase):
             address_family: The address family of the socket.
             socket_type: The socket type.
             protocol: The protocol.
-            local_address: Local address of socket.
-            remote_address: Remote address of port.
         """
         self.sockfd = FileDescriptor(int(fd))
         self.address_family = address_family
@@ -155,7 +154,7 @@ struct Socket(FileDescriptorBase):
                 print("Failed to close socket during deletion:", str(err))
 
     @always_inline
-    fn accept(self) raises -> Self:
+    fn accept(self) raises -> Socket[T]:
         """Accept a connection. The socket must be bound to an address and listening for connections.
         The return value is a connection where conn is a new socket object usable to send and receive data on the connection,
         and address is the address bound to the socket on the other end of the connection.
@@ -171,14 +170,17 @@ struct Socket(FileDescriptorBase):
             raise Error("Failed to accept connection")
 
         var remote = self.get_peer_name()
-        return Self(
+        var new = Socket[TCPAddr](
             new_sockfd,
             self.address_family,
             self.socket_type,
             self.protocol,
-            self.local_address,
-            TCPAddr(remote.host, remote.port),
+            # self.local_address,
+            # TCPAddr(remote.host, remote.port),
         )
+        new.local_address = self.local_address
+        new.remote_address = TCPAddr(remote.host, remote.port)
+        return new
 
     fn listen(self, backlog: Int = 0) raises:
         """Enable a server to accept connections.
