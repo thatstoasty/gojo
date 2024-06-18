@@ -45,41 +45,41 @@ fn test_listener() raises:
             raise err
 
 
-fn test_stuff() raises:
-    # TODO: context manager not working yet
-    # with Socket() as socket:
-    #     socket.bind("0.0.0.0", 8080)
+# fn test_stuff() raises:
+#     # TODO: context manager not working yet
+#     # with Socket() as socket:
+#     #     socket.bind("0.0.0.0", 8080)
 
-    var socket = Socket(protocol=ProtocolFamily.PF_UNIX)
-    socket.bind("0.0.0.0", 8080)
-    socket.connect(get_ip_address("www.example.com"), 80)
-    print("File number", socket.file_no())
-    var local = socket.get_sock_name()
-    var remote = socket.get_peer_name()
-    print("Local address", str(local), socket.local_address)
-    print("Remote address", str(remote), socket.remote_address)
-    socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
-    print("REUSE_ADDR value", socket.get_socket_option(SocketOptions.SO_REUSEADDR))
-    var timeout = 30
-    # socket.set_timeout(timeout)
-    # print(socket.get_timeout())
-    socket.shutdown()
-    print("closing")
-    var err = socket.close()
-    print("closed")
-    if err:
-        print("err returned")
-        raise err
-    # var option_value = socket.get_sock_opt(SocketOptions.SO_REUSEADDR)
-    # print(option_value)
-    # socket.connect(self.ip, self.port)
-    # socket.send(message)
-    # var response = socket.receive() # TODO: call receive until all data is fetched, receive should also just return bytes
-    # socket.shutdown()
-    # socket.close()
+#     var socket = Socket(protocol=ProtocolFamily.PF_UNIX)
+#     socket.bind("0.0.0.0", 8080)
+#     socket.connect(get_ip_address("www.example.com"), 80)
+#     print("File number", socket.file_no())
+#     var local = socket.get_sock_name()
+#     var remote = socket.get_peer_name()
+#     print("Local address", str(local), socket.local_address)
+#     print("Remote address", str(remote), socket.remote_address)
+#     socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
+#     print("REUSE_ADDR value", socket.get_socket_option(SocketOptions.SO_REUSEADDR))
+#     var timeout = 30
+#     # socket.set_timeout(timeout)
+#     # print(socket.get_timeout())
+#     socket.shutdown()
+#     print("closing")
+#     var err = socket.close()
+#     print("closed")
+#     if err:
+#         print("err returned")
+#         raise err
+#     # var option_value = socket.get_sock_opt(SocketOptions.SO_REUSEADDR)
+#     # print(option_value)
+#     # socket.connect(self.ip, self.port)
+#     # socket.send(message)
+#     # var response = socket.receive() # TODO: call receive until all data is fetched, receive should also just return bytes
+#     # socket.shutdown()
+#     # socket.close()
 
 
-# fn main() raises:
-#     # test_stuff()
-#     # test_listener()
-#     test_dial()
+fn main() raises:
+    # test_stuff()
+    # test_listener()
+    test_dial()

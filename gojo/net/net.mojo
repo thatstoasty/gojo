@@ -55,67 +55,67 @@ trait Conn(io.Writer, io.Reader, io.Closer):
     #     ...
 
 
-struct Connection(Conn):
-    """Connection is a concrete generic stream-oriented network connection.
-    It is used as the internal connection for structs like TCPConnection.
+# struct Connection():
+#     """Connection is a concrete generic stream-oriented network connection.
+#     It is used as the internal connection for structs like TCPConnection.
 
-    Args:
-        fd: The file descriptor of the connection.
-    """
+#     Args:
+#         socket: The file descriptor of the connection.
+#     """
 
-    var fd: Socket
+#     var socket: Socket
 
-    @always_inline
-    fn __init__(inout self, owned socket: Socket):
-        self.fd = socket^
+#     @always_inline
+#     fn __init__(inout self, owned socket: Socket):
+#         self.socket = socket^
 
-    @always_inline
-    fn __moveinit__(inout self, owned existing: Self):
-        self.fd = existing.fd^
+#     @always_inline
+#     fn __moveinit__(inout self, owned existing: Self):
+#         self.socket = existing.socket^
 
-    @always_inline
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
-        """Reads data from the underlying file descriptor.
+#     @always_inline
+#     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+#         """Reads data from the underlying file descriptor.
 
-        Args:
-            dest: The buffer to read data into.
+#         Args:
+#             dest: The buffer to read data into.
 
-        Returns:
-            The number of bytes read, or an error if one occurred.
-        """
-        return self.fd.read(dest)
+#         Returns:
+#             The number of bytes read, or an error if one occurred.
+#         """
+#         return self.socket.read(dest)
 
-    @always_inline
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        """Writes data to the underlying file descriptor.
+#     @always_inline
+#     fn write(inout self, src: List[UInt8]) -> (Int, Error):
+#         """Writes data to the underlying file descriptor.
 
-        Args:
-            src: The buffer to read data into.
+#         Args:
+#             src: The buffer to read data into.
 
-        Returns:
-            The number of bytes written, or an error if one occurred.
-        """
-        return self.fd.write(src)
+#         Returns:
+#             The number of bytes written, or an error if one occurred.
+#         """
+#         return self.socket.write(src)
 
-    @always_inline
-    fn close(inout self) -> Error:
-        """Closes the underlying file descriptor.
+#     @always_inline
+#     fn close(inout self) -> Error:
+#         """Closes the underlying file descriptor.
 
-        Returns:
-            An error if one occurred, or None if the file descriptor was closed successfully.
-        """
-        return self.fd.close()
+#         Returns:
+#             An error if one occurred, or None if the file descriptor was closed successfully.
+#         """
+#         return self.socket.close()
 
-    @always_inline
-    fn local_address[T: Addr](self) -> T:
-        """Returns the local network address.
-        The Addr returned is shared by all invocations of local_address, so do not modify it.
-        """
-        return self.fd.local_address
+#     @always_inline
+#     fn local_address[T: Addr](self) -> T:
+#         """Returns the local network address.
+#         The Addr returned is shared by all invocations of local_address, so do not modify it.
+#         """
+#         return self.socket.local_address
 
-    @always_inline
-    fn remote_address[T: Addr](self) -> T:
-        """Returns the remote network address.
-        The Addr returned is shared by all invocations of remote_address, so do not modify it.
-        """
-        return self.fd.remote_address
+#     @always_inline
+#     fn remote_address[T: Addr](self) -> T:
+#         """Returns the remote network address.
+#         The Addr returned is shared by all invocations of remote_address, so do not modify it.
+#         """
+#         return self.socket.remote_address

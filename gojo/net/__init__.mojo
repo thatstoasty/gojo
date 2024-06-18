@@ -6,6 +6,7 @@ A good chunk of the leg work here came from the lightbug_http project! https://g
 from .fd import FileDescriptor
 from .socket import Socket
 from .tcp import TCPConnection, TCPListener, listen_tcp, dial_tcp, TCPAddr
+from .udp import UDPAddr
 from .address import NetworkType, Addr
 from .ip import get_ip_address, get_addr_info
 from .dial import Dialer
