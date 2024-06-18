@@ -3,54 +3,36 @@ from ...builtins import ascii
 from ...io import io
 
 
-@value
-struct StringKey(KeyElement):
-    var s: String
-
-    fn __init__(inout self, owned s: String):
-        self.s = s ^
-
-    fn __init__(inout self, s: StringLiteral):
-        self.s = String(s)
-
-    fn __hash__(self) -> Int:
-        return hash(self.s)
-
-    fn __eq__(self, other: Self) -> Bool:
-        return self.s == other.s
-
-    fn __ne__(self, other: Self) -> Bool:
-        return self.s != other.s
-
-    fn __str__(self) -> String:
-        return self.s
-
-
 fn valid_header_field_byte(char: Int8) raises -> Bool:
     """Mask is a 128-bit bitmap with 1s for allowed bytes,
     so that the byte c can be tested with a shift and an and.
     If c >= 128, then 1<<c and 1<<(c-64) will both be zero,
     and this function will return false."""
-    var mask = 0 |
-        (1<<(10)-1)<<atol('0') |
-        (1<<(26)-1)<<atol('a') |
-        (1<<(26)-1)<<atol('A') |
-        1<<atol('!') |
-        1<<atol('#') |
-        1<<atol('$') |
-        1<<atol('%') |
-        1<<atol('&') |
-        1<<atol('\'') |
-        1<<atol('*') |
-        1<<atol('+') |
-        1<<atol('-') |
-        1<<atol('.') |
-        1<<atol('^') |
-        1<<atol('_') |
-        1<<atol('`') |
-        1<<atol('|') |
-        1<<atol('~')
-    return ((UInt64(1) << char.cast[DType.uint64]())&(mask&(1<<64-1)) | (UInt64(1)<<(char.cast[DType.uint64]()-64))&(mask>>64)) != 0
+    var mask = 0 | (1 << (10) - 1) << atol("0") | (1 << (26) - 1) << atol("a") | (1 << (26) - 1) << atol(
+        "A"
+    ) | 1 << atol("!") | 1 << atol("#") | 1 << atol("$") | 1 << atol("%") | 1 << atol("&") | 1 << atol("'") | 1 << atol(
+        "*"
+    ) | 1 << atol(
+        "+"
+    ) | 1 << atol(
+        "-"
+    ) | 1 << atol(
+        "."
+    ) | 1 << atol(
+        "^"
+    ) | 1 << atol(
+        "_"
+    ) | 1 << atol(
+        "`"
+    ) | 1 << atol(
+        "|"
+    ) | 1 << atol(
+        "~"
+    )
+    return (
+        (UInt64(1) << char.cast[DType.uint64]()) & (mask & (1 << 64 - 1))
+        | (UInt64(1) << (char.cast[DType.uint64]() - 64)) & (mask >> 64)
+    ) != 0
 
 
 fn canonical_mime_header_key(key: String) raises -> String:
@@ -64,21 +46,21 @@ fn canonical_mime_header_key(key: String) raises -> String:
     returned without modifications."""
     var upper = True
     var i = 0
-    var header_key = String(key) # operate on copy
+    var header_key = String(key)  # operate on copy
     while i < len(header_key):
         var char = header_key[i]
         if not valid_header_field_byte(ord(char)):
             return header_key
 
-        if (upper) and (ord('a') <= ord(char)) and (ord(char) <= ord('z')):
+        if (upper) and (ord("a") <= ord(char)) and (ord(char) <= ord("z")):
             header_key = canonical_mime_header_key(header_key)
             return header_key
 
-        if (not upper) and (ord('A') <= ord(char)) and (ord(char) <= ord('Z')):
+        if (not upper) and (ord("A") <= ord(char)) and (ord(char) <= ord("Z")):
             header_key = canonical_mime_header_key(header_key)
             return header_key
 
-        upper = (char == '-')
+        upper = char == "-"
         i += 1
 
     return header_key
@@ -88,28 +70,29 @@ fn canonical_mime_header_key(key: String) raises -> String:
 struct MIMEHeader(CollectionElement):
     """A MIMEHeader represents a MIME-style header mapping
     keys to sets of values."""
-    var value: Dict[StringKey, List[String]]
+
+    var value: Dict[String, List[String]]
 
     fn add(inout self, key: String, value: String) raises:
         """Adds the key, value pair to the header.
-    It appends to any existing values associated with key."""
+        It appends to any existing values associated with key."""
         var mime_key = canonical_mime_header_key(key)
         self.value[mime_key].append(value)
 
     fn set(inout self, key: String, value: String) raises:
         """Sets the header entries associated with key to
-    the single element value. It replaces any existing
-    values associated with key."""
+        the single element value. It replaces any existing
+        values associated with key."""
         var keys = List[String]()
         keys.append(value)
         self.value[canonical_mime_header_key(key)] = keys
 
     fn get(self, key: String) raises -> String:
         """Gets the first value associated with the given key.
-    It is case insensitive; [canonical_mime_header_key] is used
-    to canonicalize the provided key.
-    If there are no values associated with the key, Get returns "".
-    To use non-canonical keys, access the map directly."""
+        It is case insensitive; [canonical_mime_header_key] is used
+        to canonicalize the provided key.
+        If there are no values associated with the key, Get returns "".
+        To use non-canonical keys, access the map directly."""
         if len(self.value) == 0:
             return ""
 
@@ -121,10 +104,10 @@ struct MIMEHeader(CollectionElement):
 
     fn values(self, key: String) raises -> Optional[List[String]]:
         """Returns all values associated with the given key.
-    It is case insensitive; [canonical_mime_header_key] is
-    used to canonicalize the provided key. To use non-canonical
-    keys, access the map directly.
-    The returned slice is not a copy."""
+        It is case insensitive; [canonical_mime_header_key] is
+        used to canonicalize the provided key. To use non-canonical
+        keys, access the map directly.
+        The returned slice is not a copy."""
         if len(self.value) == 0:
             return None
 
@@ -137,10 +120,10 @@ struct MIMEHeader(CollectionElement):
 
 @value
 struct Header(CollectionElement):
-    var value: Dict[StringKey, List[String]]
+    var value: Dict[String, List[String]]
 
-    fn __init__(inout self, value: Dict[StringKey, List[String]] = Dict[StringKey, List[String]]()):
-        self.value = Dict[StringKey, List[String]]()
+    fn __init__(inout self, value: Dict[String, List[String]] = Dict[String, List[String]]()):
+        self.value = value
 
     fn add(inout self, key: String, value: String) raises:
         """Add adds the key, value pair to the header.
@@ -163,20 +146,20 @@ struct Header(CollectionElement):
 
     fn get(self, key: String) raises -> String:
         """Gets the first value associated with the given key. If
-    there are no values associated with the key, Get returns "".
-    It is case insensitive; [canonical_mime_header_key] is
-    used to canonicalize the provided key. Get assumes that all
-    keys are stored in canonical form. To use non-canonical keys,
-    access the map directly."""
+        there are no values associated with the key, Get returns "".
+        It is case insensitive; [canonical_mime_header_key] is
+        used to canonicalize the provided key. Get assumes that all
+        keys are stored in canonical form. To use non-canonical keys,
+        access the map directly."""
         var mime_header = MIMEHeader(self.value)
         return mime_header.get(key)
 
     fn values(self, key: String) raises -> Optional[List[String]]:
         """Values returns all values associated with the given key.
-    It is case insensitive; [canonical_mime_header_key] is
-    used to canonicalize the provided key. To use non-canonical
-    keys, access the map directly.
-    The returned slice is not a copy."""
+        It is case insensitive; [canonical_mime_header_key] is
+        used to canonicalize the provided key. To use non-canonical
+        keys, access the map directly.
+        The returned slice is not a copy."""
         var mime_header = MIMEHeader(self.value)
         return mime_header.values(key)
 
@@ -214,7 +197,7 @@ struct Header(CollectionElement):
         var mime_header = MIMEHeader(self.value)
         mime_header.delete_values(key)
 
-    fn write[W: io.StringWriter](self, inout w: W):
+    fn write[W: io.Writer](self, inout w: W):
         """Write writes a header in wire format.
 
         Args:
@@ -222,7 +205,7 @@ struct Header(CollectionElement):
         """
         return self._write(w)
 
-    fn _write[W: io.StringWriter](self, inout w: W):
+    fn _write[W: io.Writer](self, inout w: W):
         """Write writes a header in wire format.
 
         Args:
@@ -230,12 +213,10 @@ struct Header(CollectionElement):
         """
         return self.write_subset(w)
 
-
     # # Clone returns a copy of h or nil if h is nil.
     # fn Clone() -> Header:
     #     if h == nil:
     #         return nil
-
 
     #     # Find total number of values.
     #     nv := 0
@@ -257,7 +238,6 @@ struct Header(CollectionElement):
 
     #     return h2
 
-
     # # sortedKeyValues returns h's keys sorted in the returned kvs
     # # slice. The headerSorter used to sort is also returned, for possible
     # # return to headerSorterCache.
@@ -271,11 +251,9 @@ struct Header(CollectionElement):
     #         if !exclude[k]:
     #             kvs = append(kvs, keyValues{k, vv)
 
-
     #     hs.kvs = kvs
     #     sort.Sort(hs)
     #     return kvs, hs
-
 
     # # WriteSubset writes a header in wire format.
     # # If exclude is not nil, keys where exclude[key] == true are not written.
@@ -283,9 +261,8 @@ struct Header(CollectionElement):
     # fn WriteSubset(w io.Writer, exclude map[String]bool):
     #     return h.writeSubset(w, exclude, nil)
 
-
     # TODO: Implement the key sorter stuff
-    fn write_subset[W: io.StringWriter](self, inout w: W):
+    fn write_subset[W: io.Writer](self, inout w: W):
         for item in self.value.items():
             for value in item[].value:
                 _ = w.write_string(String(item[].key) + ": " + value[] + "\r\n")
@@ -312,15 +289,12 @@ struct Header(CollectionElement):
         #                 headerSorterPool.Put(sorter)
         #                 return err
 
-
         #         if trace != nil and trace.WroteHeaderField != nil:
         #             formattedVals = append(formattedVals, v)
-
 
         #     if trace != nil and trace.WroteHeaderField != nil:
         #         trace.WroteHeaderField(kv.key, formattedVals)
         #         formattedVals = nil
-
 
         # headerSorterPool.Put(sorter)
 
@@ -348,7 +322,7 @@ fn has_token(value: String, token: String) -> Bool:
         return True
 
     var index = 0
-    while index <= len(value)-len(token):
+    while index <= len(value) - len(token):
         # Check that first character is good.
         # The token is ASCII, so checking only a single byte
         # is sufficient. We skip this potential starting
@@ -360,7 +334,7 @@ fn has_token(value: String, token: String) -> Bool:
             continue
 
         # Check that start pos is on a valid token boundary.
-        if index > 0 and not is_token_boundary(ord(value[index-1])):
+        if index > 0 and not is_token_boundary(ord(value[index - 1])):
             continue
 
         # Check that end pos is on a valid token boundary.
@@ -368,7 +342,7 @@ fn has_token(value: String, token: String) -> Bool:
         if end_pos != len(value) and not is_token_boundary(ord(value[end_pos])):
             continue
 
-        if ascii.equal_fold(value[index:index+len(token)], token):
+        if ascii.equal_fold(value[index : index + len(token)], token):
             return True
 
         index += 1
@@ -377,7 +351,7 @@ fn has_token(value: String, token: String) -> Bool:
 
 
 fn is_token_boundary(b: Int8) -> Bool:
-    return b == ord(' ') or b == ord(',') or b == ord('\t')
+    return b == ord(" ") or b == ord(",") or b == ord("\t")
 
 
 # # var timeFormats = List[String]{

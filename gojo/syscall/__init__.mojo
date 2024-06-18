@@ -22,7 +22,6 @@ from .net import (
     getaddrinfo,
     getaddrinfo_unix,
     gai_strerror,
-    c_charptr_to_string,
     shutdown,
     inet_ntoa,
     bind,
