@@ -513,7 +513,7 @@ struct Socket(FileDescriptorBase):
         dest.size += bytes_read
 
         if bytes_read == -1:
-            return 0, HostPort(), Error("Failed to read from socket, received a -1 response.")
+            return 0, HostPort(), Error("Socket.receive_from_into: Failed to read from socket, received a -1 response.")
 
         var remote: HostPort
         var err: Error

@@ -1,8 +1,7 @@
+from collections import InlineList
 from ..syscall import SocketOptions
-from .net import Conn
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr, HostPort
 from .socket import Socket
-from .listen import listen, Listener
 
 
 @value
@@ -38,7 +37,7 @@ struct TCPAddr(Addr):
         return NetworkType.tcp.value
 
 
-struct TCPConnection:
+struct TCPConnection(Movable):
     """TCPConn is an implementation of the Conn interface for TCP network connections.
 
     Args:
@@ -90,7 +89,7 @@ struct TCPConnection:
         """
         return self.socket.close()
 
-    fn local_address(self) -> TCPAddr:
+    fn local_address[T: Addr](self) -> TCPAddr:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
 
@@ -116,7 +115,13 @@ fn listen_tcp(network: String, local_address: TCPAddr) raises -> TCPListener:
         network: The network type.
         local_address: The local address to listen on.
     """
-    return listen(network, local_address.ip + ":" + str(local_address.port))
+
+    var socket = Socket()
+    socket.bind(local_address.ip, local_address.port)
+    socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
+    socket.listen()
+    print(str("Listening on ") + str(socket.local_address_as_tcp()))
+    return TCPListener(socket^, network, local_address)
 
 
 fn listen_tcp(network: String, local_address: String) raises -> TCPListener:
@@ -126,19 +131,24 @@ fn listen_tcp(network: String, local_address: String) raises -> TCPListener:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    return listen(network, local_address)
+    var tcp_addr: TCPAddr
+    var err: Error
+    tcp_addr, err = resolve_internet_addr(network, local_address)
+    if err:
+        raise err
+    return listen_tcp(network, tcp_addr)
 
 
 struct TCPListener:
     var socket: Socket
     var network_type: String
-    var address: String
+    var address: TCPAddr
 
     fn __init__(
         inout self,
         owned socket: Socket,
         network_type: String,
-        address: String,
+        address: TCPAddr,
     ):
         self.socket = socket^
         self.network_type = network_type
@@ -149,52 +159,59 @@ struct TCPListener:
         self.network_type = existing.network_type^
         self.address = existing.address^
 
-    fn listen(self) raises -> Self:
-        return listen(self.network_type, self.address)
-
     fn accept(self) raises -> TCPConnection:
         return TCPConnection(self.socket.accept())
 
     fn close(inout self) -> Error:
         return self.socket.close()
 
-    fn addr(self) raises -> TCPAddr:
-        var result = resolve_internet_addr(self.network_type, self.address)
-        if result[1]:
-            raise result[1]
 
-        return result[0]
+alias TCP_NETWORK_TYPES = InlineList[String, 3]("tcp", "tcp4", "tcp6")
 
 
-fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
+fn dial_tcp(network: String, local_address: TCPAddr, remote_address: TCPAddr) raises -> TCPConnection:
     """Connects to the address on the named network.
 
     The network must be "tcp", "tcp4", or "tcp6".
     Args:
         network: The network type.
+        local_address: The local address to connect to.
         remote_address: The remote address to connect to.
 
     Returns:
         The TCP connection.
     """
     # TODO: Add conversion of domain name to ip address
-    return Dialer(remote_address).dial(network, remote_address.ip + ":" + str(remote_address.port))
+    if network not in TCP_NETWORK_TYPES:
+        raise Error("unsupported network type: " + network)
+
+    var socket = Socket(local_address=BaseAddr(local_address))
+    var err = socket.connect(remote_address.ip, remote_address.port)
+    if err:
+        raise err
+    return TCPConnection(socket^)
 
 
-fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
+fn dial_tcp(network: String, local_address: String, remote_address: String) raises -> TCPConnection:
     """Connects to the address on the named network.
 
     The network must be "tcp", "tcp4", or "tcp6".
     Args:
         network: The network type.
-        remote_address: The remote address to connect to.
+        local_address: The local address to connect to. (The format is "host:port").
+        remote_address: The remote address to connect to. (The format is "host:port").
 
     Returns:
         The TCP connection.
     """
-    var address: HostPort
+    var local: HostPort
     var err: Error
-    address, err = split_host_port(remote_address)
+    local, err = split_host_port(local_address)
     if err:
         raise err
-    return Dialer(TCPAddr(address.host, address.port)).dial(network, remote_address)
+
+    var remote: HostPort
+    remote, err = split_host_port(remote_address)
+    if err:
+        raise err
+    return dial_tcp(network, TCPAddr(local.host, local.port), TCPAddr(remote.host, remote.port))

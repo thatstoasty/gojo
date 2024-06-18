@@ -40,6 +40,16 @@ struct BaseAddr:
         self.port = port
         self.zone = zone
 
+    fn __init__(inout self, other: TCPAddr):
+        self.ip = other.ip
+        self.port = other.port
+        self.zone = other.zone
+
+    fn __init__(inout self, other: UDPAddr):
+        self.ip = other.ip
+        self.port = other.port
+        self.zone = other.zone
+
 
 fn resolve_internet_addr(network: String, address: String) -> (TCPAddr, Error):
     var host: String = ""

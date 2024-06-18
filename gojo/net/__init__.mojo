@@ -6,11 +6,9 @@ A good chunk of the leg work here came from the lightbug_http project! https://g
 from .fd import FileDescriptor
 from .socket import Socket
 from .tcp import TCPConnection, TCPListener, listen_tcp, dial_tcp, TCPAddr
-from .udp import UDPAddr, UDPConnection, listen_udp
+from .udp import UDPAddr, UDPConnection, listen_udp, dial_udp
 from .address import NetworkType, Addr, HostPort
 from .ip import get_ip_address, get_addr_info
-from .dial import Dialer
-from .net import Conn
 
 
 # Time in nanoseconds

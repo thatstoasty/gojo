@@ -1,8 +1,7 @@
+from collections import InlineList
 from ..syscall import SocketOptions, SocketType
-from .net import Conn
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr
 from .socket import Socket
-from .listen import listen
 
 
 # TODO: Change ip to list of bytes
@@ -39,7 +38,7 @@ struct UDPAddr(Addr):
         return NetworkType.udp.value
 
 
-struct UDPConnection:
+struct UDPConnection(Movable):
     """Implementation of the Conn interface for TCP network connections."""
 
     var socket: Socket
@@ -61,13 +60,13 @@ struct UDPConnection:
         """
         var bytes_read: Int
         var remote: HostPort
-        var err: Error
+        var err = Error()
         bytes_read, remote, err = self.socket.receive_from_into(dest)
         if err:
             if str(err) != io.EOF:
                 return bytes_read, remote, err
 
-        return bytes_read, remote, Error()
+        return bytes_read, remote, err
 
     fn write_to(inout self, src: List[UInt8], address: UDPAddr) -> (Int, Error):
         """Writes data to the underlying file descriptor.
@@ -80,6 +79,19 @@ struct UDPConnection:
             The number of bytes written, or an error if one occurred.
         """
         return self.socket.send_to(src, address.ip, address.port)
+
+    fn write_to(inout self, src: List[UInt8], host: String, port: Int) -> (Int, Error):
+        """Writes data to the underlying file descriptor.
+
+        Args:
+            src: The buffer to read data into.
+            host: The remote peer address in IPv4 format.
+            port: The remote peer port.
+
+        Returns:
+            The number of bytes written, or an error if one occurred.
+        """
+        return self.socket.send_to(src, host, port)
 
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
@@ -108,20 +120,6 @@ struct UDPConnection:
         return self.socket.remote_address_as_udp()
 
 
-fn _listen(network: String, address: String) raises -> UDPConnection:
-    var udp_addr: TCPAddr
-    var err: Error
-    udp_addr, err = resolve_internet_addr(network, address)
-    if err:
-        raise err
-    var socket = Socket(
-        socket_type=SocketType.SOCK_DGRAM, local_address=BaseAddr(udp_addr.ip, udp_addr.port, udp_addr.zone)
-    )
-    socket.bind(udp_addr.ip, udp_addr.port)
-    print(str("Listening on ") + str(socket.local_address_as_udp()))
-    return UDPConnection(socket^)
-
-
 fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
     """Creates a new UDP listener.
 
@@ -129,14 +127,72 @@ fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
         network: The network type.
         local_address: The local address to listen on.
     """
-    return _listen(network, local_address.ip + ":" + str(local_address.port))
+    var socket = Socket(socket_type=SocketType.SOCK_DGRAM)
+    socket.bind(local_address.ip, local_address.port)
+    print(str("Listening on ") + str(socket.local_address_as_udp()))
+    return UDPConnection(socket^)
 
 
-fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
+fn listen_udp(network: String, local_address: String) -> UDPConnection:
     """Creates a new UDP listener.
 
     Args:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    return _listen(network, local_address)
+    return listen_udp(network, local_address)
+
+
+alias UDP_NETWORK_TYPES = InlineList[String, 3]("udp", "udp4", "udp6")
+
+
+fn dial_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "udp", "udp4", or "udp6".
+    Args:
+        network: The network type.
+        local_address: The local address.
+
+    Returns:
+        The TCP connection.
+    """
+    # TODO: Add conversion of domain name to ip address
+    if network not in UDP_NETWORK_TYPES:
+        raise Error("unsupported network type: " + network)
+
+    var socket = Socket(local_address=BaseAddr(local_address), socket_type=SocketType.SOCK_DGRAM)
+    return UDPConnection(socket^)
+
+
+fn dial_udp(network: String, local_address: String) raises -> UDPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "udp", "udp4", or "udp6".
+    Args:
+        network: The network type.
+        local_address: The local address to connect to. (The format is "host:port").
+
+    Returns:
+        The TCP connection.
+    """
+    var result = split_host_port(local_address)
+    if result[1]:
+        raise result[1]
+
+    return dial_udp(network, UDPAddr(result[0].host, result[0].port))
+
+
+fn dial_udp(network: String, host: String, port: Int) raises -> UDPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "udp", "udp4", or "udp6".
+    Args:
+        network: The network type.
+        host: The remote host in ipv4 format.
+        port: The remote port.
+
+    Returns:
+        The TCP connection.
+    """
+    return dial_udp(network, UDPAddr(host, port))
