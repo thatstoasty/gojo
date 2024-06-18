@@ -82,5 +82,5 @@ fn test_listener() raises:
 
 fn main() raises:
     # test_stuff()
-    test_listener()
-    # test_dial()
+    # test_listener()
+    test_dial()
