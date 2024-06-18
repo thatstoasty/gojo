@@ -159,7 +159,11 @@ struct TCPListener:
         return self.socket.close()
 
     fn addr(self) raises -> TCPAddr:
-        return resolve_internet_addr(self.network_type, self.address)
+        var result = resolve_internet_addr(self.network_type, self.address)
+        if result[1]:
+            raise result[1]
+
+        return result[0]
 
 
 fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:

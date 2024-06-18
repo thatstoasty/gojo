@@ -714,15 +714,71 @@ fn recv(
     """Libc POSIX `recv` function
     Reference: https://man7.org/linux/man-pages/man3/recv.3p.html
     Fn signature: ssize_t recv(int socket, void *buffer, size_t length, int flags).
+
+    Args:
+        socket: Specifies the socket file descriptor.
+        buffer: Points to the buffer where the message should be stored.
+        length: Specifies the length in bytes of the buffer pointed to by the buffer argument.
+        flags: Specifies the type of message reception.
+
+    Returns:
+        The number of bytes received or -1 in case of failure.
+
+    Valid Flags:
+        MSG_PEEK: Peeks at an incoming message. The data is treated as unread and the next recvfrom() or similar function shall still return this data.
+        MSG_OOB: Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific.
+        MSG_WAITALL: On SOCK_STREAM sockets this requests that the function block until the full amount of data can be returned. The function may return the smaller amount of data if the socket is a message-based socket, if a signal is caught, if the connection is terminated, if MSG_PEEK was specified, or if an error is pending for the socket.
     """
     return external_call[
         "recv",
-        c_ssize_t,  # FnName, RetType
+        c_ssize_t,
         c_int,
         UnsafePointer[UInt8],
         c_size_t,
-        c_int,  # Args
+        c_int,
     ](socket, buffer, length, flags)
+
+
+fn recvfrom(
+    socket: c_int,
+    buffer: UnsafePointer[UInt8],
+    length: c_size_t,
+    flags: c_int,
+    address: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> c_ssize_t:
+    """Libc POSIX `recvfrom` function
+    Reference: https://man7.org/linux/man-pages/man3/recvfrom.3p.html
+    Fn signature: ssize_t recvfrom(int socket, void *restrict buffer, size_t length,
+        int flags, struct sockaddr *restrict address,
+        socklen_t *restrict address_len).
+
+    Args:
+        socket: Specifies the socket file descriptor.
+        buffer: Points to the buffer where the message should be stored.
+        length: Specifies the length in bytes of the buffer pointed to by the buffer argument.
+        flags: Specifies the type of message reception.
+        address: A null pointer, or points to a sockaddr structure in which the sending address is to be stored.
+        address_len: Either a null pointer, if address is a null pointer, or a pointer to a socklen_t object which on input specifies the length of the supplied sockaddr structure, and on output specifies the length of the stored address.
+
+    Returns:
+        The number of bytes received or -1 in case of failure.
+
+    Valid Flags:
+        MSG_PEEK: Peeks at an incoming message. The data is treated as unread and the next recvfrom() or similar function shall still return this data.
+        MSG_OOB: Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific.
+        MSG_WAITALL: On SOCK_STREAM sockets this requests that the function block until the full amount of data can be returned. The function may return the smaller amount of data if the socket is a message-based socket, if a signal is caught, if the connection is terminated, if MSG_PEEK was specified, or if an error is pending for the socket.
+    """
+    return external_call[
+        "recvfrom",
+        c_ssize_t,
+        c_int,
+        UnsafePointer[UInt8],
+        c_size_t,
+        c_int,
+        UnsafePointer[sockaddr],
+        UnsafePointer[socklen_t],
+    ](socket, buffer, length, flags, address, address_len)
 
 
 fn send(
@@ -749,6 +805,41 @@ fn send(
         c_size_t,
         c_int,  # Args
     ](socket, buffer, length, flags)
+
+
+fn sendto(
+    socket: c_int,
+    message: UnsafePointer[UInt8],
+    length: c_size_t,
+    flags: c_int,
+    dest_addr: UnsafePointer[sockaddr],
+    dest_len: socklen_t,
+) -> c_ssize_t:
+    """Libc POSIX `sendto` function
+    Reference: https://man7.org/linux/man-pages/man3/sendto.3p.html
+    Fn signature: ssize_t sendto(int socket, const void *message, size_t length,
+        int flags, const struct sockaddr *dest_addr,
+        socklen_t dest_len).
+
+    Args:
+        socket: Specifies the socket file descriptor.
+        message: Points to a buffer containing the message to be sent.
+        length: Specifies the size of the message in bytes.
+        flags: Specifies the type of message transmission.
+        dest_addr: Points to a sockaddr structure containing the destination address.
+        dest_len: Specifies the length of the sockaddr.
+
+    Returns:
+        The number of bytes sent or -1 in case of failure.
+
+    Valid Flags:
+        MSG_EOR: Terminates a record (if supported by the protocol).
+        MSG_OOB: Sends out-of-band data on sockets that support out-of-band data. The significance and semantics of out-of-band data are protocol-specific.
+        MSG_NOSIGNAL: Requests not to send the SIGPIPE signal if an attempt to send is made on a stream-oriented socket that is no longer connected. The [EPIPE] error shall still be returned.
+    """
+    return external_call[
+        "sendto", c_ssize_t, c_int, UnsafePointer[UInt8], c_size_t, c_int, UnsafePointer[sockaddr], socklen_t
+    ](socket, message, length, flags, dest_addr, dest_len)
 
 
 fn shutdown(socket: c_int, how: c_int) -> c_int:

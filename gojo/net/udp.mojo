@@ -1,7 +1,8 @@
-from ..syscall import SocketOptions
-from .net import Connection, Conn
-from .address import NetworkType, split_host_port, join_host_port, BaseAddr
+from ..syscall import SocketOptions, SocketType
+from .net import Conn
+from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr
 from .socket import Socket
+from .listen import listen
 
 
 # TODO: Change ip to list of bytes
@@ -49,7 +50,7 @@ struct UDPConnection:
     fn __moveinit__(inout self, owned existing: Self):
         self.socket = existing.socket^
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn read_from(inout self, inout dest: List[UInt8]) -> (Int, HostPort, Error):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -59,24 +60,26 @@ struct UDPConnection:
             The number of bytes read, or an error if one occurred.
         """
         var bytes_read: Int
+        var remote: HostPort
         var err: Error
-        bytes_read, err = self.socket.read(dest)
+        bytes_read, remote, err = self.socket.receive_from_into(dest)
         if err:
             if str(err) != io.EOF:
-                return bytes_read, err
+                return bytes_read, remote, err
 
-        return bytes_read, Error()
+        return bytes_read, remote, Error()
 
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
+    fn write_to(inout self, src: List[UInt8], address: UDPAddr) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:
             src: The buffer to read data into.
+            address: The remote peer address.
 
         Returns:
             The number of bytes written, or an error if one occurred.
         """
-        return self.socket.write(src)
+        return self.socket.send_to(src, address.ip, address.port)
 
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
@@ -105,14 +108,28 @@ struct UDPConnection:
         return self.socket.remote_address_as_udp()
 
 
-fn listen_udp(network: String, local_address: TCPAddr) raises -> UDPConnection:
+fn _listen(network: String, address: String) raises -> UDPConnection:
+    var udp_addr: TCPAddr
+    var err: Error
+    udp_addr, err = resolve_internet_addr(network, address)
+    if err:
+        raise err
+    var socket = Socket(
+        socket_type=SocketType.SOCK_DGRAM, local_address=BaseAddr(udp_addr.ip, udp_addr.port, udp_addr.zone)
+    )
+    socket.bind(udp_addr.ip, udp_addr.port)
+    print(str("Listening on ") + str(socket.local_address_as_udp()))
+    return UDPConnection(socket^)
+
+
+fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
     """Creates a new UDP listener.
 
     Args:
         network: The network type.
         local_address: The local address to listen on.
     """
-    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, local_address.ip + ":" + str(local_address.port))
+    return _listen(network, local_address.ip + ":" + str(local_address.port))
 
 
 fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
@@ -122,4 +139,4 @@ fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    return ListenConfig(DEFAULT_TCP_KEEP_ALIVE).listen(network, local_address)
+    return _listen(network, local_address)

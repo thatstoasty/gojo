@@ -15,5 +15,7 @@ struct Dialer:
         if err:
             raise err
         var socket = Socket(local_address=BaseAddr(tcp_addr.ip, tcp_addr.port, tcp_addr.zone))
-        socket.connect(tcp_addr.ip, tcp_addr.port)
+        err = socket.connect(tcp_addr.ip, tcp_addr.port)
+        if err:
+            raise err
         return TCPConnection(socket^)
