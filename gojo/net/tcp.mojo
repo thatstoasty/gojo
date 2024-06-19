@@ -62,13 +62,13 @@ struct TCPConnection(Movable):
             The number of bytes read, or an error if one occurred.
         """
         var bytes_read: Int
-        var err: Error
+        var err = Error()
         bytes_read, err = self.socket.read(dest)
         if err:
             if str(err) != io.EOF:
                 return bytes_read, err
 
-        return bytes_read, Error()
+        return bytes_read, err
 
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
@@ -89,7 +89,7 @@ struct TCPConnection(Movable):
         """
         return self.socket.close()
 
-    fn local_address[T: Addr](self) -> TCPAddr:
+    fn local_address(self) -> TCPAddr:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
 
@@ -115,12 +115,11 @@ fn listen_tcp(network: String, local_address: TCPAddr) raises -> TCPListener:
         network: The network type.
         local_address: The local address to listen on.
     """
-
     var socket = Socket()
     socket.bind(local_address.ip, local_address.port)
     socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
     socket.listen()
-    print(str("Listening on ") + str(socket.local_address_as_tcp()))
+    # print(str("Listening on ") + str(socket.local_address_as_tcp()))
     return TCPListener(socket^, network, local_address)
 
 
@@ -137,6 +136,17 @@ fn listen_tcp(network: String, local_address: String) raises -> TCPListener:
     if err:
         raise err
     return listen_tcp(network, tcp_addr)
+
+
+fn listen_tcp(network: String, host: String, port: Int) raises -> TCPListener:
+    """Creates a new TCP listener.
+
+    Args:
+        network: The network type.
+        host: The address to listen on, in ipv4 format.
+        port: The port to listen on.
+    """
+    return listen_tcp(network, TCPAddr(host, port))
 
 
 struct TCPListener:
@@ -169,13 +179,12 @@ struct TCPListener:
 alias TCP_NETWORK_TYPES = InlineList[String, 3]("tcp", "tcp4", "tcp6")
 
 
-fn dial_tcp(network: String, local_address: TCPAddr, remote_address: TCPAddr) raises -> TCPConnection:
+fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
     """Connects to the address on the named network.
 
     The network must be "tcp", "tcp4", or "tcp6".
     Args:
         network: The network type.
-        local_address: The local address to connect to.
         remote_address: The remote address to connect to.
 
     Returns:
@@ -185,33 +194,42 @@ fn dial_tcp(network: String, local_address: TCPAddr, remote_address: TCPAddr) ra
     if network not in TCP_NETWORK_TYPES:
         raise Error("unsupported network type: " + network)
 
-    var socket = Socket(local_address=BaseAddr(local_address))
+    var socket = Socket()
     var err = socket.connect(remote_address.ip, remote_address.port)
     if err:
         raise err
     return TCPConnection(socket^)
 
 
-fn dial_tcp(network: String, local_address: String, remote_address: String) raises -> TCPConnection:
+fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
     """Connects to the address on the named network.
 
     The network must be "tcp", "tcp4", or "tcp6".
     Args:
         network: The network type.
-        local_address: The local address to connect to. (The format is "host:port").
         remote_address: The remote address to connect to. (The format is "host:port").
 
     Returns:
         The TCP connection.
     """
-    var local: HostPort
-    var err: Error
-    local, err = split_host_port(local_address)
-    if err:
-        raise err
-
     var remote: HostPort
+    var err: Error
     remote, err = split_host_port(remote_address)
     if err:
         raise err
-    return dial_tcp(network, TCPAddr(local.host, local.port), TCPAddr(remote.host, remote.port))
+    return dial_tcp(network, TCPAddr(remote.host, remote.port))
+
+
+fn dial_tcp(network: String, host: String, port: Int) raises -> TCPConnection:
+    """Connects to the address on the named network.
+
+    The network must be "tcp", "tcp4", or "tcp6".
+    Args:
+        network: The network type.
+        host: The remote address to connect to in ipv4 format.
+        port: The remote port.
+
+    Returns:
+        The TCP connection.
+    """
+    return dial_tcp(network, TCPAddr(host, port))

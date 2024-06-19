@@ -50,6 +50,11 @@ struct BaseAddr:
         self.port = other.port
         self.zone = other.zone
 
+    fn __str__(self) -> String:
+        if self.zone != "":
+            return join_host_port(self.ip + "%" + self.zone, str(self.port))
+        return join_host_port(self.ip, str(self.port))
+
 
 fn resolve_internet_addr(network: String, address: String) -> (TCPAddr, Error):
     var host: String = ""

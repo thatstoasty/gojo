@@ -129,18 +129,30 @@ fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
     """
     var socket = Socket(socket_type=SocketType.SOCK_DGRAM)
     socket.bind(local_address.ip, local_address.port)
-    print(str("Listening on ") + str(socket.local_address_as_udp()))
+    # print(str("Listening on ") + str(socket.local_address_as_udp()))
     return UDPConnection(socket^)
 
 
-fn listen_udp(network: String, local_address: String) -> UDPConnection:
+fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
     """Creates a new UDP listener.
 
     Args:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    return listen_udp(network, local_address)
+    var result = split_host_port(local_address)
+    return listen_udp(network, UDPAddr(result[0].host, result[0].port))
+
+
+fn listen_udp(network: String, host: String, port: Int) raises -> UDPConnection:
+    """Creates a new UDP listener.
+
+    Args:
+        network: The network type.
+        host: The address to listen on in ipv4 format.
+        port: The port number.
+    """
+    return listen_udp(network, UDPAddr(host, port))
 
 
 alias UDP_NETWORK_TYPES = InlineList[String, 3]("udp", "udp4", "udp6")

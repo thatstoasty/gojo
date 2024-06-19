@@ -440,7 +440,7 @@ struct Socket(FileDescriptorBase):
             0,
         )
         if bytes_received == -1:
-            return List[UInt8](), Error("Failed to receive message from socket.")
+            return List[UInt8](), Error("Socket.receive: Failed to receive message from socket.")
 
         var bytes = List[UInt8](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
