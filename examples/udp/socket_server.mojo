@@ -3,7 +3,7 @@ from gojo.syscall import SocketType
 import gojo.io
 
 
-fn udp_server() raises:
+fn main() raises:
     var socket = Socket(socket_type=SocketType.SOCK_DGRAM)
     alias host = "127.0.0.1"
     alias port = 12000
@@ -26,7 +26,3 @@ fn udp_server() raises:
         var bytes_sent: Int
         bytes_sent, err = socket.send_to(message.as_bytes(), remote.host, remote.port)
         print("Message sent:", message)
-
-
-fn main() raises:
-    udp_server()

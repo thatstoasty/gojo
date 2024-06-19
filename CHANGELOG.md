@@ -1,11 +1,22 @@
-
 # Change Log
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
+
+## [0.0.2] - 2024-06-19
+
+### Added
+
+- UDP support in `net` package.
+- `examples` package with `tcp` and `udp` examples using `Socket` and their respective `dial` and `listen` functions.
+
+### Removed
+
+- `Listener`, `Dialer`, and `Conn` interfaces have been removed until Trait support improves. For now, call `listen_tcp/listen_udp` and `dial_tcp/dial_udp` functions directly.
 
 ## [0.0.1] - 2024-06-16
 

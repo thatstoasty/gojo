@@ -2,7 +2,7 @@ from gojo.net import UDPAddr, get_ip_address, listen_udp, HostPort
 import gojo.io
 
 
-fn udp_listener() raises:
+fn main() raises:
     var listener = listen_udp("udp", UDPAddr("127.0.0.1", 12000))
 
     while True:
@@ -21,7 +21,3 @@ fn udp_listener() raises:
         var bytes_sent: Int
         bytes_sent, err = listener.write_to(message.as_bytes(), UDPAddr(remote.host, remote.port))
         print("Message sent:", message)
-
-
-fn main() raises:
-    udp_listener()

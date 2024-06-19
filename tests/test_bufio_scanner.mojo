@@ -13,8 +13,7 @@ fn test_scan_words() raises:
     var r = Reader(buf^)
 
     # Create a scanner from the reader
-    var scanner = Scanner(r^)
-    scanner.split = scan_words
+    var scanner = Scanner[split=scan_words](r^)
 
     var expected_results = List[String]()
     expected_results.append("Testing")
@@ -120,8 +119,7 @@ fn test_scan_bytes() raises:
         var reader = Reader(buf^)
 
         # Create a scanner from the reader
-        var scanner = Scanner(reader^)
-        scanner.split = scan_bytes
+        var scanner = Scanner[split=scan_bytes](reader^)
 
         var j = 0
 

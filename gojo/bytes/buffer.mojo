@@ -240,7 +240,7 @@ struct Buffer(
         self.last_read = OP_INVALID
 
     @always_inline
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: Span[Byte, True]) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -256,12 +256,13 @@ struct Buffer(
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            if dest.capacity == 0:
-                return 0, Error()
+            # TODO: How to check if the span's pointer has 0 capacity? We want to return early if the span can't receive any data.
+            # if dest.capacity == 0:
+            #     return 0, Error()
             return 0, Error(io.EOF)
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
-        var bytes_read = copy(dest, self.as_bytes_slice()[self.offset : self._size], dest.size)
+        var bytes_read = copy(dest, self.as_bytes_slice()[self.offset :])
         self.offset += bytes_read
 
         if bytes_read > 0:

@@ -33,7 +33,7 @@ fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error
     return writer.write_string(string)
 
 
-fn read_at_least[R: Reader](inout reader: R, inout dest: List[Byte], min: Int) -> (Int, Error):
+fn read_at_least[R: Reader](inout reader: R, inout dest: Span[Byte, True], min: Int) -> (Int, Error):
     """Reads from r into buf until it has read at least min bytes.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -69,7 +69,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: List[Byte], min: Int) -
     return total_bytes_read, error
 
 
-fn read_full[R: Reader](inout reader: R, inout dest: List[Byte]) -> (Int, Error):
+fn read_full[R: Reader](inout reader: R, inout dest: Span[Byte, True]) -> (Int, Error):
     """Reads exactly len(buf) bytes from r into buf.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -405,6 +405,7 @@ fn read_full[R: Reader](inout reader: R, inout dest: List[Byte]) -> (Int, Error)
 # }
 
 
+# TODO: read directly into dest
 fn read_all[R: Reader](inout reader: R) -> (List[Byte], Error):
     """Reads from r until an error or EOF and returns the data it read.
     A successful call returns err == nil, not err == EOF. Because ReadAll is
@@ -421,9 +422,10 @@ fn read_all[R: Reader](inout reader: R) -> (List[Byte], Error):
 
     while True:
         var temp = List[Byte](capacity=BUFFER_SIZE)
+        var span = Span[Byte, True](temp)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = reader.read(temp)
+        bytes_read, err = reader.read(span)
         var err_message = str(err)
         if err_message != "":
             if err_message != EOF:
