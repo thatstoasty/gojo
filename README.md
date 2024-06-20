@@ -42,7 +42,7 @@ All of these packages are partially implemented and do not support unicode chara
 - `net`
   - `Socket`: Wraps `FileDescriptor` and implements network specific functions.
   - `FileDescriptor`: File Descriptor wrapper that implements `io.Writer`, `io.Reader`, and `io.Closer`.
-  - `Dial` and `Listen` interfaces (for TCP only atm).
+  - `Dial` and `Listen` functions. (for TCP and UDP only atm).
 
 ## Usage
 
