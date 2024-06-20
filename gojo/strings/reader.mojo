@@ -51,12 +51,13 @@ struct Reader(
         return len(self.string)
 
     @always_inline
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
         """Reads from the underlying string into the provided List[UInt8] object.
         Implements the [io.Reader] trait.
 
         Args:
             dest: The destination List[UInt8] object to read into.
+            capacity: The capacity of the destination List[UInt8] object.
 
         Returns:
             The number of bytes read into dest.
@@ -69,13 +70,35 @@ struct Reader(
         self.read_pos += bytes_written
         return bytes_written, Error()
 
-    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Reads from the underlying string into the provided List[UInt8] object.
+        Implements the [io.Reader] trait.
+
+        Args:
+            dest: The destination List[UInt8] object to read into.
+
+        Returns:
+            The number of bytes read into dest.
+        """
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
+
+    @always_inline
+    fn _read_at(self, inout dest: Span[UInt8, True], off: Int, capacity: Int) -> (Int, Error):
         """Reads from the Reader into the dest List[UInt8] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
 
         Args:
             dest: The destination List[UInt8] object to read into.
             off: The byte offset to start reading from.
+            capacity: The capacity of the destination List[UInt8] object.
 
         Returns:
             The number of bytes read into dest.
@@ -93,6 +116,27 @@ struct Reader(
             error = Error(io.EOF)
 
         return copied_elements_count, error
+
+    @always_inline
+    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
+        """Reads from the Reader into the dest List[UInt8] starting at the offset off.
+        It returns the number of bytes read into dest and an error if any.
+
+        Args:
+            dest: The destination List[UInt8] object to read into.
+            off: The byte offset to start reading from.
+
+        Returns:
+            The number of bytes read into dest.
+        """
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read_at(span, off, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn read_byte(inout self) -> (UInt8, Error):

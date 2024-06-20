@@ -23,6 +23,7 @@ from ..syscall import (
     getaddrinfo_unix,
     gai_strerror,
 )
+from .address import HostPort
 
 alias AddrInfo = Variant[addrinfo, addrinfo_unix]
 
@@ -159,3 +160,27 @@ fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) ->
 
     var ai = sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8]())
     return UnsafePointer[sockaddr_in].address_of(ai).bitcast[sockaddr]()
+
+
+fn convert_sockaddr_to_host_port(sockaddr: UnsafePointer[sockaddr]) -> (HostPort, Error):
+    """Casts a sockaddr pointer to a sockaddr_in pointer and converts the binary IP and port to a string and int respectively.
+
+    Args:
+        sockaddr: The sockaddr pointer to convert.
+
+    Returns:
+        A tuple containing the HostPort and an Error if any occurred,.
+    """
+    if not sockaddr:
+        return HostPort(), Error("sockaddr is null, nothing to convert.")
+
+    # Cast sockaddr struct to sockaddr_in to convert binary IP to string.
+    var addr_in = move_from_pointee(sockaddr.bitcast[sockaddr_in]())
+
+    return (
+        HostPort(
+            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
+            port=convert_binary_port_to_int(addr_in.sin_port),
+        ),
+        Error(),
+    )

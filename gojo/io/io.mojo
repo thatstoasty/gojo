@@ -1,5 +1,4 @@
 from ..builtins import copy, Byte, panic
-from .traits import ERR_UNEXPECTED_EOF
 
 alias BUFFER_SIZE = 4096
 
@@ -405,6 +404,7 @@ fn read_full[R: Reader](inout reader: R, inout dest: List[Byte]) -> (Int, Error)
 # }
 
 
+# TODO: read directly into dest
 fn read_all[R: Reader](inout reader: R) -> (List[Byte], Error):
     """Reads from r until an error or EOF and returns the data it read.
     A successful call returns err == nil, not err == EOF. Because ReadAll is

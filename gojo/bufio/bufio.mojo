@@ -108,11 +108,8 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         if self.read_pos > 0:
             var data_to_slide = self.as_bytes_slice()[self.read_pos : self.write_pos]
             # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-            for i in range(len(self.buf)):
-                if i > len(self.buf):
-                    self.buf[i] = data_to_slide[i]
-                else:
-                    self.buf.append(data_to_slide[i])
+            for i in range(len(data_to_slide)):
+                self.buf[i] = data_to_slide[i]
 
             # self.buf.reserve(current_capacity)
             self.write_pos -= self.read_pos
@@ -126,20 +123,15 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
-            # TODO: Using temp until slicing can return a Reference
-            var temp = List[UInt8](capacity=io.BUFFER_SIZE)
+            # TODO: Using temp until slicing can return a Reference, does reading directly into a Span of self.buf work?
+            # Maybe we need to read into the end of the buffer.
+            var span = self.as_bytes_slice()
             var bytes_read: Int
             var err: Error
-            bytes_read, err = self.reader.read(temp)
+            bytes_read, err = self.reader._read(span, len(self.buf))
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
-            # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-            for i in range(len(temp)):
-                if i + self.write_pos > len(temp):
-                    self.buf[i + self.write_pos] = temp[i]
-                else:
-                    self.buf.append(temp[i])
             self.write_pos += bytes_read
 
             if err:
@@ -230,7 +222,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             if remain == 0:
                 return number_of_bytes, Error()
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
         """Reads data into dest.
         It returns the number of bytes read into dest.
         The bytes are taken from at most one Read on the underlying [Reader],
@@ -238,22 +230,20 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         To read exactly len(src) bytes, use io.ReadFull(b, src).
         If the underlying [Reader] can return a non-zero count with io.EOF,
         then this Read method can do so as well; see the [io.Reader] docs."""
-        var space_available = dest.capacity - len(dest)
-        if space_available == 0:
+        # TODO: How do we check the capacity of a Span? Or UnsafePointer?
+        if capacity == 0:
             if self.buffered() > 0:
                 return 0, Error()
             return 0, self.read_error()
 
         var bytes_read: Int = 0
         if self.read_pos == self.write_pos:
-            if space_available >= len(self.buf):
+            if capacity >= len(self.buf):
                 # Large read, empty buffer.
                 # Read directly into dest to avoid copy.
                 var bytes_read: Int
-                var err: Error
-                bytes_read, err = self.reader.read(dest)
+                bytes_read, self.err = self.reader._read(dest, capacity)
 
-                self.err = err
                 if bytes_read < 0:
                     panic(ERR_NEGATIVE_READ)
 
@@ -267,10 +257,9 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             # Do not use self.fill, which will loop.
             self.read_pos = 0
             self.write_pos = 0
-            var buf = List[UInt8](self.as_bytes_slice())  # TODO: I'm hoping this reads into self.data directly lol
+            var buf = self.as_bytes_slice()  # TODO: I'm hoping this reads into self.data directly lol
             var bytes_read: Int
-            var err: Error
-            bytes_read, err = self.reader.read(buf)
+            bytes_read, self.err = self.reader._read(buf, len(buf))
 
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
@@ -281,13 +270,37 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             self.write_pos += bytes_read
 
         # copy as much as we can
-        # Note: if the slice panics here, it is probably because
-        # the underlying reader returned a bad count. See issue 49795.
-        bytes_read = copy(dest, self.as_bytes_slice()[self.read_pos : self.write_pos])
+        var source = self.as_bytes_slice()[self.read_pos : self.write_pos]
+        bytes_read = 0
+        var start = len(dest)
+
+        for i in range(len(source)):
+            dest[i + start] = source[i]
+            bytes_read += 1
+        dest._len += bytes_read
         self.read_pos += bytes_read
-        self.last_byte = int(self.as_bytes_slice()[self.read_pos - 1])
+        self.last_byte = int(self.buf[self.read_pos - 1])
         self.last_rune_size = -1
         return bytes_read, Error()
+
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Reads data into dest.
+        It returns the number of bytes read into dest.
+        The bytes are taken from at most one Read on the underlying [Reader],
+        hence n may be less than len(src).
+        To read exactly len(src) bytes, use io.ReadFull(b, src).
+        If the underlying [Reader] can return a non-zero count with io.EOF,
+        then this Read method can do so as well; see the [io.Reader] docs."""
+
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
@@ -929,20 +942,9 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
 
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
-                # TODO: should really be using a slice that returns refs and not a copy.
-                # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
-                var sl = List[UInt8](self.as_bytes_slice()[self.bytes_written : len(self.buf)])
-                sl.reserve(self.buf.capacity)
-                bytes_read, err = reader.read(sl)
-                if bytes_read > 0:
-                    # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-                    var bytes_read = 0
-                    for i in range(len(sl)):
-                        if i + self.bytes_written > len(sl):
-                            self.buf[i + self.bytes_written] = sl[i]
-                        else:
-                            self.buf.append(sl[i])
-                        bytes_read += 1
+                # Read into remaining unused space in the buffer.
+                var buf = self.as_bytes_slice()[self.bytes_written : len(self.buf)]
+                bytes_read, err = reader._read(buf, len(buf))
 
                 if bytes_read != 0 or err:
                     break

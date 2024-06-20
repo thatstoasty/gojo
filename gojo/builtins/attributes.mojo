@@ -25,12 +25,34 @@ fn copy[T: CollectionElement](inout target: List[T], source: List[T], start: Int
     return count
 
 
-fn copy[T: CollectionElement](inout target: List[T], source: Span[T], start: Int = 0) -> Int:
+fn copy[T: CollectionElement](inout target_span: Span[T, True], source_span: Span[T], start: Int = 0) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
 
     Args:
-        target: The buffer to copy into.
+        target_span: The buffer to copy into.
+        source_span: The buffer to copy from.
+        start: The index to start copying into.
+
+    Returns:
+        The number of bytes copied.
+    """
+    var count = 0
+
+    for i in range(len(source_span)):
+        target_span[i + start] = source_span[i]
+        count += 1
+
+    target_span._len += count
+    return count
+
+
+fn copy[T: CollectionElement](inout target_span: Span[T, True], source: InlineList[T], start: Int = 0) -> Int:
+    """Copies the contents of source into target at the same index. Returns the number of bytes copied.
+    Added a start parameter to specify the index to start copying into.
+
+    Args:
+        target_span: The buffer to copy into.
         source: The buffer to copy from.
         start: The index to start copying into.
 
@@ -40,13 +62,18 @@ fn copy[T: CollectionElement](inout target: List[T], source: Span[T], start: Int
     var count = 0
 
     for i in range(len(source)):
-        if i + start > len(target):
-            target[i + start] = source[i]
-        else:
-            target.append(source[i])
+        target_span[i + start] = source[i]
         count += 1
 
+    target_span._len += count
     return count
+
+
+fn test(inout dest: List[UInt8]):
+    var source = List[UInt8](1, 2, 3)
+    var target = Span[UInt8](dest)
+
+    _ = copy(target, Span(source), start=0)
 
 
 fn copy[T: CollectionElement](inout list: InlineList[T], source: Span[T], start: Int = 0) -> Int:
