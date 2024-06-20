@@ -13,10 +13,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - UDP support in `net` package.
 - `examples` package with `tcp` and `udp` examples using `Socket` and their respective `dial` and `listen` functions.
+- Added `scan_runes` split function to `bufio.scan` module.
+- Added `bufio.Scanner` examples to the `examples` directory.
 
 ### Removed
 
 - `Listener`, `Dialer`, and `Conn` interfaces have been removed until Trait support improves. For now, call `listen_tcp/listen_udp` and `dial_tcp/dial_udp` functions directly.
+
+### Changed
+
+- Incrementally moving towards using `Span` for the `Reader` and `Writer` traits. Added an `_read` function to `Reader` and `_read_at` to `ReaderAt` traits to enable reading into `Span`. The usual implementation is the take a `List[UInt8]` but then to use `_read` and pass a `Span` constructed from the List.
 
 ## [0.0.1] - 2024-06-16
 
