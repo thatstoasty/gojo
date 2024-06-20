@@ -79,7 +79,7 @@ struct Reader(
             Int: The number of bytes read into dest."""
 
         if self.index >= self.size:
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
@@ -125,12 +125,12 @@ struct Reader(
             return 0, Error("bytes.Reader.read_at: negative offset")
 
         if off >= Int(self.size):
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         var unread_bytes = self.as_bytes_slice()[off : self.size]
         var bytes_written = copy(dest, unread_bytes)
         if bytes_written < len(dest):
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         return bytes_written, Error()
 
@@ -160,7 +160,7 @@ struct Reader(
         """Reads and returns a single byte from the internal buffer. Implements the [io.ByteReader] Interface."""
         self.prev_rune = -1
         if self.index >= self.size:
-            return UInt8(0), Error(io.EOF)
+            return UInt8(0), io.EOF
 
         var byte = self.data[self.index]
         self.index += 1
@@ -256,7 +256,7 @@ struct Reader(
 
         self.index += write_count
         if write_count != len(bytes):
-            return write_count, Error(io.ERR_SHORT_WRITE)
+            return write_count, io.ERR_SHORT_WRITE
 
         return write_count, Error()
 

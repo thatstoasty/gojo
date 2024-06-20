@@ -136,12 +136,18 @@ struct StringBuilder[growth_factor: Float32 = 2](
     @always_inline
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """
-        Appends a byte Span to the builder buffer.
+        Appends a byte List to the builder buffer.
 
         Args:
-            src: The byte array to append.
+          src: The byte array to append.
         """
-        return self._write(Span(src))
+        var span = Span(src)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._write(span)
+
+        return bytes_read, err
 
     @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):

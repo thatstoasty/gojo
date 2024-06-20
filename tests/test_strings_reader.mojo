@@ -68,15 +68,15 @@ fn test_read_and_unread_byte() raises:
     test.assert_equal(len(reader), len(example))
 
 
-fn test_write_to() raises:
-    var test = MojoTest("Testing strings.Reader.write_to")
-    var example: String = "Hello, World!"
-    var reader = new_reader("Hello, World!")
+# fn test_write_to() raises:
+#     var test = MojoTest("Testing strings.Reader.write_to")
+#     var example: String = "Hello, World!"
+#     var reader = new_reader("Hello, World!")
 
-    # Write from the string reader to a StringBuilder.
-    var builder = StringBuilder()
-    _ = reader.write_to(builder)
-    test.assert_equal(str(builder), example)
+#     # Write from the string reader to a StringBuilder.
+#     var builder = StringBuilder()
+#     _ = reader.write_to(builder)
+#     test.assert_equal(str(builder), example)
 
 
 fn main() raises:
@@ -84,5 +84,5 @@ fn main() raises:
     test_read_at()
     test_seek()
     test_read_and_unread_byte()
-    test_write_to()
+    # test_write_to()
     test_read_slice()

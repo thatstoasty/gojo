@@ -359,6 +359,18 @@ struct Socket(FileDescriptorBase):
         return Error()
 
     @always_inline
+    fn _write(inout self: Self, src: Span[UInt8]) -> (Int, Error):
+        """Send data to the socket. The socket must be connected to a remote socket.
+
+        Args:
+            src: The data to send.
+
+        Returns:
+            The number of bytes sent.
+        """
+        return self.fd._write(src)
+
+    @always_inline
     fn write(inout self: Self, src: List[UInt8]) -> (Int, Error):
         """Send data to the socket. The socket must be connected to a remote socket.
 
@@ -370,14 +382,13 @@ struct Socket(FileDescriptorBase):
         """
         return self.fd.write(src)
 
-    fn send_all(self, src: List[UInt8], max_attempts: Int = 3) raises:
+    fn send_all(self, src: Span[UInt8], max_attempts: Int = 3) -> Error:
         """Send data to the socket. The socket must be connected to a remote socket.
 
         Args:
             src: The data to send.
             max_attempts: The maximum number of attempts to send the data.
         """
-        var data = src.unsafe_ptr()
         var bytes_to_send = len(src)
         var total_bytes_sent = 0
         var attempts = 0
@@ -385,21 +396,23 @@ struct Socket(FileDescriptorBase):
         # Try to send all the data in the buffer. If it did not send all the data, keep trying but start from the offset of the last successful send.
         while total_bytes_sent < len(src):
             if attempts > max_attempts:
-                raise Error("Failed to send message after " + str(max_attempts) + " attempts.")
+                return Error("Failed to send message after " + str(max_attempts) + " attempts.")
 
             var bytes_sent = send(
                 self.fd.fd,
-                data.offset(total_bytes_sent),
+                src.unsafe_ptr() + total_bytes_sent,
                 bytes_to_send - total_bytes_sent,
                 0,
             )
             if bytes_sent == -1:
-                raise Error("Failed to send message, wrote" + String(total_bytes_sent) + "bytes before failing.")
+                return Error("Failed to send message, wrote" + String(total_bytes_sent) + "bytes before failing.")
             total_bytes_sent += bytes_sent
             attempts += 1
 
+        return Error()
+
     @always_inline
-    fn send_to(inout self, src: List[UInt8], address: String, port: Int) -> (Int, Error):
+    fn send_to(inout self, src: Span[UInt8], address: String, port: Int) -> (Int, Error):
         """Send data to the a remote address by connecting to the remote socket before sending.
         The socket must be not already be connected to a remote socket.
 
@@ -444,7 +457,7 @@ struct Socket(FileDescriptorBase):
 
         var bytes = List[UInt8](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
-            return bytes, Error(io.EOF)
+            return bytes, io.EOF
 
         return bytes, Error()
 
@@ -513,7 +526,7 @@ struct Socket(FileDescriptorBase):
 
         var bytes = List[UInt8](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
-            return bytes, remote, Error(io.EOF)
+            return bytes, remote, io.EOF
 
         return bytes, remote, Error()
 
@@ -542,7 +555,7 @@ struct Socket(FileDescriptorBase):
             return 0, HostPort(), err
 
         if bytes_read < dest.capacity:
-            return bytes_read, remote, Error(io.EOF)
+            return bytes_read, remote, io.EOF
 
         return bytes_read, remote, Error()
 
@@ -578,5 +591,9 @@ struct Socket(FileDescriptorBase):
     #     self.set_socket_option(SocketOptions.SO_RCVTIMEO, duration)
 
     @always_inline
-    fn send_file(self, file: FileHandle, offset: Int = 0) raises:
-        self.send_all(file.read_bytes())
+    fn send_file(self, file: FileHandle) -> Error:
+        try:
+            var bytes = file.read_bytes()
+            return self.send_all(Span(bytes))
+        except e:
+            return e

@@ -69,7 +69,7 @@ struct TCPConnection(Movable):
         var err = Error()
         bytes_read, err = self.socket._read(dest, capacity)
         if err:
-            if str(err) != io.EOF:
+            if str(err) != str(io.EOF):
                 return bytes_read, err
 
         return bytes_read, err
@@ -92,6 +92,18 @@ struct TCPConnection(Movable):
         dest.size += bytes_read
 
         return bytes_read, err
+
+    @always_inline
+    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+        """Writes data to the underlying file descriptor.
+
+        Args:
+            src: The buffer to read data into.
+
+        Returns:
+            The number of bytes written, or an error if one occurred.
+        """
+        return self.socket._write(src)
 
     @always_inline
     fn write(inout self, src: List[UInt8]) -> (Int, Error):

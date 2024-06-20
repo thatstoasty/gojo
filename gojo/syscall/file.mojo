@@ -1,6 +1,3 @@
-from . import c_int, c_char, c_void, c_size_t, c_ssize_t
-
-
 trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
     ...
 

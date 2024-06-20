@@ -50,7 +50,7 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
         _ = copy(dest, Span(result), len(dest))
 
         if bytes_read == 0:
-            return bytes_read, Error(io.EOF)
+            return bytes_read, io.EOF
 
         return bytes_read, Error()
 
@@ -74,7 +74,7 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
         _ = copy(dest, result, len(dest))
 
         if bytes_read == 0:
-            return bytes_read, Error(io.EOF)
+            return bytes_read, io.EOF
 
         return bytes_read, Error()
 
@@ -91,7 +91,7 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
             bytes.extend(temp)
 
             if len(temp) < io.BUFFER_SIZE:
-                return bytes, Error(io.EOF)
+                return bytes, io.EOF
 
     @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
@@ -139,7 +139,7 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
 
         try:
             self.handle.write(src.unsafe_ptr())
-            return len(src), Error(io.EOF)
+            return len(src), io.EOF
         except e:
             return 0, Error(str(e))
 

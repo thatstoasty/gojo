@@ -185,12 +185,18 @@ struct Buffer(
     @always_inline
     fn write(inout self, src: List[Byte]) -> (Int, Error):
         """
-        Appends a byte Span to the builder buffer.
+        Appends a byte List to the builder buffer.
 
         Args:
           src: The byte array to append.
         """
-        return self._write(Span(src))
+        var span = Span(src)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._write(span)
+
+        return bytes_read, err
 
     @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):
@@ -200,7 +206,7 @@ struct Buffer(
         Args:
           src: The string to append.
         """
-        return self._write(src.as_bytes_slice())
+        return self.write(src.as_bytes_slice())
 
     @always_inline
     fn write_byte(inout self, byte: Byte) -> (Int, Error):
@@ -248,6 +254,7 @@ struct Buffer(
 
         Args:
             dest: The buffer to read into.
+            capacity: The capacity of the destination buffer.
 
         Returns:
             The number of bytes read from the buffer.
@@ -259,7 +266,7 @@ struct Buffer(
             # TODO: How to check if the span's pointer has 0 capacity? We want to return early if the span can't receive any data.
             if capacity == 0:
                 return 0, Error()
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         var bytes_read = copy(dest, self.as_bytes_slice()[self.offset :])
@@ -301,7 +308,7 @@ struct Buffer(
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            return Byte(0), Error(io.EOF)
+            return Byte(0), io.EOF
 
         var byte = self._data[self.offset]
         self.offset += 1
@@ -366,7 +373,7 @@ struct Buffer(
         var err = Error()
         if i < 0:
             end = self[]._size
-            err = Error(io.EOF)
+            err = Error(str(io.EOF))
 
         var line = self[].as_bytes_slice()[self[].offset : end]
         self[].offset = end

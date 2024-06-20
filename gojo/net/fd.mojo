@@ -50,7 +50,7 @@ struct FileDescriptor(FileDescriptorBase):
             0,
         )
         if bytes_received == 0:
-            return bytes_received, Error(io.EOF)
+            return bytes_received, io.EOF
 
         if bytes_received == -1:
             return 0, Error("Failed to receive message from socket.")
