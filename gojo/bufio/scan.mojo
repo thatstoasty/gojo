@@ -1,5 +1,5 @@
 import ..io
-from ..builtins import copy, panic, Error
+from ..builtins import copy, panic
 from ..builtins.bytes import index_byte
 from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 
@@ -259,11 +259,12 @@ alias SplitFunction = fn (data: Span[UInt8], at_eof: Bool) -> (
     Error,
 )
 
-# # Errors returned by Scanner.
+# Errors returned by Scanner.
 alias ERR_TOO_LONG = Error("bufio.Scanner: token too long")
 alias ERR_NEGATIVE_ADVANCE = Error("bufio.Scanner: SplitFunction returns negative advance count")
 alias ERR_ADVANCE_TOO_FAR = Error("bufio.Scanner: SplitFunction returns advance count beyond input")
 alias ERR_BAD_READ_COUNT = Error("bufio.Scanner: Read returned impossible count")
+
 # ERR_FINAL_TOKEN is a special sentinel error value. It is Intended to be
 # returned by a split function to indicate that the scanning should stop
 # with no error. If the token being delivered with this error is not nil,
@@ -293,51 +294,46 @@ fn new_scanner[R: io.Reader](owned reader: R) -> Scanner[R]:
 
 ###### split functions ######
 fn scan_bytes(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
-    """Split function for a [Scanner] that returns each byte as a token."""
+    """Returns each byte as a token.
+
+    Args:
+        data: The data to split.
+        at_eof: Whether the data is at the end of the file.
+
+    Returns:
+        The number of bytes to advance the input, token in bytes, and an error if one occurred.
+    """
     if at_eof and len(data) == 0:
         return 0, List[UInt8](), Error()
 
     return 1, List[UInt8](data[0:1]), Error()
 
 
-# var errorRune = List[UInt8](string(utf8.RuneError))
+fn scan_runes(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
+    """Returns each UTF-8-encoded rune as a token.
 
-# # ScanRunes is a split function for a [Scanner] that returns each
-# # UTF-8-encoded rune as a token. The sequence of runes returned is
-# # equivalent to that from a range loop over the input as a string, which
-# # means that erroneous UTF-8 encodings translate to U+FFFD = "\xef\xbf\xbd".
-# # Because of the Scan Interface, this makes it impossible for the client to
-# # distinguish correctly encoded replacement runes from encoding errors.
-# fn ScanRunes(data List[UInt8], at_eof Bool) (advance Int, token List[UInt8], err error):
-# 	if at_eof and data.capacity == 0:
-# 		return 0, nil, nil
+    Args:
+        data: The data to split.
+        at_eof: Whether the data is at the end of the file.
 
+    Returns:
+        The number of bytes to advance the input, token in bytes, and an error if one occurred.
+    """
+    if at_eof and len(data) == 0:
+        return 0, List[UInt8](), Error()
 
-# 	# Fast path 1: ASCII.
-# 	if data[0] < utf8.RuneSelf:
-# 		return 1, data[0:1], nil
+    # Number of bytes of the current character
+    var char_length = int(
+        (DTypePointer[DType.uint8](data.unsafe_ptr()).load() >> 7 == 0).cast[DType.uint8]() * 1
+        + countl_zero(~DTypePointer[DType.uint8](data.unsafe_ptr()).load())
+    )
 
+    # Copy N bytes into new pointer and construct List.
+    var sp = UnsafePointer[UInt8].alloc(char_length)
+    memcpy(sp, data.unsafe_ptr(), char_length)
+    var result = List[UInt8](unsafe_pointer=sp, size=char_length, capacity=char_length)
 
-# 	# Fast path 2: Correct UTF-8 decode without error.
-# 	_, width := utf8.DecodeRune(data)
-# 	if width > 1:
-# 		# It's a valid encoding. Width cannot be one for a correctly encoded
-# 		# non-ASCII rune.
-# 		return width, data[0:width], nil
-
-
-# 	# We know it's an error: we have width==1 and implicitly r==utf8.RuneError.
-# 	# Is the error because there wasn't a full rune to be decoded?
-# 	# FullRune distinguishes correctly between erroneous and incomplete encodings.
-# 	if !at_eof and !utf8.FullRune(data):
-# 		# Incomplete; get more bytes.
-# 		return 0, nil, nil
-
-
-# 	# We have a real UTF-8 encoding error. Return a properly encoded error rune
-# 	# but advance only one byte. This matches the behavior of a range loop over
-# 	# an incorrectly encoded string.
-# 	return 1, errorRune, nil
+    return char_length, result, Error()
 
 
 fn drop_carriage_return(data: Span[UInt8]) -> List[UInt8]:
@@ -357,8 +353,7 @@ fn drop_carriage_return(data: Span[UInt8]) -> List[UInt8]:
 
 
 fn scan_lines(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
-    """Split function for a [Scanner] that returns each line of
-    text, stripped of any trailing end-of-line marker. The returned line may
+    """Returns each line of text, stripped of any trailing end-of-line marker. The returned line may
     be empty. The end-of-line marker is one optional carriage return followed
     by one mandatory newline. The last non-empty line of input will be returned even if it has no
     newline.
@@ -366,6 +361,7 @@ fn scan_lines(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
     Args:
         data: The data to split.
         at_eof: Whether the data is at the end of the file.
+
     Returns:
         The number of bytes to advance the input.
     """
@@ -394,10 +390,15 @@ fn is_space(r: UInt8) -> Bool:
 
 # TODO: Handle runes and utf8 decoding. For now, just assuming single byte length.
 fn scan_words(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
-    """Split function for a [Scanner] that returns each
-    space-separated word of text, with surrounding spaces deleted. It will
-    never return an empty string. The definition of space is set by
-    unicode.IsSpace.
+    """Returns each space-separated word of text, with surrounding spaces deleted. It will
+    never return an empty string.
+
+    Args:
+        data: The data to split.
+        at_eof: Whether the data is at the end of the file.
+
+    Returns:
+        The number of bytes to advance the input, token in bytes, and an error if one occurred.
     """
     # Skip leading spaces.
     var start = 0
