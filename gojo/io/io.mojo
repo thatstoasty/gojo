@@ -51,7 +51,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: List[Byte], min: Int) -
         The number of bytes read."""
     var error = Error()
     if len(dest) < min:
-        return 0, Error(io.ERR_SHORT_BUFFER)
+        return 0, io.ERR_SHORT_BUFFER
 
     var total_bytes_read: Int = 0
     while total_bytes_read < min and not error:
@@ -63,7 +63,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: List[Byte], min: Int) -
         error = Error()
 
     elif total_bytes_read > 0 and str(error):
-        error = Error(ERR_UNEXPECTED_EOF)
+        error = ERR_UNEXPECTED_EOF
 
     return total_bytes_read, error
 
@@ -424,9 +424,8 @@ fn read_all[R: Reader](inout reader: R) -> (List[Byte], Error):
         var bytes_read: Int
         var err: Error
         bytes_read, err = reader.read(temp)
-        var err_message = str(err)
-        if err_message != "":
-            if err_message != EOF:
+        if str(err) != "":
+            if str(err) != str(EOF):
                 return dest, err
 
             at_eof = True

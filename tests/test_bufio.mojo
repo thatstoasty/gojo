@@ -1,7 +1,7 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.builtins.bytes import to_string
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, Writer, new_writer, new_reader
 from gojo.io import read_all, FileWrapper
 from gojo.strings import StringBuilder
 
@@ -34,20 +34,20 @@ fn test_read_all():
     test.assert_equal(String(bytes), "0123456789")
 
 
-fn test_write_to():
-    var test = MojoTest("Testing bufio.Reader.write_to")
+# fn test_write_to():
+#     var test = MojoTest("Testing bufio.Reader.write_to")
 
-    var buf = buffer.new_buffer("0123456789")
-    var reader = Reader(buf^)
+#     var buf = buffer.new_buffer("0123456789")
+#     var reader = Reader(buf^)
 
-    # Create a new writer containing the content "Hello World"
-    var writer = buffer.new_buffer("Hello World")
+#     # Create a new writer containing the content "Hello World"
+#     var writer = buffer.new_buffer("Hello World")
 
-    # Write the content of the reader to the writer
-    _ = reader.write_to(writer)
+#     # Write the content of the reader to the writer
+#     _ = reader.write_to(writer)
 
-    # Check if the content of the writer is "Hello World0123456789"
-    test.assert_equal(str(writer), "Hello World0123456789")
+#     # Check if the content of the writer is "Hello World0123456789"
+#     test.assert_equal(str(writer), "Hello World0123456789")
 
 
 fn test_read_and_unread_byte():
@@ -124,8 +124,9 @@ fn test_write():
     var test = MojoTest("Testing bufio.Writer.write and flush")
 
     # Create a new List[UInt8] Buffer Writer and use it to create the buffered Writer
-    var buf = buffer.new_buffer()
-    var writer = Writer(buf^)
+    # var buf = buffer.new_buffer()
+    var writer = new_writer(buffer.new_buffer())
+    # var writer = Writer(buf^)
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the List[UInt8] Buffer Writer.
     var src = String("0123456789").as_bytes()
@@ -226,7 +227,7 @@ fn test_read_from():
 fn main():
     test_read()
     test_read_all()
-    test_write_to()
+    # test_write_to()
     test_read_and_unread_byte()
     test_read_slice()
     test_peek()

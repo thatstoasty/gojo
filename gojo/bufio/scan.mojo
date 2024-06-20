@@ -192,7 +192,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
 
                 loop += 1
                 if loop > MAX_CONSECUTIVE_EMPTY_READS:
-                    self.set_err(Error(io.ERR_NO_PROGRESS))
+                    self.set_err(io.ERR_NO_PROGRESS)
                     break
 
     fn set_err(inout self, err: Error):
@@ -203,7 +203,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
         """
         if self.err:
             var value = str(self.err)
-            if value == "" or value == io.EOF:
+            if value == "" or value == str(io.EOF):
                 self.err = err
         else:
             self.err = err
@@ -218,11 +218,11 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
             True if the advance was legal, False otherwise.
         """
         if n < 0:
-            self.set_err(Error(str(ERR_NEGATIVE_ADVANCE)))
+            self.set_err(ERR_NEGATIVE_ADVANCE)
             return False
 
         if n > self.end - self.start:
-            self.set_err(Error(str(ERR_ADVANCE_TOO_FAR)))
+            self.set_err(ERR_ADVANCE_TOO_FAR)
             return False
 
         self.start += n

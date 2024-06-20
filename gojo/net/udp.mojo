@@ -68,7 +68,7 @@ struct UDPConnection(Movable):
 
         return bytes_read, remote, err
 
-    fn write_to(inout self, src: List[UInt8], address: UDPAddr) -> (Int, Error):
+    fn write_to(inout self, src: Span[UInt8], address: UDPAddr) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -80,7 +80,7 @@ struct UDPConnection(Movable):
         """
         return self.socket.send_to(src, address.ip, address.port)
 
-    fn write_to(inout self, src: List[UInt8], host: String, port: Int) -> (Int, Error):
+    fn write_to(inout self, src: Span[UInt8], host: String, port: Int) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:

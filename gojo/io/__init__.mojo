@@ -20,13 +20,13 @@ alias SEEK_END = 2  # seek relative to the end
 
 # ERR_SHORT_WRITE means that a write accepted fewer bytes than requested
 # but failed to return an explicit error.
-alias ERR_SHORT_WRITE = "short write"
+alias ERR_SHORT_WRITE = Error("short write")
 
 # ERR_INVALID_WRITE means that a write returned an impossible count.
-alias ERR_INVALID_WRITE = "invalid write result"
+alias ERR_INVALID_WRITE = Error("invalid write result")
 
 # ERR_SHORT_BUFFER means that a read required a longer buffer than was provided.
-alias ERR_SHORT_BUFFER = "short buffer"
+alias ERR_SHORT_BUFFER = Error("short buffer")
 
 # EOF is the error returned by Read when no more input is available.
 # (Read must return EOF itself, not an error wrapping EOF,
@@ -35,16 +35,16 @@ alias ERR_SHORT_BUFFER = "short buffer"
 # If the EOF occurs unexpectedly in a structured data stream,
 # the appropriate error is either [ERR_UNEXPECTED_EOF] or some other error
 # giving more detail.
-alias EOF = "EOF"
+alias EOF = Error("EOF")
 
 # ERR_UNEXPECTED_EOF means that EOF was encountered in the
 # middle of reading a fixed-size block or data structure.
-alias ERR_UNEXPECTED_EOF = "unexpected EOF"
+alias ERR_UNEXPECTED_EOF = Error("unexpected EOF")
 
 # ERR_NO_PROGRESS is returned by some clients of a [Reader] when
 # many calls to Read have failed to return any data or error,
 # usually the sign of a broken [Reader] implementation.
-alias ERR_NO_PROGRESS = "multiple Read calls return no data or error"
+alias ERR_NO_PROGRESS = Error("multiple Read calls return no data or error")
 
 
 trait Reader(Movable):
@@ -98,6 +98,9 @@ trait Writer(Movable):
 
     Implementations must not retain p.
     """
+
+    # fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    #     ...
 
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         ...
@@ -256,7 +259,10 @@ trait WriterAt:
 
     Implementations must not retain p."""
 
-    fn write_at(self, src: Span[UInt8], off: Int) -> (Int, Error):
+    fn _write_at(self, src: Span[UInt8], off: Int) -> (Int, Error):
+        ...
+
+    fn write_at(self, src: List[UInt8], off: Int) -> (Int, Error):
         ...
 
 

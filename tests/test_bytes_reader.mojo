@@ -38,10 +38,10 @@ fn test_read_after_big_seek() raises:
     if not err:
         raise Error("Expected error not raised while testing big seek.")
 
-    if str(err) != io.EOF:
+    if str(err) != str(io.EOF):
         raise err
 
-    test.assert_equal(str(err), io.EOF)
+    test.assert_equal(str(err), str(io.EOF))
 
 
 fn test_read_at() raises:

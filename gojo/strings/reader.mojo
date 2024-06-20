@@ -3,6 +3,7 @@ from ..builtins import copy, panic
 
 
 @value
+# TODO: Uncomment write_to and write_buf once the bug with the trait's Span argument is fixed.
 struct Reader(
     Sized,
     io.Reader,
@@ -10,7 +11,7 @@ struct Reader(
     io.ByteReader,
     io.ByteScanner,
     io.Seeker,
-    io.WriterTo,
+    # io.WriterTo,
 ):
     """A Reader that implements the [io.Reader], [io.ReaderAt], [io.ByteReader], [io.ByteScanner], [io.Seeker], and [io.WriterTo] traits
     by reading from a string. The zero value for Reader operates like a Reader of an empty string.
@@ -63,7 +64,7 @@ struct Reader(
             The number of bytes read into dest.
         """
         if self.read_pos >= len(self.string):
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         self.prev_rune = -1
         var bytes_written = copy(dest, self.string.as_bytes_slice()[self.read_pos :])
@@ -108,12 +109,12 @@ struct Reader(
             return 0, Error("strings.Reader.read_at: negative offset")
 
         if off >= len(self.string):
-            return 0, Error(io.EOF)
+            return 0, io.EOF
 
         var error = Error()
         var copied_elements_count = copy(dest, self.string.as_bytes_slice()[off:])
         if copied_elements_count < len(dest):
-            error = Error(io.EOF)
+            error = Error(str(io.EOF))
 
         return copied_elements_count, error
 
@@ -143,7 +144,7 @@ struct Reader(
         """Reads the next byte from the underlying string."""
         self.prev_rune = -1
         if self.read_pos >= len(self.string):
-            return UInt8(0), Error(io.EOF)
+            return UInt8(0), io.EOF
 
         var b = self.string.as_bytes_slice()[self.read_pos]
         self.read_pos += 1
@@ -215,32 +216,32 @@ struct Reader(
         self.read_pos = position
         return position, Error()
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
-        """Writes the remaining portion of the underlying string to the provided writer.
-        Implements the [io.WriterTo] trait.
+    # fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+    #     """Writes the remaining portion of the underlying string to the provided writer.
+    #     Implements the [io.WriterTo] trait.
 
-        Args:
-            writer: The writer to write the remaining portion of the string to.
+    #     Args:
+    #         writer: The writer to write the remaining portion of the string to.
 
-        Returns:
-            The number of bytes written to the writer.
-        """
-        self.prev_rune = -1
-        var err = Error()
-        if self.read_pos >= len(self.string):
-            return Int(0), err
+    #     Returns:
+    #         The number of bytes written to the writer.
+    #     """
+    #     self.prev_rune = -1
+    #     var err = Error()
+    #     if self.read_pos >= len(self.string):
+    #         return Int(0), err
 
-        var chunk_to_write = self.string.as_bytes_slice()[self.read_pos :]
-        var bytes_written: Int
-        bytes_written, err = writer.write(chunk_to_write)
-        if bytes_written > len(chunk_to_write):
-            panic("strings.Reader.write_to: invalid write_string count")
+    #     var chunk_to_write = self.string.as_bytes_slice()[self.read_pos :]
+    #     var bytes_written: Int
+    #     bytes_written, err = writer.write(chunk_to_write)
+    #     if bytes_written > len(chunk_to_write):
+    #         panic("strings.Reader.write_to: invalid write_string count")
 
-        self.read_pos += bytes_written
-        if bytes_written != len(chunk_to_write) and not err:
-            err = Error(io.ERR_SHORT_WRITE)
+    #     self.read_pos += bytes_written
+    #     if bytes_written != len(chunk_to_write) and not err:
+    #         err = Error(io.ERR_SHORT_WRITE)
 
-        return bytes_written, err
+    #     return bytes_written, err
 
     # # TODO: How can I differentiate between the two write_to methods when the writer implements both traits?
     # fn write_to[W: io.StringWriter](inout self, inout writer: W) raises -> Int:
