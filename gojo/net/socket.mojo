@@ -449,6 +449,19 @@ struct Socket(FileDescriptorBase):
         return bytes, Error()
 
     @always_inline
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
+        """Receive data from the socket into the buffer dest. Equivalent to recv_into().
+
+        Args:
+            dest: The buffer to read data into.
+            capacity: The capacity of the buffer.
+
+        Returns:
+            The number of bytes read, and an error if one occurred.
+        """
+        return self.fd._read(dest, capacity)
+
+    @always_inline
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Receive data from the socket into the buffer dest. Equivalent to recv_into().
 
@@ -458,7 +471,14 @@ struct Socket(FileDescriptorBase):
         Returns:
             The number of bytes read, and an error if one occurred.
         """
-        return self.fd.read(dest)
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn receive_from(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8], HostPort, Error):

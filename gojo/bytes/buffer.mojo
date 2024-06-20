@@ -240,7 +240,7 @@ struct Buffer(
         self.last_read = OP_INVALID
 
     @always_inline
-    fn read(inout self, inout dest: Span[Byte, True]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[Byte, True], capacity: Int) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -257,18 +257,41 @@ struct Buffer(
             # Buffer is empty, reset to recover space.
             self.reset()
             # TODO: How to check if the span's pointer has 0 capacity? We want to return early if the span can't receive any data.
-            # if dest.capacity == 0:
-            #     return 0, Error()
+            if capacity == 0:
+                return 0, Error()
             return 0, Error(io.EOF)
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         var bytes_read = copy(dest, self.as_bytes_slice()[self.offset :])
+        dest._len += bytes_read
         self.offset += bytes_read
 
         if bytes_read > 0:
             self.last_read = OP_READ
 
         return bytes_read, Error()
+
+    @always_inline
+    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+        """Reads the next len(dest) bytes from the buffer or until the buffer
+        is drained. The return value n is the number of bytes read. If the
+        buffer has no data to return, err is io.EOF (unless len(dest) is zero);
+        otherwise it is nil.
+
+        Args:
+            dest: The buffer to read into.
+
+        Returns:
+            The number of bytes read from the buffer.
+        """
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn read_byte(inout self) -> (Byte, Error):

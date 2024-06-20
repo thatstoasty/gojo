@@ -31,12 +31,12 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
         return Error()
 
     @always_inline
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
         """Read from the file handle into dest's pointer.
         Pretty hacky way to force the filehandle read into the defined trait, and it's unsafe since we're
         reading directly into the pointer.
         """
-        var bytes_to_read = dest.capacity - len(dest)
+        # var bytes_to_read = dest.capacity - len(dest)
         var bytes_read: Int
         var result: List[UInt8]
         try:
@@ -47,9 +47,33 @@ struct FileWrapper(FileDescriptorBase, io.ByteReader):
         except e:
             return 0, e
 
-        _ = copy(dest, result, dest.size)
+        _ = copy(dest, Span(result), len(dest))
 
-        if bytes_read == 0 or bytes_read < bytes_to_read:
+        if bytes_read == 0:
+            return bytes_read, Error(io.EOF)
+
+        return bytes_read, Error()
+
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Read from the file handle into dest's pointer.
+        Pretty hacky way to force the filehandle read into the defined trait, and it's unsafe since we're
+        reading directly into the pointer.
+        """
+        # var bytes_to_read = dest.capacity - len(dest)
+        var bytes_read: Int
+        var result: List[UInt8]
+        try:
+            result = self.handle.read_bytes()
+            bytes_read = len(result)
+            # TODO: Need to raise an Issue for this. Reading with pointer does not return an accurate count of bytes_read :(
+            # bytes_read = int(self.handle.read(DTypePointer[DType.uint8](dest.unsafe_ptr()) + dest.size))
+        except e:
+            return 0, e
+
+        _ = copy(dest, result, len(dest))
+
+        if bytes_read == 0:
             return bytes_read, Error(io.EOF)
 
         return bytes_read, Error()

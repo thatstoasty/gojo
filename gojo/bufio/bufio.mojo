@@ -128,17 +128,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             var span = self.as_bytes_slice()
             var bytes_read: Int
             var err: Error
-            bytes_read, err = self.reader.read(span)
-            print("bytes read, bufio reader", bytes_read)
+            bytes_read, err = self.reader._read(span, len(self.buf))
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
-            # # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-            # for i in range(len(temp)):
-            #     if i + self.write_pos > len(temp):
-            #         self.buf[i + self.write_pos] = temp[i]
-            #     else:
-            #         self.buf.append(temp[i])
             self.write_pos += bytes_read
 
             if err:
@@ -229,7 +222,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             if remain == 0:
                 return number_of_bytes, Error()
 
-    fn read(inout self, inout dest: Span[UInt8, True]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
         """Reads data into dest.
         It returns the number of bytes read into dest.
         The bytes are taken from at most one Read on the underlying [Reader],
@@ -238,32 +231,27 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         If the underlying [Reader] can return a non-zero count with io.EOF,
         then this Read method can do so as well; see the [io.Reader] docs."""
         # TODO: How do we check the capacity of a Span? Or UnsafePointer?
-        # var space_available = dest.capacity - len(dest)
-        # if space_available == 0:
-        #     if self.buffered() > 0:
-        #         return 0, Error()
-        #     return 0, self.read_error()
+        if capacity == 0:
+            if self.buffered() > 0:
+                return 0, Error()
+            return 0, self.read_error()
 
         var bytes_read: Int = 0
         if self.read_pos == self.write_pos:
-            # TODO: How do we check the capacity of a Span? Or UnsafePointer? For now just assume the buffer DOES have enough space.
-            # if space_available >= len(self.buf):
-            # Large read, empty buffer.
-            # Read directly into dest to avoid copy.
-            # var bytes_read: Int
-            # var err: Error
-            # bytes_read, err = self.reader.read(dest)
-            # print("bufio reader", bytes_read, err)
+            if capacity >= len(self.buf):
+                # Large read, empty buffer.
+                # Read directly into dest to avoid copy.
+                var bytes_read: Int
+                bytes_read, self.err = self.reader._read(dest, capacity)
 
-            # self.err = err
-            # if bytes_read < 0:
-            #     panic(ERR_NEGATIVE_READ)
+                if bytes_read < 0:
+                    panic(ERR_NEGATIVE_READ)
 
-            # if bytes_read > 0:
-            #     self.last_byte = int(dest[bytes_read - 1])
-            #     self.last_rune_size = -1
+                if bytes_read > 0:
+                    self.last_byte = int(dest[bytes_read - 1])
+                    self.last_rune_size = -1
 
-            # return bytes_read, self.read_error()
+                return bytes_read, self.read_error()
 
             # One read.
             # Do not use self.fill, which will loop.
@@ -271,8 +259,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             self.write_pos = 0
             var buf = self.as_bytes_slice()  # TODO: I'm hoping this reads into self.data directly lol
             var bytes_read: Int
-            var err: Error
-            bytes_read, err = self.reader.read(buf)
+            bytes_read, self.err = self.reader._read(buf, len(buf))
 
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
@@ -290,12 +277,30 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         for i in range(len(source)):
             dest[i + start] = source[i]
             bytes_read += 1
-
         dest._len += bytes_read
         self.read_pos += bytes_read
         self.last_byte = int(self.buf[self.read_pos - 1])
         self.last_rune_size = -1
         return bytes_read, Error()
+
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Reads data into dest.
+        It returns the number of bytes read into dest.
+        The bytes are taken from at most one Read on the underlying [Reader],
+        hence n may be less than len(src).
+        To read exactly len(src) bytes, use io.ReadFull(b, src).
+        If the underlying [Reader] can return a non-zero count with io.EOF,
+        then this Read method can do so as well; see the [io.Reader] docs."""
+
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
@@ -937,19 +942,9 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
 
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
-                # TODO: should really be using a slice that returns refs and not a copy.
-                # Read into remaining unused space in the buffer. We need to reserve capacity for the slice otherwise read will never hit EOF.
+                # Read into remaining unused space in the buffer.
                 var buf = self.as_bytes_slice()[self.bytes_written : len(self.buf)]
-                bytes_read, err = reader.read(buf)
-                # if bytes_read > 0:
-                #     # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-                #     var bytes_read = 0
-                #     for i in range(len(sl)):
-                #         if i + self.bytes_written > len(sl):
-                #             self.buf[i + self.bytes_written] = sl[i]
-                #         else:
-                #             self.buf.append(sl[i])
-                #         bytes_read += 1
+                bytes_read, err = reader._read(buf, len(buf))
 
                 if bytes_read != 0 or err:
                     break

@@ -41,22 +41,34 @@ struct FileDescriptor(FileDescriptorBase):
         return Error()
 
     @always_inline
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
         """Receive data from the file descriptor and write it to the buffer provided."""
         var bytes_received = recv(
             self.fd,
-            dest.unsafe_ptr() + dest.size,
-            dest.capacity - dest.size,
+            dest.unsafe_ptr() + len(dest),
+            capacity - len(dest),
             0,
         )
-        if bytes_received == -1:
-            return 0, Error("Failed to receive message from socket.")
-        dest.size += bytes_received
-
-        if bytes_received < dest.capacity:
+        if bytes_received == 0:
             return bytes_received, Error(io.EOF)
 
+        if bytes_received == -1:
+            return 0, Error("Failed to receive message from socket.")
+        dest._len += bytes_received
+
         return bytes_received, Error()
+
+    @always_inline
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+        """Receive data from the file descriptor and write it to the buffer provided."""
+        var span = Span(dest)
+
+        var bytes_read: Int
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
+
+        return bytes_read, err
 
     @always_inline
     fn write(inout self, src: List[UInt8]) -> (Int, Error):

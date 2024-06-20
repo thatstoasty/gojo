@@ -46,12 +46,35 @@ struct TCPConnection(Movable):
 
     var socket: Socket
 
+    @always_inline
     fn __init__(inout self, owned socket: Socket):
         self.socket = socket^
 
+    @always_inline
     fn __moveinit__(inout self, owned existing: Self):
         self.socket = existing.socket^
 
+    @always_inline
+    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
+        """Reads data from the underlying file descriptor.
+
+        Args:
+            dest: The buffer to read data into.
+            capacity: The capacity of the destination buffer.
+
+        Returns:
+            The number of bytes read, or an error if one occurred.
+        """
+        var bytes_read: Int
+        var err = Error()
+        bytes_read, err = self.socket._read(dest, capacity)
+        if err:
+            if str(err) != io.EOF:
+                return bytes_read, err
+
+        return bytes_read, err
+
+    @always_inline
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
@@ -61,15 +84,16 @@ struct TCPConnection(Movable):
         Returns:
             The number of bytes read, or an error if one occurred.
         """
+        var span = Span(dest)
+
         var bytes_read: Int
-        var err = Error()
-        bytes_read, err = self.socket.read(dest)
-        if err:
-            if str(err) != io.EOF:
-                return bytes_read, err
+        var err: Error
+        bytes_read, err = self._read(span, dest.capacity)
+        dest.size += bytes_read
 
         return bytes_read, err
 
+    @always_inline
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
@@ -81,6 +105,7 @@ struct TCPConnection(Movable):
         """
         return self.socket.write(src)
 
+    @always_inline
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
 
@@ -89,6 +114,7 @@ struct TCPConnection(Movable):
         """
         return self.socket.close()
 
+    @always_inline
     fn local_address(self) -> TCPAddr:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
@@ -98,6 +124,7 @@ struct TCPConnection(Movable):
         """
         return self.socket.local_address_as_tcp()
 
+    @always_inline
     fn remote_address(self) -> TCPAddr:
         """Returns the remote network address.
         The Addr returned is shared by all invocations of remote_address, so do not modify it.

@@ -1,5 +1,4 @@
 from ..builtins import copy, Byte, panic
-from .traits import ERR_UNEXPECTED_EOF
 
 alias BUFFER_SIZE = 4096
 
@@ -33,7 +32,7 @@ fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error
     return writer.write_string(string)
 
 
-fn read_at_least[R: Reader](inout reader: R, inout dest: Span[Byte, True], min: Int) -> (Int, Error):
+fn read_at_least[R: Reader](inout reader: R, inout dest: List[Byte], min: Int) -> (Int, Error):
     """Reads from r into buf until it has read at least min bytes.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -69,7 +68,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: Span[Byte, True], min: 
     return total_bytes_read, error
 
 
-fn read_full[R: Reader](inout reader: R, inout dest: Span[Byte, True]) -> (Int, Error):
+fn read_full[R: Reader](inout reader: R, inout dest: List[Byte]) -> (Int, Error):
     """Reads exactly len(buf) bytes from r into buf.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -422,10 +421,9 @@ fn read_all[R: Reader](inout reader: R) -> (List[Byte], Error):
 
     while True:
         var temp = List[Byte](capacity=BUFFER_SIZE)
-        var span = Span[Byte, True](temp)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = reader.read(span)
+        bytes_read, err = reader.read(temp)
         var err_message = str(err)
         if err_message != "":
             if err_message != EOF:

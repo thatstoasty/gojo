@@ -176,7 +176,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
                 var bytes_read: Int
                 var err: Error
-                bytes_read, err = self.reader.read(buf)
+                bytes_read, err = self.reader._read(buf, self.buf.capacity - self.end)
                 if bytes_read < 0 or len(buf) - self.end < bytes_read:
                     self.set_err(ERR_BAD_READ_COUNT)
                     break
@@ -227,40 +227,6 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
 
         self.start += n
         return True
-
-    fn buffer(inout self, buf: List[UInt8], max: Int) raises:
-        """Sets the initial buffer to use when scanning
-        and the maximum size of buffer that may be allocated during scanning.
-        The maximum token size must be less than the larger of max and cap(buf).
-        If max <= cap(buf), [Scanner.Scan] will use this buffer only and do no allocation.
-
-        By default, [Scanner.Scan] uses an Internal buffer and sets the
-        maximum token size to [MAX_SCAN_TOKEN_SIZE].
-
-        buffer raises an Error if it is called after scanning has started.
-
-        Args:
-            buf: The buffer to use when scanning.
-            max: The maximum size of buffer that may be allocated during scanning.
-
-        Raises:
-            Error: If called after scanning has started.
-        """
-        if self.scan_called:
-            raise Error("buffer called after Scan")
-
-        # self.buf = buf[0:buf.capacity()]
-        self.max_token_size = max
-
-    # # split sets the split function for the [Scanner].
-    # # The default split function is [scan_lines].
-    # #
-    # # split panics if it is called after scanning has started.
-    # fn split(inout self, split_function: SplitFunction) raises:
-    #     if self.scan_called:
-    #         raise Error("split called after Scan")
-
-    #     split = split_function
 
 
 # SplitFunction is the signature of the split function used to tokenize the
