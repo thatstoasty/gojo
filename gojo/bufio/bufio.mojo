@@ -665,6 +665,7 @@ fn new_reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](owned reader: R) -
 
 
 # buffered output
+# TODO: Cleanup copying elements
 struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
     Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom
 ):
