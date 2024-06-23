@@ -51,16 +51,19 @@ struct _fdopen:
         _ = external_call["fclose", Int32](self.handle)
 
 
-alias DEFAULT_BUFFER_SIZE = 16
 alias STDIN = 0
 
 
-fn read():
-    var buf = UnsafePointer[UInt8].alloc(DEFAULT_BUFFER_SIZE)
+fn input(prompt: String = "") -> String:
+    if prompt != "":
+        print(prompt, end="")
+    var buf = UnsafePointer[UInt8]()
+    var bytes_read: Int32
     with _fdopen(STDIN) as f:
-        var bytes_read = getline(UnsafePointer(buf), UnsafePointer[Int32](Int32(DEFAULT_BUFFER_SIZE)), f.handle)
-        print(String(buf, int(bytes_read)))
+        bytes_read = getline(UnsafePointer(buf), UnsafePointer(Int32(0)), f.handle)
+    return String(buf, int(bytes_read))
 
 
 fn main() raises:
-    read()
+    var user_input = input("What's your name?")
+    print(user_input)
