@@ -22,48 +22,85 @@ fn getline(
 
 
 @value
-@register_passable("trivial")
-struct _fdopen:
-    alias STDIN = 0
+struct stdin:
+    """A read only file handle to the stdin stream."""
+
+    alias file_descriptor = 0
+    alias mode = "r"
     var handle: UnsafePointer[NoneType]
 
-    fn __init__(inout self, stream_id: FileDescriptor):
-        """Creates a file handle to the stdout/stderr stream.
-
-        Args:
-            stream_id: The stream id
-        """
-        alias mode = "r"
+    @always_inline
+    fn __init__(inout self):
+        """Creates a file handle to the stdin stream."""
         var handle: UnsafePointer[NoneType]
 
         @parameter
         if os_is_windows():
-            handle = external_call["_fdopen", UnsafePointer[NoneType]](_dup(stream_id.value), mode.unsafe_ptr())
+            handle = external_call["_fdopen", UnsafePointer[NoneType]](
+                _dup(Self.file_descriptor), Self.mode.unsafe_ptr()
+            )
         else:
-            handle = external_call["fdopen", UnsafePointer[NoneType]](_dup(stream_id.value), mode.unsafe_ptr())
+            handle = external_call["fdopen", UnsafePointer[NoneType]](
+                _dup(Self.file_descriptor), Self.mode.unsafe_ptr()
+            )
         self.handle = handle
 
+    @always_inline
+    fn readline(self) -> String:
+        var buffer = UnsafePointer[UInt8]()
+        var bytes_read = external_call[
+            "getline", Int, UnsafePointer[UnsafePointer[UInt8]], UnsafePointer[UInt32], UnsafePointer[NoneType]
+        ](UnsafePointer(buffer), UnsafePointer(UInt32(0)), self.handle)
+        return String(buffer, int(bytes_read))
+
+    @always_inline
+    fn read_until_delimiter(self, delimiter: String) -> String:
+        var buffer = UnsafePointer[UInt8]()
+        var bytes_read = external_call[
+            "getdelim", Int, UnsafePointer[UnsafePointer[UInt8]], UnsafePointer[UInt32], Int, UnsafePointer[NoneType]
+        ](UnsafePointer(buffer), UnsafePointer(UInt32(0)), ord(delimiter), self.handle)
+        return String(buffer, int(bytes_read))
+
+    @always_inline
+    fn read(self, buffer: UnsafePointer[UInt8], size: Int) -> String:
+        var bytes_read = 0
+        while bytes_read < size:
+            var byte = external_call["fgetc", Int, UnsafePointer[NoneType]](self.handle)
+            if byte == -1:
+                break
+            buffer[bytes_read] = UInt8(byte)
+            bytes_read += 1
+        buffer[bytes_read] = 0
+        bytes_read += 1
+        return String(buffer, int(bytes_read))
+
+    @always_inline
+    fn close(self):
+        _ = external_call["fclose", Int32](self.handle)
+
+    @always_inline
+    fn __del__(owned self):
+        self.close()
+
+    @always_inline
     fn __enter__(self) -> Self:
         return self
 
+    @always_inline
     fn __exit__(self):
         """Closes the file handle."""
-        _ = external_call["fclose", Int32](self.handle)
-
-
-alias STDIN = 0
+        self.close()
 
 
 fn input(prompt: String = "") -> String:
     if prompt != "":
         print(prompt, end="")
-    var buf = UnsafePointer[UInt8]()
-    var bytes_read: Int32
-    with _fdopen(STDIN) as f:
-        bytes_read = getline(UnsafePointer(buf), UnsafePointer(Int32(0)), f.handle)
-    return String(buf, int(bytes_read))
+    return stdin().readline()
 
 
 fn main() raises:
-    var user_input = input("What's your name?")
-    print(user_input)
+    # var user_input = input("What's your name?")
+    # print(user_input)
+    # print(stdin().read_until_delimiter("c"))
+    var buf = UnsafePointer[UInt8].alloc(4)
+    print(stdin().read(buf, 4))
