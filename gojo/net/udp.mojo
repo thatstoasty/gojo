@@ -63,7 +63,7 @@ struct UDPConnection(Movable):
         var err = Error()
         bytes_read, remote, err = self.socket.receive_from_into(dest)
         if err:
-            if str(err) != io.EOF:
+            if str(err) != str(io.EOF):
                 return bytes_read, remote, err
 
         return bytes_read, remote, err

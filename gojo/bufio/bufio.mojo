@@ -618,32 +618,32 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
 
     #     return bytes_written, Error()
 
-    # fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
-    #     """Writes the [Reader]'s buffer to the writer.
+    fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+        """Writes the [Reader]'s buffer to the writer.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written.
-    #     """
-    #     # Nothing to write
-    #     if self.read_pos == self.write_pos:
-    #         return Int(0), Error()
+        Returns:
+            The number of bytes written.
+        """
+        # Nothing to write
+        if self.read_pos == self.write_pos:
+            return Int(0), Error()
 
-    #     # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
-    #     var bytes_written: Int
-    #     var err: Error
-    #     var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
-    #     bytes_written, err = writer.write(List[UInt8](buf_to_write))
-    #     if err:
-    #         return bytes_written, err
+        # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
+        var bytes_written: Int
+        var err: Error
+        var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
+        bytes_written, err = writer.write(List[UInt8](buf_to_write))
+        if err:
+            return bytes_written, err
 
-    #     if bytes_written < 0:
-    #         panic(ERR_NEGATIVE_WRITE)
+        if bytes_written < 0:
+            panic(ERR_NEGATIVE_WRITE)
 
-    #     self.read_pos += bytes_written
-    #     return Int(bytes_written), Error()
+        self.read_pos += bytes_written
+        return Int(bytes_written), Error()
 
 
 fn new_reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](owned reader: R) -> Reader[R, size]:
