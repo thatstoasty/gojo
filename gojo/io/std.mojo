@@ -1,5 +1,4 @@
 import ..io
-from ..syscall import FD
 
 
 @value
@@ -9,7 +8,7 @@ struct STDWriter[file_descriptor: Int](Copyable, io.Writer, io.StringWriter):
     @always_inline
     fn __init__(inout self):
         constrained[
-            file_descriptor == FD.STDOUT or file_descriptor == FD.STDERR,
+            file_descriptor == 1 or file_descriptor == 2,
             "The STDWriter Struct is meant to write to STDOUT and STDERR. file_descriptor must be 1 or 2.",
         ]()
 

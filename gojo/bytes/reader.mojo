@@ -26,7 +26,6 @@ struct Reader(
     var index: Int  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
 
-    @always_inline
     fn __init__(inout self, owned buffer: List[UInt8]):
         """Initializes a new [Reader.Reader] struct."""
         self.capacity = buffer.capacity
@@ -35,7 +34,6 @@ struct Reader(
         self.index = 0
         self.prev_rune = -1
 
-    @always_inline
     fn __moveinit__(inout self, owned other: Reader):
         """Initializes a new [Reader.Reader] struct by moving the data from another [Reader.Reader] struct."""
         self.capacity = other.capacity
@@ -50,24 +48,19 @@ struct Reader(
         other.index = 0
         other.prev_rune = -1
 
-    @always_inline
     fn __len__(self) -> Int:
-        """len returns the number of bytes of the unread portion of the
-        slice."""
+        """Returns the number of bytes of the unread portion of the slice."""
         return self.size - int(self.index)
 
-    @always_inline
     fn __del__(owned self):
         if self.data:
             self.data.free()
 
-    @always_inline
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, self.is_mutable, self.lifetime](unsafe_ptr=self[].data, len=self[].size)
+        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self.data, len=self.size)
 
-    @always_inline
-    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
         """Reads from the internal buffer into the dest List[UInt8] struct.
         Implements the [io.Reader] Interface.
 
@@ -83,13 +76,13 @@ struct Reader(
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
-        var bytes_written = copy(dest, self.as_bytes_slice()[self.index : self.size], len(dest))
+        var bytes_to_write = self.as_bytes_slice()[self.index : self.size]
+        var bytes_written = copy(dest.unsafe_ptr(), bytes_to_write.unsafe_ptr(), len(bytes_to_write))
         dest._len += bytes_written
         self.index += bytes_written
 
         return bytes_written, Error()
 
-    @always_inline
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads from the internal buffer into the dest List[UInt8] struct.
         Implements the [io.Reader] Interface.
@@ -108,14 +101,14 @@ struct Reader(
 
         return bytes_read, err
 
-    @always_inline
-    fn _read_at(self, inout dest: Span[UInt8, True], off: Int, capacity: Int) -> (Int, Error):
+    fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
 
         Args:
-            dest: The destination List[UInt8] struct to read into.
+            dest: The destination Span[UInt8] struct to read into.
             off: The offset to start reading from.
+            capacity: The capacity of the destination buffer.
 
         Returns:
             Int: The number of bytes read into dest.
@@ -128,13 +121,12 @@ struct Reader(
             return 0, io.EOF
 
         var unread_bytes = self.as_bytes_slice()[off : self.size]
-        var bytes_written = copy(dest, unread_bytes)
+        var bytes_written = copy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), len(unread_bytes))
         if bytes_written < len(dest):
             return 0, io.EOF
 
         return bytes_written, Error()
 
-    @always_inline
     fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
@@ -155,7 +147,6 @@ struct Reader(
 
         return bytes_read, err
 
-    @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
         """Reads and returns a single byte from the internal buffer. Implements the [io.ByteReader] Interface."""
         self.prev_rune = -1
@@ -166,7 +157,6 @@ struct Reader(
         self.index += 1
         return byte, Error()
 
-    @always_inline
     fn unread_byte(inout self) -> Error:
         """Unreads the last byte read by moving the read position back by one.
         Complements [Reader.read_byte] in implementing the [io.ByteScanner] Interface.
@@ -206,7 +196,6 @@ struct Reader(
     #     self.prev_rune = -1
     #     return nil
 
-    @always_inline
     fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
         """Moves the read position to the specified offset from the specified whence.
 
@@ -235,7 +224,6 @@ struct Reader(
         self.index = position
         return position, Error()
 
-    @always_inline
     fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
         """Writes data to w until the buffer is drained or an error occurs.
         implements the [io.WriterTo] Interface.
@@ -260,7 +248,6 @@ struct Reader(
 
         return write_count, Error()
 
-    @always_inline
     fn reset(inout self, owned buffer: List[UInt8]):
         """Resets the [Reader.Reader] to be reading from buffer.
 

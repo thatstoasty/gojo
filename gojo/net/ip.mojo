@@ -39,7 +39,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
         )
 
         var status = getaddrinfo(
-            host.unsafe_uint8_ptr(),
+            host.unsafe_ptr(),
             UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
@@ -51,7 +51,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return move_from_pointee(servinfo)
+        return servinfo.take_pointee()
     elif os_is_linux():
         var servinfo = UnsafePointer[addrinfo_unix]().alloc(1)
         servinfo[0] = addrinfo_unix()
@@ -62,7 +62,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
         )
 
         var status = getaddrinfo_unix(
-            host.unsafe_uint8_ptr(),
+            host.unsafe_ptr(),
             UnsafePointer[UInt8](),
             UnsafePointer.address_of(hints),
             UnsafePointer.address_of(servinfo),
@@ -74,7 +74,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
             print("servinfo is null")
             raise Error("Failed to get address info. Pointer to addrinfo is null.")
 
-        return move_from_pointee(servinfo)
+        return servinfo.take_pointee()
     else:
         raise Error("Windows is not supported yet! Sorry!")
 
@@ -102,7 +102,7 @@ fn get_ip_address(host: String) raises -> String:
         raise Error("Failed to get IP address. getaddrinfo was called successfully, but ai_addr is null.")
 
     # Cast sockaddr struct to sockaddr_in struct and convert the binary IP to a string using inet_ntop.
-    var addr_in = move_from_pointee(ai_addr.bitcast[sockaddr_in]())
+    var addr_in = ai_addr.bitcast[sockaddr_in]().take_pointee()
 
     return convert_binary_ip_to_string(addr_in.sin_addr.s_addr, address_family, address_length).strip()
 
@@ -117,11 +117,11 @@ fn convert_binary_port_to_int(port: UInt16) -> Int:
 
 fn convert_ip_to_binary(ip_address: String, address_family: Int) -> UInt32:
     var ip_buffer = UnsafePointer[UInt8].alloc(4)
-    var status = inet_pton(address_family, ip_address.unsafe_uint8_ptr(), ip_buffer)
+    var status = inet_pton(address_family, ip_address.unsafe_ptr(), ip_buffer)
     if status == -1:
         print("Failed to convert IP address to binary")
 
-    return move_from_pointee(ip_buffer.bitcast[c_uint]())
+    return ip_buffer.bitcast[c_uint]().take_pointee()
 
 
 fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, address_length: UInt32) -> String:
@@ -175,7 +175,7 @@ fn convert_sockaddr_to_host_port(sockaddr: UnsafePointer[sockaddr]) -> (HostPort
         return HostPort(), Error("sockaddr is null, nothing to convert.")
 
     # Cast sockaddr struct to sockaddr_in to convert binary IP to string.
-    var addr_in = move_from_pointee(sockaddr.bitcast[sockaddr_in]())
+    var addr_in = sockaddr.bitcast[sockaddr_in]().take_pointee()
 
     return (
         HostPort(

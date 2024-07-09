@@ -1,5 +1,4 @@
 from .table import Interval, narrow, combining, doublewidth, ambiguous, emoji, nonprint
-from .string import UnicodeString
 
 
 @value
@@ -48,7 +47,7 @@ struct Condition:
     fn string_width(self, s: String) -> Int:
         """Return width as you can see."""
         var width = 0
-        for r in UnicodeString(s):
+        for r in s:
             width += self.rune_width(ord(String(r)))
         return width
 

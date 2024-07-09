@@ -3,7 +3,7 @@ from gojo.strings import StringBuilder, Reader, new_reader
 import gojo.io
 
 
-fn test_read() raises:
+fn test_read():
     var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
@@ -17,7 +17,7 @@ fn test_read() raises:
     test.assert_equal(String(buffer), "Hello, World!")
 
 
-fn test_read_slice() raises:
+fn test_read_slice():
     var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
@@ -31,7 +31,7 @@ fn test_read_slice() raises:
     test.assert_equal(String(buffer), "Hello, World!")
 
 
-fn test_read_at() raises:
+fn test_read_at():
     var test = MojoTest("Testing strings.Reader.read_at")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
@@ -45,7 +45,7 @@ fn test_read_at() raises:
     test.assert_equal(String(buffer), "World!")
 
 
-fn test_seek() raises:
+fn test_seek():
     var test = MojoTest("Testing strings.Reader.seek")
     var reader = new_reader("Hello, World!")
 
@@ -54,7 +54,7 @@ fn test_seek() raises:
     test.assert_equal(int(position[0]), 5)
 
 
-fn test_read_and_unread_byte() raises:
+fn test_read_and_unread_byte():
     var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
     var example: String = "Hello, World!"
     var reader = new_reader("Hello, World!")
@@ -68,7 +68,7 @@ fn test_read_and_unread_byte() raises:
     test.assert_equal(len(reader), len(example))
 
 
-# fn test_write_to() raises:
+# fn test_write_to():
 #     var test = MojoTest("Testing strings.Reader.write_to")
 #     var example: String = "Hello, World!"
 #     var reader = new_reader("Hello, World!")
@@ -79,7 +79,7 @@ fn test_read_and_unread_byte() raises:
 #     test.assert_equal(str(builder), example)
 
 
-fn main() raises:
+fn main():
     test_read()
     test_read_at()
     test_seek()

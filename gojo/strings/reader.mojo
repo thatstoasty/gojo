@@ -21,25 +21,18 @@ struct Reader(
     var read_pos: Int  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
 
-    @always_inline
     fn __init__(inout self, string: String = ""):
         self.string = string
         self.read_pos = 0
         self.prev_rune = -1
 
-    @always_inline
     fn __len__(self) -> Int:
-        """Returns the number of bytes of the unread portion of the string.
-
-        Returns:
-            int: the number of bytes of the unread portion of the string.
-        """
+        """Returns the number of bytes of the unread portion of the string."""
         if self.read_pos >= len(self.string):
             return 0
 
         return len(self.string) - self.read_pos
 
-    @always_inline
     fn size(self) -> Int:
         """Returns the original length of the underlying string.
         size is the number of bytes available for reading via [Reader.read_at].
@@ -51,8 +44,7 @@ struct Reader(
         """
         return len(self.string)
 
-    @always_inline
-    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
         """Reads from the underlying string into the provided List[UInt8] object.
         Implements the [io.Reader] trait.
 
@@ -67,11 +59,12 @@ struct Reader(
             return 0, io.EOF
 
         self.prev_rune = -1
-        var bytes_written = copy(dest, self.string.as_bytes_slice()[self.read_pos :])
+        var bytes_to_read = self.string.as_bytes_slice()[self.read_pos :]
+        var bytes_written = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), len(bytes_to_read))
+        dest._len += bytes_written
         self.read_pos += bytes_written
         return bytes_written, Error()
 
-    @always_inline
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads from the underlying string into the provided List[UInt8] object.
         Implements the [io.Reader] trait.
@@ -91,8 +84,7 @@ struct Reader(
 
         return bytes_read, err
 
-    @always_inline
-    fn _read_at(self, inout dest: Span[UInt8, True], off: Int, capacity: Int) -> (Int, Error):
+    fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
         """Reads from the Reader into the dest List[UInt8] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
 
@@ -112,13 +104,14 @@ struct Reader(
             return 0, io.EOF
 
         var error = Error()
-        var copied_elements_count = copy(dest, self.string.as_bytes_slice()[off:])
+        var bytes_to_read = self.string.as_bytes_slice()[off:]
+        var copied_elements_count = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), len(bytes_to_read))
+        dest._len += copied_elements_count
         if copied_elements_count < len(dest):
             error = Error(str(io.EOF))
 
         return copied_elements_count, error
 
-    @always_inline
     fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
         """Reads from the Reader into the dest List[UInt8] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
@@ -139,7 +132,6 @@ struct Reader(
 
         return bytes_read, err
 
-    @always_inline
     fn read_byte(inout self) -> (UInt8, Error):
         """Reads the next byte from the underlying string."""
         self.prev_rune = -1
@@ -150,7 +142,6 @@ struct Reader(
         self.read_pos += 1
         return UInt8(b), Error()
 
-    @always_inline
     fn unread_byte(inout self) -> Error:
         """Unreads the last byte read. Only the most recent byte read can be unread."""
         if self.read_pos <= 0:
@@ -269,7 +260,6 @@ struct Reader(
 
     #     return Int(bytes_written)
 
-    @always_inline
     fn reset(inout self, string: String):
         """Resets the [Reader] to be reading from the beginning of the provided string.
 

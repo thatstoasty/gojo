@@ -40,7 +40,7 @@ fn test_listener() raises:
     var listener = listen_tcp("tcp", TCPAddr("0.0.0.0", 8081))
     while True:
         var conn = listener.accept()
-        print("Accepted connection from", conn.remote_address())
+        print("Accepted connection from", str(conn.remote_address()))
         var err = conn.close()
         if err:
             raise err

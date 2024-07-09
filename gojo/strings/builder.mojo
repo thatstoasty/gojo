@@ -36,14 +36,12 @@ struct StringBuilder[growth_factor: Float32 = 2](
     var _size: Int
     var _capacity: Int
 
-    @always_inline
     fn __init__(inout self, *, capacity: Int = 4096):
         constrained[growth_factor >= 1.25]()
         self._data = UnsafePointer[UInt8]().alloc(capacity)
         self._size = 0
         self._capacity = capacity
 
-    @always_inline
     fn __moveinit__(inout self, owned other: Self):
         self._data = other._data
         self._size = other._size
@@ -52,17 +50,14 @@ struct StringBuilder[growth_factor: Float32 = 2](
         other._size = 0
         other._capacity = 0
 
-    @always_inline
     fn __del__(owned self):
         if self._data:
             self._data.free()
 
-    @always_inline
     fn __len__(self) -> Int:
         """Returns the length of the string builder."""
         return self._size
 
-    @always_inline
     fn __str__(self) -> String:
         """
         Converts the string builder to a string.
@@ -75,15 +70,11 @@ struct StringBuilder[growth_factor: Float32 = 2](
         memcpy(copy, self._data, self._size)
         return StringRef(copy, self._size)
 
-    @always_inline
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
-        """Returns the internal _data as a Span[UInt8]."""
-        return Span[UInt8, self.is_mutable, self.lifetime](unsafe_ptr=self[]._data, len=self[]._size)
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+        """Returns the internal data as a Span[UInt8]."""
+        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    @always_inline
-    fn render(
-        self: Reference[Self],
-    ) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn render(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """
         Return a StringSlice view of the _data owned by the builder.
         Slightly faster than __str__, 10-20% faster in limited testing.
@@ -91,9 +82,8 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Returns:
                 The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
-        return StringSlice[self.is_mutable, self.lifetime](unsafe_from_utf8_ptr=self[]._data, len=self[]._size)
+        return StringSlice[__lifetime_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
 
-    @always_inline
     fn _resize(inout self, _capacity: Int) -> None:
         """
         Resizes the string builder buffer.
@@ -109,7 +99,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
 
         return None
 
-    @always_inline
     fn _resize_if_needed(inout self, bytes_to_add: Int):
         """Resizes the buffer if the bytes to add exceeds the current capacity."""
         # TODO: Handle the case where new_capacity is greater than MAX_INT. It should panic.
@@ -119,7 +108,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
 
-    @always_inline
     fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
         """
         Appends a byte Span to the builder buffer.
@@ -133,7 +121,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
 
         return len(src), Error()
 
-    @always_inline
     fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """
         Appends a byte List to the builder buffer.
@@ -149,7 +136,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
 
         return bytes_read, err
 
-    @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
@@ -159,7 +145,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """
         return self._write(src.as_bytes_slice())
 
-    @always_inline
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         self._resize_if_needed(1)
         self._data[self._size] = byte

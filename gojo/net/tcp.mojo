@@ -55,7 +55,7 @@ struct TCPConnection(Movable):
         self.socket = existing.socket^
 
     @always_inline
-    fn _read(inout self, inout dest: Span[UInt8, True], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
         Args:

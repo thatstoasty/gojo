@@ -1,5 +1,5 @@
 import ..io
-from ..builtins import copy, Byte, panic, index_byte
+from ..builtins import copy, panic, index_byte
 from algorithm.memory import parallel_memcpy
 
 
@@ -51,7 +51,6 @@ struct Buffer(
     var offset: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    @always_inline
     fn __init__(inout self, capacity: Int = io.BUFFER_SIZE):
         self._capacity = capacity
         self._size = 0
@@ -59,15 +58,13 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    @always_inline
-    fn __init__(inout self, owned buf: List[Byte]):
+    fn __init__(inout self, owned buf: List[UInt8]):
         self._capacity = buf.capacity
         self._size = buf.size
         self._data = buf.steal_data()
         self.offset = 0
         self.last_read = OP_INVALID
 
-    @always_inline
     fn __init__(inout self, owned data: UnsafePointer[UInt8], capacity: Int, size: Int):
         self._capacity = capacity
         self._size = size
@@ -75,7 +72,6 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    @always_inline
     fn __moveinit__(inout self, owned other: Self):
         self._data = other._data
         self._size = other._size
@@ -88,35 +84,38 @@ struct Buffer(
         other.offset = 0
         other.last_read = OP_INVALID
 
-    @always_inline
     fn __del__(owned self):
         if self._data:
             self._data.free()
 
-    @always_inline
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the buffer.
         self._size - self.offset."""
         return self._size - self.offset
 
-    @always_inline
     fn bytes_ptr(self) -> UnsafePointer[UInt8]:
         """Returns a pointer holding the unread portion of the buffer."""
         return self._data.offset(self.offset)
 
-    @always_inline
     fn bytes(self) -> List[UInt8]:
         """Returns a list of bytes holding a copy of the unread portion of the buffer."""
         var copy = UnsafePointer[UInt8]().alloc(self._size)
         memcpy(copy, self._data.offset(self.offset), self._size)
         return List[UInt8](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
 
-    @always_inline
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, self.is_mutable, self.lifetime](unsafe_ptr=self[]._data, len=self[]._size)
+        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    @always_inline
+    fn as_string_slice(self) -> StringSlice[__lifetime_of(self)]:
+        """
+        Return a StringSlice view of the data owned by the builder.
+
+        Returns:
+          The string representation of the string builder. Returns an empty string if the string builder is empty.
+        """
+        return StringSlice[__lifetime_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
+
     fn _resize(inout self, capacity: Int) -> None:
         """
         Resizes the string builder buffer.
@@ -132,7 +131,6 @@ struct Buffer(
 
         return None
 
-    @always_inline
     fn _resize_if_needed(inout self, bytes_to_add: Int):
         # TODO: Handle the case where new_capacity is greater than MAX_INT. It should panic.
         if bytes_to_add > self._capacity - self._size:
@@ -141,7 +139,6 @@ struct Buffer(
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
 
-    @always_inline
     fn __str__(self) -> String:
         """
         Converts the string builder to a string.
@@ -150,25 +147,19 @@ struct Buffer(
           The string representation of the string builder. Returns an empty
           string if the string builder is empty.
         """
-        var copy = UnsafePointer[UInt8]().alloc(self._size)
-        memcpy(copy, self._data, self._size)
-        return StringRef(copy, self._size)
+        return self.as_string_slice()
 
-    @always_inline
-    fn render(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    @deprecated("Buffer.render() has been deprecated. Use Buffer.as_string_slice() instead.")
+    fn render(self) -> StringSlice[__lifetime_of(self)]:
         """
         Return a StringSlice view of the data owned by the builder.
-        Slightly faster than __str__, 10-20% faster in limited testing.
 
         Returns:
           The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
-        return StringSlice[self.is_mutable, self.lifetime](
-            unsafe_from_utf8_strref=StringRef(self[]._data, self[]._size)
-        )
+        return self.as_string_slice()
 
-    @always_inline
-    fn _write(inout self, src: Span[Byte]) -> (Int, Error):
+    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
         """
         Appends a byte Span to the builder buffer.
 
@@ -182,8 +173,7 @@ struct Buffer(
 
         return len(src), Error()
 
-    @always_inline
-    fn write(inout self, src: List[Byte]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """
         Appends a byte List to the builder buffer.
 
@@ -198,7 +188,6 @@ struct Buffer(
 
         return bytes_read, err
 
-    @always_inline
     fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
@@ -206,10 +195,9 @@ struct Buffer(
         Args:
           src: The string to append.
         """
-        return self.write(src.as_bytes_slice())
+        return self._write(src.as_bytes_slice())
 
-    @always_inline
-    fn write_byte(inout self, byte: Byte) -> (Int, Error):
+    fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         """Appends the byte c to the buffer, growing the buffer as needed.
         The returned error is always nil, but is included to match [bufio.Writer]'s
         write_byte. If the buffer becomes too large, write_byte will panic with
@@ -228,12 +216,10 @@ struct Buffer(
 
         return 1, Error()
 
-    @always_inline
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
         return self._size <= self.offset
 
-    @always_inline
     fn reset(inout self):
         """Resets the buffer to be empty,
         but it retains the underlying storage for use by future writes.
@@ -245,8 +231,7 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    @always_inline
-    fn _read(inout self, inout dest: Span[Byte, True], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -269,7 +254,8 @@ struct Buffer(
             return 0, io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
-        var bytes_read = copy(dest, self.as_bytes_slice()[self.offset :])
+        var bytes_to_read = self.as_bytes_slice()[self.offset :]
+        var bytes_read = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), source_length=len(bytes_to_read))
         dest._len += bytes_read
         self.offset += bytes_read
 
@@ -278,8 +264,7 @@ struct Buffer(
 
         return bytes_read, Error()
 
-    @always_inline
-    fn read(inout self, inout dest: List[Byte]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -300,15 +285,14 @@ struct Buffer(
 
         return bytes_read, err
 
-    @always_inline
-    fn read_byte(inout self) -> (Byte, Error):
+    fn read_byte(inout self) -> (UInt8, Error):
         """Reads and returns the next byte from the buffer.
         If no byte is available, it returns error io.EOF.
         """
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            return Byte(0), io.EOF
+            return UInt8(0), io.EOF
 
         var byte = self._data[self.offset]
         self.offset += 1
@@ -316,7 +300,6 @@ struct Buffer(
 
         return byte, Error()
 
-    @always_inline
     fn unread_byte(inout self) -> Error:
         """Unreads the last byte returned by the most recent successful
         read operation that read at least one byte. If a write has happened since
@@ -332,8 +315,7 @@ struct Buffer(
 
         return Error()
 
-    @always_inline
-    fn read_bytes(inout self, delim: Byte) -> (List[Byte], Error):
+    fn read_bytes(inout self, delim: UInt8) -> (List[UInt8], Error):
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -345,44 +327,42 @@ struct Buffer(
             delim: The delimiter to read until.
 
         Returns:
-            A List[Byte] struct containing the data up to and including the delimiter.
+            A List[UInt8] struct containing the data up to and including the delimiter.
         """
-        var slice: Span[UInt8, True, __lifetime_of(self)]
+        var slice: Span[UInt8, __lifetime_of(self)]
         var err: Error
         slice, err = self.read_slice(delim)
 
-        var bytes = List[Byte](capacity=len(slice) + 1)
+        var bytes = List[UInt8](capacity=len(slice) + 1)
         for byte in slice:
             bytes.append(byte[])
 
         return bytes, err
 
-    @always_inline
-    fn read_slice(self: Reference[Self, True], delim: Byte) -> (Span[UInt8, self.is_mutable, self.lifetime], Error):
+    fn read_slice(inout self, delim: UInt8) -> (Span[UInt8, __lifetime_of(self)], Error):
         """Like read_bytes but returns a reference to internal buffer data.
 
         Args:
             delim: The delimiter to read until.
 
         Returns:
-            A List[Byte] struct containing the data up to and including the delimiter.
+            A List[UInt8] struct containing the data up to and including the delimiter.
         """
-        var i = index_byte(bytes=self[].as_bytes_slice(), delim=delim)
-        var end = self[].offset + i + 1
+        var i = index_byte(bytes=self.as_bytes_slice(), delim=delim)
+        var end = self.offset + i + 1
 
         var err = Error()
         if i < 0:
-            end = self[]._size
+            end = self._size
             err = Error(str(io.EOF))
 
-        var line = self[].as_bytes_slice()[self[].offset : end]
-        self[].offset = end
-        self[].last_read = OP_READ
+        var line = self.as_bytes_slice()[self.offset : end]
+        self.offset = end
+        self.last_read = OP_READ
 
         return line, err
 
-    @always_inline
-    fn read_string(inout self, delim: Byte) -> (String, Error):
+    fn read_string(inout self, delim: UInt8) -> (String, Error):
         """Reads until the first occurrence of delim in the input,
         returning a string containing the data up to and including the delimiter.
         If read_string encounters an error before finding a delimiter,
@@ -403,8 +383,7 @@ struct Buffer(
 
         return String(bytes), err
 
-    @always_inline
-    fn next(self: Reference[Self, True], number_of_bytes: Int) raises -> Span[Byte, self.is_mutable, self.lifetime]:
+    fn next(inout self, number_of_bytes: Int) -> Span[UInt8, __lifetime_of(self)]:
         """Returns a slice containing the next n bytes from the buffer,
         advancing the buffer as if the bytes had been returned by [Buffer.read].
         If there are fewer than n bytes in the buffer, next returns the entire buffer.
@@ -416,17 +395,17 @@ struct Buffer(
         Returns:
             A slice containing the next n bytes from the buffer.
         """
-        self[].last_read = OP_INVALID
-        var bytes_remaining = len(self[])
+        self.last_read = OP_INVALID
+        var bytes_remaining = len(self)
         var bytes_to_read = number_of_bytes
         if bytes_to_read > bytes_remaining:
             bytes_to_read = bytes_remaining
 
-        var data = self[].as_bytes_slice()[self[].offset : self[].offset + bytes_to_read]
+        var data = self.as_bytes_slice()[self.offset : self.offset + bytes_to_read]
 
-        self[].offset += bytes_to_read
+        self.offset += bytes_to_read
         if bytes_to_read > 0:
-            self[].last_read = OP_READ
+            self.last_read = OP_READ
 
         return data
 
@@ -477,11 +456,11 @@ fn new_buffer(capacity: Int = io.BUFFER_SIZE) -> Buffer:
     In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
     sufficient to initialize a [Buffer].
     """
-    var b = List[Byte](capacity=capacity)
+    var b = List[UInt8](capacity=capacity)
     return Buffer(b^)
 
 
-fn new_buffer(owned buf: List[Byte]) -> Buffer:
+fn new_buffer(owned buf: List[UInt8]) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to
