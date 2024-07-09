@@ -108,7 +108,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
 
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """
         Appends a byte Span to the builder buffer.
 
@@ -121,21 +121,6 @@ struct StringBuilder[growth_factor: Float32 = 2](
 
         return len(src), Error()
 
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        """
-        Appends a byte List to the builder buffer.
-
-        Args:
-          src: The byte array to append.
-        """
-        var span = Span(src)
-
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._write(span)
-
-        return bytes_read, err
-
     fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
@@ -143,7 +128,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Args:
             src: The string to append.
         """
-        return self._write(src.as_bytes_slice())
+        return self.write(src.as_bytes_slice())
 
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         self._resize_if_needed(1)

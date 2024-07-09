@@ -350,18 +350,7 @@ struct Socket(FileDescriptorBase):
         self.remote_address = BaseAddr(remote.host, remote.port)
         return Error()
 
-    fn _write(inout self: Self, src: Span[UInt8]) -> (Int, Error):
-        """Send data to the socket. The socket must be connected to a remote socket.
-
-        Args:
-            src: The data to send.
-
-        Returns:
-            The number of bytes sent.
-        """
-        return self.fd._write(src)
-
-    fn write(inout self: Self, src: List[UInt8]) -> (Int, Error):
+    fn write(inout self: Self, src: Span[UInt8]) -> (Int, Error):
         """Send data to the socket. The socket must be connected to a remote socket.
 
         Args:

@@ -125,7 +125,7 @@ struct FileWrapper(io.ReadWriteCloser, io.ByteReader):
         except e:
             return 0, e
 
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         if len(src) == 0:
             return 0, Error("No data to write")
 
@@ -134,6 +134,3 @@ struct FileWrapper(io.ReadWriteCloser, io.ByteReader):
             return len(src), io.EOF
         except e:
             return 0, Error(str(e))
-
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        return self._write(Span(src))

@@ -765,7 +765,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
         """
         return self.bytes_written
 
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """Writes the contents of src into the buffer.
         It returns the number of bytes written.
         If nn < len(src), it also returns an error explaining
@@ -816,21 +816,6 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
         self.bytes_written += n
         total_bytes_written += n
         return total_bytes_written, err
-
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        """
-        Appends a byte List to the builder buffer.
-
-        Args:
-          src: The byte array to append.
-        """
-        var span = Span(src)
-
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._write(span)
-
-        return bytes_read, err
 
     fn write_byte(inout self, src: UInt8) -> (Int, Error):
         """Writes a single byte to the internal buffer.

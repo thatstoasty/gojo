@@ -33,7 +33,7 @@ alias MIN_READ: Int = 512
 # ERR_TOO_LARGE is passed to panic if memory cannot be allocated to store data in a buffer.
 alias ERR_TOO_LARGE = "buffer.Buffer: too large"
 alias ERR_NEGATIVE_READ = "buffer.Buffer: reader returned negative count from read"
-alias ERR_SHORT_WRITE = "short write"
+alias ERR_SHORTwrite = "short write"
 
 
 struct Buffer(
@@ -159,7 +159,7 @@ struct Buffer(
         """
         return self.as_string_slice()
 
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """
         Appends a byte Span to the builder buffer.
 
@@ -173,21 +173,6 @@ struct Buffer(
 
         return len(src), Error()
 
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        """
-        Appends a byte List to the builder buffer.
-
-        Args:
-          src: The byte array to append.
-        """
-        var span = Span(src)
-
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._write(span)
-
-        return bytes_read, err
-
     fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
@@ -195,7 +180,7 @@ struct Buffer(
         Args:
           src: The string to append.
         """
-        return self._write(src.as_bytes_slice())
+        return self.write(src.as_bytes_slice())
 
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         """Appends the byte c to the buffer, growing the buffer as needed.
@@ -421,14 +406,14 @@ struct Buffer(
     #         The number of bytes written to the writer.
     #     """
     #     self.last_read = OP_INVALID
-    #     var bytes_to_write = len(self)
+    #     var bytes_towrite = len(self)
     #     var total_bytes_written: Int = 0
 
-    #     if bytes_to_write > 0:
+    #     if bytes_towrite > 0:
     #         var bytes_written: Int
     #         var err: Error
     #         bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
-    #         if bytes_written > bytes_to_write:
+    #         if bytes_written > bytes_towrite:
     #             panic("bytes.Buffer.write_to: invalid write count")
 
     #         self.offset += bytes_written
@@ -437,8 +422,8 @@ struct Buffer(
     #             return total_bytes_written, err
 
     #         # all bytes should have been written, by definition of write method in io.Writer
-    #         if bytes_written != bytes_to_write:
-    #             return total_bytes_written, Error(ERR_SHORT_WRITE)
+    #         if bytes_written != bytes_towrite:
+    #             return total_bytes_written, Error(ERR_SHORTwrite)
 
     #     # Buffer is now empty; reset.
     #     self.reset()

@@ -170,7 +170,7 @@ fn test_big_write():
 
     # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
     var text = str(builder)
-    _ = writer.write(text.as_bytes())
+    _ = writer.write(text.as_bytes_slice())
     test.assert_equal(len(writer.writer), 5000)
     test.assert_equal(text[0], "0")
     test.assert_equal(text[4999], "9")

@@ -46,15 +46,12 @@ struct TCPConnection(Movable):
 
     var socket: Socket
 
-    @always_inline
     fn __init__(inout self, owned socket: Socket):
         self.socket = socket^
 
-    @always_inline
     fn __moveinit__(inout self, owned existing: Self):
         self.socket = existing.socket^
 
-    @always_inline
     fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
@@ -74,7 +71,6 @@ struct TCPConnection(Movable):
 
         return bytes_read, err
 
-    @always_inline
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         """Reads data from the underlying file descriptor.
 
@@ -93,20 +89,7 @@ struct TCPConnection(Movable):
 
         return bytes_read, err
 
-    @always_inline
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
-        """Writes data to the underlying file descriptor.
-
-        Args:
-            src: The buffer to read data into.
-
-        Returns:
-            The number of bytes written, or an error if one occurred.
-        """
-        return self.socket._write(src)
-
-    @always_inline
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -117,7 +100,6 @@ struct TCPConnection(Movable):
         """
         return self.socket.write(src)
 
-    @always_inline
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.
 
@@ -126,7 +108,6 @@ struct TCPConnection(Movable):
         """
         return self.socket.close()
 
-    @always_inline
     fn local_address(self) -> TCPAddr:
         """Returns the local network address.
         The Addr returned is shared by all invocations of local_address, so do not modify it.
@@ -136,7 +117,6 @@ struct TCPConnection(Movable):
         """
         return self.socket.local_address_as_tcp()
 
-    @always_inline
     fn remote_address(self) -> TCPAddr:
         """Returns the remote network address.
         The Addr returned is shared by all invocations of remote_address, so do not modify it.

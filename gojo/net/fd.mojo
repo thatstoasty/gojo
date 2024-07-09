@@ -64,11 +64,7 @@ struct FileDescriptor(FileDescriptorBase):
 
         return bytes_read, err
 
-    fn write(inout self, src: List[UInt8]) -> (Int, Error):
-        """Write data from the buffer to the file descriptor."""
-        return self._write(Span(src))
-
-    fn _write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """Write data from the buffer to the file descriptor."""
         var bytes_sent = send(self.fd, src.unsafe_ptr(), len(src), 0)
         if bytes_sent == -1:
