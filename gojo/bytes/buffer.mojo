@@ -394,40 +394,40 @@ struct Buffer(
 
         return data
 
-    # fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
-    #     """Writes data to w until the buffer is drained or an error occurs.
-    #     The return value n is the number of bytes written; Any error
-    #     encountered during the write is also returned.
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+        """Writes data to w until the buffer is drained or an error occurs.
+        The return value n is the number of bytes written; Any error
+        encountered during the write is also returned.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written to the writer.
-    #     """
-    #     self.last_read = OP_INVALID
-    #     var bytes_towrite = len(self)
-    #     var total_bytes_written: Int = 0
+        Returns:
+            The number of bytes written to the writer.
+        """
+        self.last_read = OP_INVALID
+        var bytes_to_write = len(self)
+        var total_bytes_written: Int = 0
 
-    #     if bytes_towrite > 0:
-    #         var bytes_written: Int
-    #         var err: Error
-    #         bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
-    #         if bytes_written > bytes_towrite:
-    #             panic("bytes.Buffer.write_to: invalid write count")
+        if bytes_to_write > 0:
+            var bytes_written: Int
+            var err: Error
+            bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
+            if bytes_written > bytes_to_write:
+                panic("bytes.Buffer.write_to: invalid write count")
 
-    #         self.offset += bytes_written
-    #         total_bytes_written = bytes_written
-    #         if err:
-    #             return total_bytes_written, err
+            self.offset += bytes_written
+            total_bytes_written = bytes_written
+            if err:
+                return total_bytes_written, err
 
-    #         # all bytes should have been written, by definition of write method in io.Writer
-    #         if bytes_written != bytes_towrite:
-    #             return total_bytes_written, Error(ERR_SHORTwrite)
+            # all bytes should have been written, by definition of write method in io.Writer
+            if bytes_written != bytes_to_write:
+                return total_bytes_written, Error(ERR_SHORTwrite)
 
-    #     # Buffer is now empty; reset.
-    #     self.reset()
-    #     return total_bytes_written, Error()
+        # Buffer is now empty; reset.
+        self.reset()
+        return total_bytes_written, Error()
 
 
 fn new_buffer(capacity: Int = io.BUFFER_SIZE) -> Buffer:

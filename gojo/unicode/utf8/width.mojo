@@ -24,22 +24,32 @@ struct Condition:
                 return 1
             elif in_table(r, narrow):
                 return 1
-            elif in_tables(r, nonprint, combining):
+            elif in_table(r, nonprint):
+                return 0
+            elif in_table(r, combining):
                 return 0
             elif in_table(r, doublewidth):
                 return 2
             else:
                 return 1
         else:
-            if in_tables(r, nonprint, combining):
+            if in_table(r, nonprint):
+                return 0
+            elif in_table(r, combining):
                 return 0
             elif in_table(r, narrow):
                 return 1
-            elif in_tables(r, ambiguous, doublewidth):
+            if in_table(r, ambiguous):
+                return 2
+            elif in_table(r, doublewidth):
                 return 2
             elif in_table(r, ambiguous) or in_table(r, emoji):
                 return 2
-            elif not self.strict_emoji_neutral and in_tables(r, ambiguous, emoji, narrow):
+            elif not self.strict_emoji_neutral and in_table(r, ambiguous):
+                return 2
+            elif not self.strict_emoji_neutral and in_table(r, emoji):
+                return 2
+            elif not self.strict_emoji_neutral and in_table(r, narrow):
                 return 2
             else:
                 return 1
@@ -52,14 +62,14 @@ struct Condition:
         return width
 
 
-fn in_tables(r: UInt32, *ts: List[Interval]) -> Bool:
+fn in_tables(r: UInt32, *ts: InlineArray[Interval]) -> Bool:
     for t in ts:
         if in_table(r, t[]):
             return True
     return False
 
 
-fn in_table(r: UInt32, t: List[Interval]) -> Bool:
+fn in_table[size: Int](r: UInt32, t: InlineArray[Interval, size]) -> Bool:
     if r < t[0].first:
         return False
 

@@ -117,7 +117,7 @@ fn copy(target: UnsafePointer[UInt8], source: UnsafePointer[UInt8], source_lengt
 
 fn copy(
     inout target: List[UInt8],
-    source: DTypePointer[DType.uint8],
+    source: UnsafePointer[Scalar[DType.uint8]],
     source_start: Int,
     source_end: Int,
     target_start: Int = 0,

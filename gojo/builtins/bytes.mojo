@@ -57,7 +57,7 @@ fn index_byte(bytes: List[Byte], delim: Byte) -> Int:
     return -1
 
 
-fn index_byte(bytes: DTypePointer[DType.uint8], size: Int, delim: Byte) -> Int:
+fn index_byte(bytes: UnsafePointer[Scalar[DType.uint8]], size: Int, delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte delim.
 
     Args:

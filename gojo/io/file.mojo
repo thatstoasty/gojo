@@ -37,7 +37,7 @@ struct FileWrapper(io.ReadWriteCloser, io.ByteReader):
             result = self.handle.read_bytes()
             bytes_read = len(result)
             # TODO: Need to raise an Issue for this. Reading with pointer does not return an accurate count of bytes_read :(
-            # bytes_read = int(self.handle.read(DTypePointer[DType.uint8](dest.unsafe_ptr()) + dest.size))
+            # bytes_read = int(self.handle.read(UnsafePointer[Scalar[DType.uint8]](dest.unsafe_ptr()) + dest.size))
         except e:
             return 0, e
 
@@ -65,7 +65,7 @@ struct FileWrapper(io.ReadWriteCloser, io.ByteReader):
             result = self.handle.read_bytes()
             bytes_read = len(result)
             # TODO: Need to raise an Issue for this. Reading with pointer does not return an accurate count of bytes_read :(
-            # bytes_read = int(self.handle.read(DTypePointer[DType.uint8](dest.unsafe_ptr()) + dest.size))
+            # bytes_read = int(self.handle.read(UnsafePointer[Scalar[DType.uint8]](dest.unsafe_ptr()) + dest.size))
         except e:
             return 0, e
 

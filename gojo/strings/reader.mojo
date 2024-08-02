@@ -270,12 +270,21 @@ struct Reader(
         self.read_pos = 0
         self.prev_rune = -1
 
+    fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__lifetime_of(self)]:
+        """Reads from the underlying string until a delimiter is found.
+        The delimiter is not included in the returned string slice.
 
-fn new_reader(string: String = "") -> Reader:
-    """Returns a new [Reader] reading from the provided string.
-    It is similar to [bytes.new_buffer] but more efficient and non-writable.
+        Returns:
+            The string slice containing the bytes read until the delimiter.
+        """
+        var start = self.read_pos
+        var bytes = self.string.as_bytes_slice()
+        while self.read_pos < len(self.string):
+            if bytes[self.read_pos] == ord(delimiter):
+                break
+            self.read_pos += 1
 
-    Args:
-        string: The string to read from.
-    """
-    return Reader(string)
+        self.read_pos += 1
+        return StringSlice[__lifetime_of(self)](
+            unsafe_from_utf8_ptr=self.string.unsafe_ptr() + start, len=self.read_pos - start - 1
+        )

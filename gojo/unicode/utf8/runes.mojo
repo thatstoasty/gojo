@@ -18,13 +18,13 @@ fn rune_count_in_string(s: String) -> Int:
     Returns:
         The number of runes in the string.
     """
-    var p = DTypePointer[DType.uint8](s.unsafe_ptr())
+    var p = UnsafePointer[Scalar[DType.uint8]](s.unsafe_ptr())
     var string_byte_length = len(s)
     var result = 0
 
     @parameter
     fn count[simd_width: Int](offset: Int):
-        result += int(((SIMD[size=simd_width].load(p + offset) >> 6) != 0b10).cast[DType.uint8]().reduce_add())
+        result += int(((p.load[width=simd_width](offset) >> 6) != 0b10).cast[DType.uint8]().reduce_add())
 
     vectorize[count, simd_width_u8](string_byte_length)
     return result

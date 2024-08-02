@@ -334,8 +334,8 @@ fn scan_bytes(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8], Error):
 #         return 0, List[UInt8](), Error()
 
 #     # Number of bytes of the current character
-#     var lhs = (SIMD[size=1].load(DTypePointer[DType.uint8](data.unsafe_ptr())) >> 7 == 0 * 1).cast[DType.uint8]()
-#     var rhs = countl_zero(~SIMD[size=1].load(DTypePointer[DType.uint8](data.unsafe_ptr())))
+#     var lhs = (SIMD[size=1].load(UnsafePointer[Scalar[DType.uint8]](data.unsafe_ptr())) >> 7 == 0 * 1).cast[DType.uint8]()
+#     var rhs = countl_zero(~SIMD[size=1].load(UnsafePointer[Scalar[DType.uint8]](data.unsafe_ptr())))
 #     var char_length = int(lhs + rhs)
 
 #     # Copy N bytes into new pointer and construct List.

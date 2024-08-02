@@ -83,7 +83,7 @@ trait Reader(Movable):
     fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
         ...
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: Span[UInt8, _], capacity: Int) -> (Int, Error):
         ...
 
 
