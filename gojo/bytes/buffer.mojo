@@ -1,6 +1,7 @@
+from utils import StringSlice, Span
+from memory import memcpy
 import ..io
 from ..builtins import copy, panic, index_byte
-from algorithm.memory import parallel_memcpy
 
 
 alias Rune = Int32

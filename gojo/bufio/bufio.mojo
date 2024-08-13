@@ -1,4 +1,5 @@
 from collections import InlineList
+from utils import Span
 import ..io
 from ..builtins import copy, panic
 from ..builtins.bytes import index_byte
@@ -17,10 +18,10 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 # buffered input
 # TODO: Uncomment write_to and write_buf once the bug with the trait's Span argument is fixed.
-struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, io.ByteReader, io.ByteScanner):
+struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     """Implements buffering for an io.Reader object."""
 
-    var buf: InlineList[UInt8, size]
+    var buf: List[UInt8]
     var reader: R  # reader provided by the client
     var read_pos: Int
     var write_pos: Int  # buf read and write positions
@@ -31,16 +32,13 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
     fn __init__(
         inout self,
         owned reader: R,
-        buf: InlineList[UInt8, size] = InlineList[UInt8, size](),
+        capacity: Int = io.BUFFER_SIZE,
         read_pos: Int = 0,
         write_pos: Int = 0,
         last_byte: Int = -1,
         last_rune_size: Int = -1,
     ):
-        self.buf = InlineList[UInt8, size]()
-        for element in buf:
-            self.buf.append(element[])
-
+        self.buf = List[UInt8](capacity=capacity)
         self.reader = reader^
         self.read_pos = read_pos
         self.write_pos = write_pos
@@ -49,10 +47,7 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.buf = InlineList[UInt8, size]()
-        for element in existing.buf:
-            self.buf.append(element[])
-
+        self.buf = existing.buf^
         self.reader = existing.reader^
         self.read_pos = existing.read_pos
         self.write_pos = existing.write_pos
@@ -83,16 +78,15 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](array=self.buf._array)
+        return Span[UInt8, __lifetime_of(self)](self.buf)
 
-    fn reset(inout self, buf: InlineList[UInt8, size], owned reader: R):
+    fn reset(inout self, owned reader: R):
         """Discards any buffered data, resets all state, and switches
         the buffered reader to read from r.
         Calling reset on the zero value of [Reader] initializes the internal buffer
         to the default size.
         Calling self.reset(b) (that is, resetting a [Reader] to itself) does nothing."""
-        self = Reader[R, size](
-            buf=buf,
+        self = Reader[R](
             reader=reader^,
             last_byte=-1,
             last_rune_size=-1,
@@ -119,12 +113,10 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
-            # TODO: Using temp until slicing can return a Reference, does reading directly into a Span of self.buf work?
-            # Maybe we need to read into the end of the buffer.
-            var span = self.as_bytes_slice()
+            # var span = self.as_bytes_slice()
             var bytes_read: Int
             var err: Error
-            bytes_read, err = self.reader._read(span, len(self.buf))
+            bytes_read, err = self.reader.read(self.buf)
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
@@ -632,7 +624,7 @@ struct Reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](Sized, io.Reader, 
     #     return Int(bytes_written), Error()
 
 
-fn new_reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](owned reader: R) -> Reader[R, size]:
+fn new_reader[R: io.Reader](owned reader: R) -> Reader[R]:
     """Returns a new [Reader] whose buffer has at least the specified
     size. If the argument io.Reader is already a [Reader] with large enough
     size, it returns the underlying [Reader].
@@ -646,14 +638,12 @@ fn new_reader[R: io.Reader, size: Int = MIN_READ_BUFFER_SIZE](owned reader: R) -
     Returns:
         The new [Reader].
     """
-    var r = Reader[R, size](reader^)
+    var r = Reader[R](reader^)
     return r^
 
 
 # buffered output
-struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
-    Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom
-):
+struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
     # If an error occurs writing to a [Writer], no more data will be
     # accepted and all subsequent writes, and [Writer.flush], will return the error.
@@ -661,7 +651,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
     # [Writer.flush] method to guarantee all data has been forwarded to
     # the underlying [io.Writer]."""
 
-    var buf: InlineList[UInt8, size]
+    var buf: List[UInt8]
     var bytes_written: Int
     var writer: W
     var err: Error
@@ -669,20 +659,16 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
     fn __init__(
         inout self,
         owned writer: W,
-        buf: InlineList[UInt8, size] = InlineList[UInt8, size](),
+        capacity: Int = io.BUFFER_SIZE,
         bytes_written: Int = 0,
     ):
-        self.buf = InlineList[UInt8, size]()
-        for element in buf:
-            self.buf.append(element[])
+        self.buf = List[UInt8](capacity=capacity)
         self.bytes_written = bytes_written
         self.writer = writer^
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.buf = InlineList[UInt8, size]()
-        for element in existing.buf:
-            self.buf.append(element[])
+        self.buf = existing.buf^
         self.bytes_written = existing.bytes_written
         self.writer = existing.writer^
         self.err = existing.err^
@@ -693,7 +679,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](array=self.buf._array)
+        return Span[UInt8, __lifetime_of(self)](self.buf)
 
     fn reset(inout self, owned writer: W):
         """Discards any unflushed buffered data, clears any error, and
@@ -705,15 +691,6 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
         Args:
             writer: The writer to write to.
         """
-        # # If a Writer w is passed to new_writer, new_writer will return w.
-        # # Different layers of code may do that, and then later pass w
-        # # to reset. Avoid infinite recursion in that case.
-        # if self == writer:
-        #     return
-
-        # if self.buf == nil:
-        #     self.buf = make(InlineList[UInt8, io.BUFFER_SIZE], io.BUFFER_SIZE)
-
         self.err = Error()
         self.bytes_written = 0
         self.writer = writer^
@@ -739,17 +716,18 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
                 # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
                 var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
                 for i in range(len(temp)):
-                    if i > len(temp):
-                        self.buf[i] = temp[i]
-                    else:
-                        self.buf.append(temp[i])
+                    self.buf[i] = temp[i]
+                    # if i > len(temp):
+                    #     self.buf[i] = temp[i]
+                    # else:
+                    #     self.buf.append(temp[i])
 
             self.bytes_written -= bytes_written
             self.err = err
             return err
 
         # Reset the buffer
-        self.buf = InlineList[UInt8, size]()
+        self.buf = List[UInt8](capacity=io.BUFFER_SIZE)
         self.bytes_written = 0
         return err
 
@@ -929,7 +907,7 @@ struct Writer[W: io.Writer, size: Int = io.BUFFER_SIZE](
         return total_bytes_written, Error()
 
 
-fn new_writer[W: io.Writer, size: Int = io.BUFFER_SIZE](owned writer: W) -> Writer[W, size]:
+fn new_writer[W: io.Writer](owned writer: W) -> Writer[W]:
     """Returns a new [Writer] whose buffer has at least the specified
     size. If the argument io.Writer is already a [Writer] with large enough
     size, it returns the underlying [Writer]."""
@@ -938,10 +916,7 @@ fn new_writer[W: io.Writer, size: Int = io.BUFFER_SIZE](owned writer: W) -> Writ
     # if ok and self.buf.capacity >= size:
     # 	return b
 
-    constrained[size > 0, "bufio: invalid buffer size. Must be greater than 0."]()
-
-    return Writer[W, size](
-        buf=InlineList[UInt8, size](),
+    return Writer[W](
         writer=writer^,
         bytes_written=0,
     )

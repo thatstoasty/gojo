@@ -22,32 +22,32 @@ fn test_read():
     test.assert_equal(to_string(dest), "Hello World!")
 
 
-# fn test_read_all():
-#     var test = MojoTest("Testing bufio.Reader with io.read_all")
+# # fn test_read_all():
+# #     var test = MojoTest("Testing bufio.Reader with io.read_all")
 
-#     var s: String = "0123456789"
-#     var buf = buffer.new_reader(s)
-#     var reader = Reader(buf^)
-#     var result = read_all(reader)
-#     var bytes = result[0]
-#     bytes.append(0)
-#     test.assert_equal(String(bytes), "0123456789")
+# #     var s: String = "0123456789"
+# #     var buf = buffer.new_reader(s)
+# #     var reader = Reader(buf^)
+# #     var result = read_all(reader)
+# #     var bytes = result[0]
+# #     bytes.append(0)
+# #     test.assert_equal(String(bytes), "0123456789")
 
 
-# fn test_write_to():
-#     var test = MojoTest("Testing bufio.Reader.write_to")
+# # fn test_write_to():
+# #     var test = MojoTest("Testing bufio.Reader.write_to")
 
-#     var buf = buffer.new_buffer("0123456789")
-#     var reader = Reader(buf^)
+# #     var buf = buffer.new_buffer("0123456789")
+# #     var reader = Reader(buf^)
 
-#     # Create a new writer containing the content "Hello World"
-#     var writer = buffer.new_buffer("Hello World")
+# #     # Create a new writer containing the content "Hello World"
+# #     var writer = buffer.new_buffer("Hello World")
 
-#     # Write the content of the reader to the writer
-#     _ = reader.write_to(writer)
+# #     # Write the content of the reader to the writer
+# #     _ = reader.write_to(writer)
 
-#     # Check if the content of the writer is "Hello World0123456789"
-#     test.assert_equal(str(writer), "Hello World0123456789")
+# #     # Check if the content of the writer is "Hello World0123456789"
+# #     test.assert_equal(str(writer), "Hello World0123456789")
 
 
 fn test_read_and_unread_byte():
@@ -141,7 +141,7 @@ fn test_several_writes():
     var test = MojoTest("Testing several bufio.Writer.write")
 
     # Create a new List[UInt8] Buffer Writer and use it to create the buffered Writer
-    var buf = buffer.new_buffer()
+    var buf = buffer.Buffer(capacity=4096)
     var writer = Writer(buf^)
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the List[UInt8] Buffer Writer.
@@ -226,8 +226,8 @@ fn test_read_from():
 # TODO: Add big file read/write to make sure buffer usage is correct
 fn main():
     test_read()
-    # test_read_all()
-    # test_write_to()
+    #     # test_read_all()
+    #     # test_write_to()
     test_read_and_unread_byte()
     test_read_slice()
     test_peek()

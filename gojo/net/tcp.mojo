@@ -1,3 +1,4 @@
+from utils import Span
 from collections import InlineList
 from ..syscall import SocketOptions
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr, HostPort

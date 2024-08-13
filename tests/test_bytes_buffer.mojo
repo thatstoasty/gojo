@@ -58,7 +58,7 @@ fn test_read_string():
     var s: String = "Hello World!"
     var buf = new_buffer(s)
     var result = buf.read_string(ord("o"))
-    test.assert_equal(String(result[0]), String("Hello"))
+    test.assert_equal(result[0], String("Hello"))
 
 
 fn test_next():

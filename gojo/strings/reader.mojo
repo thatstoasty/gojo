@@ -1,3 +1,4 @@
+from utils import StringSlice, Span
 import ..io
 from ..builtins import copy, panic
 

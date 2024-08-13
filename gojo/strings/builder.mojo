@@ -1,3 +1,6 @@
+from collections import InlineArray
+from utils import StringSlice, Span
+from memory import memcpy
 import ..io
 
 

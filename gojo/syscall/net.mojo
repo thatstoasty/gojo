@@ -1,12 +1,10 @@
+from utils.static_tuple import StaticTuple
 from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t
 from .file import O_CLOEXEC, O_NONBLOCK
-from utils.static_tuple import StaticTuple
 
 alias IPPROTO_IPV6 = 41
 alias IPV6_V6ONLY = 26
 alias EPROTONOSUPPORT = 93
-
-# Adapted from https://github.com/gabrieldemarmiesse/mojo-stdlib-extensions/ . Huge thanks to Gabriel!
 
 
 struct FD:

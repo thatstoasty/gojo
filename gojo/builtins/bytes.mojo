@@ -1,3 +1,5 @@
+from utils import Span
+
 alias Byte = UInt8
 
 

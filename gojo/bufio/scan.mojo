@@ -1,6 +1,7 @@
+from utils import StringSlice, Span
+from memory import memcpy
 import ..io
-from ..builtins import copy, panic
-from ..builtins.bytes import index_byte
+from ..builtins import copy, panic, index_byte
 from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 
 

@@ -1,3 +1,6 @@
+from collections import InlineArray
+
+
 @register_passable("trivial")
 struct Interval:
     var first: UInt32

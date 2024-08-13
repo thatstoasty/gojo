@@ -1,3 +1,4 @@
+from collections import InlineArray
 from .table import Interval, narrow, combining, doublewidth, ambiguous, emoji, nonprint
 
 

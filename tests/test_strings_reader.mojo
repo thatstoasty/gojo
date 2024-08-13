@@ -1,12 +1,12 @@
 from tests.wrapper import MojoTest
-from gojo.strings import StringBuilder, Reader, new_reader
+from gojo.strings import StringBuilder, Reader
 import gojo.io
 
 
 fn test_read():
     var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
-    var reader = new_reader("Hello, World!")
+    var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
     var buffer = List[UInt8](capacity=16)
@@ -20,7 +20,7 @@ fn test_read():
 fn test_read_slice():
     var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
-    var reader = new_reader("Hello, World!")
+    var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
     var buffer = List[UInt8](capacity=16)
@@ -34,7 +34,7 @@ fn test_read_slice():
 fn test_read_at():
     var test = MojoTest("Testing strings.Reader.read_at")
     var example: String = "Hello, World!"
-    var reader = new_reader("Hello, World!")
+    var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
     var buffer = List[UInt8](capacity=128)
@@ -47,7 +47,7 @@ fn test_read_at():
 
 fn test_seek():
     var test = MojoTest("Testing strings.Reader.seek")
-    var reader = new_reader("Hello, World!")
+    var reader = Reader("Hello, World!")
 
     # Seek to the middle of the reader.
     var position = reader.seek(5, io.SEEK_START)
@@ -57,7 +57,7 @@ fn test_seek():
 fn test_read_and_unread_byte():
     var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
     var example: String = "Hello, World!"
-    var reader = new_reader("Hello, World!")
+    var reader = Reader("Hello, World!")
 
     # Read the first byte from the reader.
     var byte = reader.read_byte()
@@ -71,7 +71,7 @@ fn test_read_and_unread_byte():
 # fn test_write_to():
 #     var test = MojoTest("Testing strings.Reader.write_to")
 #     var example: String = "Hello, World!"
-#     var reader = new_reader("Hello, World!")
+#     var reader = Reader("Hello, World!")
 
 #     # Write from the string reader to a StringBuilder.
 #     var builder = StringBuilder()

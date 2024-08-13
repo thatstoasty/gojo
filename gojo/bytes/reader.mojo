@@ -1,3 +1,4 @@
+from utils import Span
 from ..builtins import copy, panic
 import ..io
 

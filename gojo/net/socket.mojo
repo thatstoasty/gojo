@@ -1,3 +1,4 @@
+from utils import Span
 from ..syscall import (
     sockaddr,
     sockaddr_in,
@@ -384,7 +385,7 @@ struct Socket(FileDescriptorBase):
                 0,
             )
             if bytes_sent == -1:
-                return Error("Failed to send message, wrote" + String(total_bytes_sent) + "bytes before failing.")
+                return Error("Failed to send message, wrote" + str(total_bytes_sent) + "bytes before failing.")
             total_bytes_sent += bytes_sent
             attempts += 1
 

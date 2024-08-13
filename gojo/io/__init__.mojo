@@ -1,3 +1,4 @@
+from utils import Span
 from .io import write_string, read_at_least, read_full, read_all, BUFFER_SIZE
 from .file import FileWrapper
 from .std import STDWriter

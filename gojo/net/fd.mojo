@@ -1,3 +1,4 @@
+from utils import Span
 import ..io
 from ..syscall import (
     recv,
