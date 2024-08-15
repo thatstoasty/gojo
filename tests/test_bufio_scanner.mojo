@@ -9,7 +9,7 @@ fn test_scan_words():
 
     # Create a reader from a string buffer
     var s: String = "Testing🔥 this🔥 string🔥!"
-    var buf = buffer.new_buffer(s)
+    var buf = buffer.Buffer(s.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -28,7 +28,7 @@ fn test_scan_lines():
 
     # Create a reader from a string buffer
     var s: String = "Testing\nthis\nstring!"
-    var buf = buffer.new_buffer(s)
+    var buf = buffer.Buffer(s.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -44,7 +44,7 @@ fn test_scan_lines():
 
 fn scan_no_newline_test(test_case: String, result_lines: List[String], test: MojoTest):
     # Create a reader from a string buffer
-    var buf = buffer.new_buffer(test_case)
+    var buf = buffer.Buffer(test_case.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -94,7 +94,7 @@ fn test_scan_bytes():
 
     for test_case in test_cases:
         # Create a reader from a string buffer
-        var buf = buffer.new_buffer(test_case[])
+        var buf = buffer.Buffer(test_case[].as_bytes())
         # var reader = Reader(buf^)
 
         # Create a scanner from the reader
@@ -125,7 +125,7 @@ fn test_file_wrapper_scanner() raises:
 
 #     # Create a reader from a string buffer
 #     var s: String = "🔪🔥🔪🔥"
-#     var buf = buffer.new_buffer(s)
+#     var buf = buffer.Buffer(s.as_bytes())
 #     # var r = Reader(buf^)
 
 #     # Create a scanner from the reader

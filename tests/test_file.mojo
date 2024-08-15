@@ -47,7 +47,7 @@ fn test_write() raises:
     var test = MojoTest("Testing FileWrapper.write")
     var file = FileWrapper("tests/data/test_write.txt", "w")
     var content = String("12345")
-    var bytes_written = file.write(content.as_bytes())
+    var bytes_written = file.write(content.as_bytes_slice())
     test.assert_equal(bytes_written[0], 5)
 
     with open("tests/data/test_write.txt", "r") as f:

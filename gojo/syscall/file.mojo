@@ -1,3 +1,6 @@
+from sys import external_call
+
+
 trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
     ...
 

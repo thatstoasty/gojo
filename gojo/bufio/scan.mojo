@@ -240,35 +240,35 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():  # The functi
         return True
 
 
-# SplitFunction is the signature of the split function used to tokenize the
-# input. The arguments are an initial substring of the remaining unprocessed
-# data and a flag, at_eof, that reports whether the [Reader] has no more data
-# to give. The return values are the number of bytes to advance the input
-# and the next token to return to the user, if any, plus an error, if any.
-#
-# Scanning stops if the function returns an error, in which case some of
-# the input may be discarded. If that error is [ERR_FINAL_TOKEN], scanning
-# stops with no error. A non-nil token delivered with [ERR_FINAL_TOKEN]
-# will be the last token, and a nil token with [ERR_FINAL_TOKEN]
-# immediately stops the scanning.
-#
-# Otherwise, the [Scanner] advances the input. If the token is not nil,
-# the [Scanner] returns it to the user. If the token is nil, the
-# Scanner reads more data and continues scanning; if there is no more
-# data--if at_eof was True--the [Scanner] returns. If the data does not
-# yet hold a complete token, for instance if it has no newline while
-# scanning lines, a [SplitFunction] can return (0, nil, nil) to signal the
-# [Scanner] to read more data Into the slice and try again with a
-# longer slice starting at the same poInt in the input.
-#
-# The function is never called with an empty data slice unless at_eof
-# is True. If at_eof is True, however, data may be non-empty and,
-# as always, holds unprocessed text.
 alias SplitFunction = fn (data: Span[UInt8], at_eof: Bool) -> (
     Int,
     List[UInt8],
     Error,
 )
+"""SplitFunction is the signature of the split function used to tokenize the
+input. The arguments are an initial substring of the remaining unprocessed
+data and a flag, at_eof, that reports whether the [Reader] has no more data
+to give. The return values are the number of bytes to advance the input
+and the next token to return to the user, if any, plus an error, if any.
+
+Scanning stops if the function returns an error, in which case some of
+the input may be discarded. If that error is [ERR_FINAL_TOKEN], scanning
+stops with no error. A non-nil token delivered with [ERR_FINAL_TOKEN]
+will be the last token, and a nil token with [ERR_FINAL_TOKEN]
+immediately stops the scanning.
+
+Otherwise, the [Scanner] advances the input. If the token is not nil,
+the [Scanner] returns it to the user. If the token is nil, the
+Scanner reads more data and continues scanning; if there is no more
+data--if at_eof was True--the [Scanner] returns. If the data does not
+yet hold a complete token, for instance if it has no newline while
+scanning lines, a [SplitFunction] can return (0, nil, nil) to signal the
+[Scanner] to read more data Into the slice and try again with a
+longer slice starting at the same poInt in the input.
+
+The function is never called with an empty data slice unless at_eof
+is True. If at_eof is True, however, data may be non-empty and,
+as always, holds unprocessed text."""
 
 # Errors returned by Scanner.
 alias ERR_TOO_LONG = Error("bufio.Scanner: token too long")
@@ -276,31 +276,28 @@ alias ERR_NEGATIVE_ADVANCE = Error("bufio.Scanner: SplitFunction returns negativ
 alias ERR_ADVANCE_TOO_FAR = Error("bufio.Scanner: SplitFunction returns advance count beyond input")
 alias ERR_BAD_READ_COUNT = Error("bufio.Scanner: Read returned impossible count")
 
-# ERR_FINAL_TOKEN is a special sentinel error value. It is Intended to be
-# returned by a split function to indicate that the scanning should stop
-# with no error. If the token being delivered with this error is not nil,
-# the token is the last token.
-#
-# The value is useful to stop processing early or when it is necessary to
-# deliver a final empty token (which is different from a nil token).
-# One could achieve the same behavior with a custom error value but
-# providing one here is tidier.
-# See the emptyFinalToken example for a use of this value.
+
 alias ERR_FINAL_TOKEN = Error("final token")
+"""ERR_FINAL_TOKEN is a special sentinel error value. It is Intended to be
+returned by a split function to indicate that the scanning should stop
+with no error. If the token being delivered with this error is not nil,
+the token is the last token.
+
+The value is useful to stop processing early or when it is necessary to
+deliver a final empty token (which is different from a nil token).
+One could achieve the same behavior with a custom error value but
+providing one here is tidier.
+See the emptyFinalToken example for a use of this value."""
 
 
-# MAX_SCAN_TOKEN_SIZE is the maximum size used to buffer a token
-# unless the user provides an explicit buffer with [Scanner.buffer].
-# The actual maximum token size may be smaller as the buffer
-# may need to include, for instance, a newline.
 alias MAX_SCAN_TOKEN_SIZE = 64 * 1024
-alias START_BUF_SIZE = 4096  # Size of initial allocation for buffer.
+"""MAX_SCAN_TOKEN_SIZE is the maximum size used to buffer a token
+unless the user provides an explicit buffer with [Scanner.buffer].
+The actual maximum token size may be smaller as the buffer
+may need to include, for instance, a newline."""
 
-
-fn new_scanner[R: io.Reader](owned reader: R) -> Scanner[R]:
-    """Returns a new [Scanner] to read from r.
-    The split function defaults to [scan_lines]."""
-    return Scanner(reader^)
+alias START_BUF_SIZE = 4096
+"""Size of initial allocation for buffer."""
 
 
 ###### split functions ######

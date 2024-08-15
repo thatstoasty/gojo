@@ -3,7 +3,7 @@ from utils import Span
 alias Byte = UInt8
 
 
-fn equals(left: List[UInt8], right: List[UInt8]) -> Bool:
+fn equals(left: List[UInt8, True], right: List[UInt8, True]) -> Bool:
     if len(left) != len(right):
         return False
     for i in range(len(left)):
@@ -12,7 +12,7 @@ fn equals(left: List[UInt8], right: List[UInt8]) -> Bool:
     return True
 
 
-fn has_prefix(bytes: List[Byte], prefix: List[Byte]) -> Bool:
+fn has_prefix(bytes: List[Byte, True], prefix: List[Byte, True]) -> Bool:
     """Reports whether the List[Byte] struct begins with prefix.
 
     Args:
@@ -27,7 +27,7 @@ fn has_prefix(bytes: List[Byte], prefix: List[Byte]) -> Bool:
     return len_comparison and prefix_comparison
 
 
-fn has_suffix(bytes: List[Byte], suffix: List[Byte]) -> Bool:
+fn has_suffix(bytes: List[Byte, True], suffix: List[Byte, True]) -> Bool:
     """Reports whether the List[Byte] struct ends with suffix.
 
     Args:
@@ -42,7 +42,7 @@ fn has_suffix(bytes: List[Byte], suffix: List[Byte]) -> Bool:
     return len_comparison and suffix_comparison
 
 
-fn index_byte(bytes: List[Byte], delim: Byte) -> Int:
+fn index_byte(bytes: List[Byte, True], delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte delim.
 
     Args:

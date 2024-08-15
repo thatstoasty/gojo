@@ -5,7 +5,7 @@ import gojo.io
 
 fn test_read() raises:
     var test = MojoTest("Testing bytes.Reader.read")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
     var dest = List[UInt8](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
@@ -28,7 +28,7 @@ fn test_read() raises:
 
 fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
     _ = reader.seek(123456789, io.SEEK_START)
     var dest = List[UInt8](capacity=16)
 
@@ -46,7 +46,7 @@ fn test_read_after_big_seek() raises:
 
 fn test_read_at() raises:
     var test = MojoTest("Testing bytes.Reader.read_at")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
 
     var dest = List[UInt8](capacity=16)
     var pos = reader.read_at(dest, 0)
@@ -61,7 +61,7 @@ fn test_read_at() raises:
 
 fn test_seek() raises:
     var test = MojoTest("Testing bytes.Reader.seek")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
     var pos = reader.seek(5, io.SEEK_START)
 
     var dest = List[UInt8](capacity=16)
@@ -86,7 +86,7 @@ fn test_seek() raises:
 
 fn test_read_all() raises:
     var test = MojoTest("Testing io.read_all with bytes.Reader")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
     var result = io.read_all(reader)
     var bytes = result[0]
     bytes.append(0)
@@ -97,7 +97,7 @@ fn test_read_all() raises:
 #     var test = MojoTest("Testing bytes.Reader.write_to")
 
 #     # Create a new reader containing the content "0123456789"
-#     var reader = reader.new_reader("0123456789")
+#     var reader = reader.Reader(String("0123456789").as_bytes())
 
 #     # Create a new writer containing the content "Hello World"
 #     var test_string: String = "Hello World"
@@ -112,7 +112,7 @@ fn test_read_all() raises:
 
 fn test_read_and_unread_byte() raises:
     var test = MojoTest("Testing bytes.Reader.read_byte and bytes.Reader.unread_byte")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
 
     # Read the first byte from the reader.
     var byte: UInt8
@@ -130,7 +130,7 @@ fn test_read_and_unread_byte() raises:
 
 fn test_unread_byte_at_beginning() raises:
     var test = MojoTest("Testing bytes.Reader.unread_byte before reading any bytes")
-    var reader = reader.new_reader("0123456789")
+    var reader = reader.Reader(String("0123456789").as_bytes())
 
     alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of slice"
 

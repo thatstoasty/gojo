@@ -27,7 +27,7 @@ struct Reader(
     var index: Int  # current reading index
     var prev_rune: Int  # index of previous rune; or < 0
 
-    fn __init__(inout self, owned buffer: List[UInt8]):
+    fn __init__(inout self, owned buffer: List[UInt8, True]):
         """Initializes a new [Reader.Reader] struct."""
         self.capacity = buffer.capacity
         self.size = buffer.size
@@ -260,23 +260,3 @@ struct Reader(
         self.data = buffer.steal_data()
         self.index = 0
         self.prev_rune = -1
-
-
-fn new_reader(owned buffer: List[UInt8]) -> Reader:
-    """Returns a new [Reader.Reader] reading from b.
-
-    Args:
-        buffer: The new buffer to read from.
-
-    """
-    return Reader(buffer)
-
-
-fn new_reader(owned buffer: String) -> Reader:
-    """Returns a new [Reader.Reader] reading from b.
-
-    Args:
-        buffer: The new buffer to read from.
-
-    """
-    return Reader(buffer.as_bytes())

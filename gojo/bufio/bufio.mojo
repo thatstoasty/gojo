@@ -624,24 +624,6 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     #     return Int(bytes_written), Error()
 
 
-fn new_reader[R: io.Reader](owned reader: R) -> Reader[R]:
-    """Returns a new [Reader] whose buffer has at least the specified
-    size. If the argument io.Reader is already a [Reader] with large enough
-    size, it returns the underlying [Reader].
-
-    Args:
-        reader: The reader to read from.
-
-    Params:
-        size: The size of the buffer.
-
-    Returns:
-        The new [Reader].
-    """
-    var r = Reader[R](reader^)
-    return r^
-
-
 # buffered output
 struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an [io.Writer] object.
@@ -907,21 +889,6 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         return total_bytes_written, Error()
 
 
-fn new_writer[W: io.Writer](owned writer: W) -> Writer[W]:
-    """Returns a new [Writer] whose buffer has at least the specified
-    size. If the argument io.Writer is already a [Writer] with large enough
-    size, it returns the underlying [Writer]."""
-    # Is it already a Writer?
-    # b, ok := w.(*Writer)
-    # if ok and self.buf.capacity >= size:
-    # 	return b
-
-    return Writer[W](
-        writer=writer^,
-        bytes_written=0,
-    )
-
-
 # buffered input and output
 struct ReadWriter[R: io.Reader, W: io.Writer]():
     """ReadWriter stores pointers to a [Reader] and a [Writer].
@@ -933,9 +900,3 @@ struct ReadWriter[R: io.Reader, W: io.Writer]():
     fn __init__(inout self, owned reader: R, owned writer: W):
         self.reader = reader^
         self.writer = writer^
-
-
-# new_read_writer
-fn new_read_writer[R: io.Reader, W: io.Writer](owned reader: R, owned writer: W) -> ReadWriter[R, W]:
-    """Allocates a new [ReadWriter] that dispatches to r and w."""
-    return ReadWriter[R, W](reader^, writer^)

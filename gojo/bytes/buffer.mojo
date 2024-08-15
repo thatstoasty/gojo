@@ -4,8 +4,6 @@ import ..io
 from ..builtins import copy, panic, index_byte
 
 
-alias Rune = Int32
-
 # SMALL_BUFFER_SIZE is an initial allocation minimal capacity.
 alias SMALL_BUFFER_SIZE: Int = 64
 
@@ -59,7 +57,7 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn __init__(inout self, owned buf: List[UInt8]):
+    fn __init__(inout self, owned buf: List[UInt8, True]):
         self._capacity = buf.capacity
         self._size = buf.size
         self._data = buf.steal_data()
@@ -429,55 +427,3 @@ struct Buffer(
         # Buffer is now empty; reset.
         self.reset()
         return total_bytes_written, Error()
-
-
-fn new_buffer(capacity: Int = io.BUFFER_SIZE) -> Buffer:
-    """Creates and initializes a new [Buffer] using buf as its`
-    initial contents. The new [Buffer] takes ownership of buf, and the
-    caller should not use buf after this call. new_buffer is intended to
-    prepare a [Buffer] to read existing data. It can also be used to set
-    the initial size of the internal buffer for writing. To do that,
-    buf should have the desired capacity but a length of zero.
-
-    In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
-    sufficient to initialize a [Buffer].
-    """
-    var b = List[UInt8](capacity=capacity)
-    return Buffer(b^)
-
-
-fn new_buffer(owned buf: List[UInt8]) -> Buffer:
-    """Creates and initializes a new [Buffer] using buf as its`
-    initial contents. The new [Buffer] takes ownership of buf, and the
-    caller should not use buf after this call. new_buffer is intended to
-    prepare a [Buffer] to read existing data. It can also be used to set
-    the initial size of the internal buffer for writing. To do that,
-    buf should have the desired capacity but a length of zero.
-
-    In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
-    sufficient to initialize a [Buffer].
-
-    Args:
-        buf: The bytes to use as the initial contents of the buffer.
-
-    Returns:
-        A new [Buffer] initialized with the provided bytes.
-    """
-    return Buffer(buf^)
-
-
-fn new_buffer(owned s: String) -> Buffer:
-    """Creates and initializes a new [Buffer] using string s as its
-    initial contents. It is intended to prepare a buffer to read an existing
-    string.
-
-    In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is
-    sufficient to initialize a [Buffer].
-
-    Args:
-        s: The string to use as the initial contents of the buffer.
-
-    Returns:
-        A new [Buffer] initialized with the provided string.
-    """
-    return Buffer(s.as_bytes())
