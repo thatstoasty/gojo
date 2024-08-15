@@ -7,7 +7,9 @@ mv gojo.mojopkg tmp/
 cp -R tests/ tmp/tests/
 
 echo -e "\nBuilding binaries for all examples."
-pytest tmp/tests
+cd tmp
+pytest tests
+cd ..
 
 echo -e "Cleaning up the test directory."
 rm -R tmp

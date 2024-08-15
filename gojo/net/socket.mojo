@@ -47,6 +47,7 @@ from .ip import (
     convert_sockaddr_to_host_port,
 )
 from .address import Addr, BaseAddr, HostPort
+from sys import sizeof
 
 alias SocketClosedError = Error("Socket: Socket is already closed")
 
