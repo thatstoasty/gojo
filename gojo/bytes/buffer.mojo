@@ -96,11 +96,11 @@ struct Buffer(
         """Returns a pointer holding the unread portion of the buffer."""
         return self._data.offset(self.offset)
 
-    fn bytes(self) -> List[UInt8]:
+    fn bytes(self) -> List[UInt8, True]:
         """Returns a list of bytes holding a copy of the unread portion of the buffer."""
         var copy = UnsafePointer[UInt8]().alloc(self._size)
         memcpy(copy, self._data.offset(self.offset), self._size)
-        return List[UInt8](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
+        return List[UInt8, True](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
