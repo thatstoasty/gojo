@@ -141,7 +141,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
                     if str(err) == str(ERR_FINAL_TOKEN):
                         self.token = token
                         self.done = True
-                        # When token is not nil, it means the scanning stops
+                        # When token is not empty, it means the scanning stops
                         # with a trailing token, and thus the return value
                         # should be True to indicate the existence of the token.
                         return len(token) != 0
@@ -204,13 +204,13 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
             # be extra careful: Scanner is for safe, simple jobs.
             var loop = 0
             while True:
-                var buf = self.as_bytes_slice()[self.end :]
-                var dest_ptr = buf.unsafe_ptr()
+                var dest_ptr = self.buf.unsafe_ptr().offset(self.end)
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
                 var bytes_read: Int
                 var err: Error
-                bytes_read, err = self.reader._read(dest_ptr, len(buf))
-                if bytes_read < 0 or len(buf) - self.end < bytes_read:
+                bytes_read, err = self.reader._read(dest_ptr, self.buf.capacity - self.buf.size)
+                self.buf.size += bytes_read
+                if bytes_read < 0 or self.buf.size - self.end < bytes_read:
                     self.set_err(ERR_BAD_READ_COUNT)
                     break
 
