@@ -785,7 +785,6 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
 
         if err:
             if bytes_written > 0 and bytes_written < self.bytes_written:
-                # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
                 var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
                 _ = copy(self.buf.unsafe_ptr().offset(self.buf.size), temp.unsafe_ptr(), len(temp))
 

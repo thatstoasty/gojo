@@ -9,7 +9,7 @@ from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 alias MAX_INT: Int = 2147483647
 
 
-struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
+struct Scanner[R: io.Reader, split: SplitFunction = scan_lines, capacity: Int = io.BUFFER_SIZE]():
     """`Scanner` provides a convenient interface for reading data such as
     a file of newline-delimited lines of text. Successive calls to
     the `Scanner.scan` method will step through the 'tokens' of a file, skipping
@@ -25,7 +25,8 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
     large to fit in the `Scanner.buffer`. When a scan stops, the reader may have
     advanced arbitrarily far past the last token. Programs that need more
     control over error handling or large tokens, or must run sequential scans
-    on a reader, should use `bufio.Reader` instead."""
+    on a reader, should use `bufio.Reader` instead.
+    """
 
     var reader: R
     """The reader provided by the client."""
@@ -51,9 +52,10 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
     fn __init__(
         inout self,
         owned reader: R,
+        *,
         max_token_size: Int = MAX_SCAN_TOKEN_SIZE,
-        token: List[UInt8, True] = List[UInt8, True](capacity=io.BUFFER_SIZE),
-        buf: List[UInt8, True] = List[UInt8, True](capacity=io.BUFFER_SIZE),
+        token: List[UInt8, True] = List[UInt8, True](capacity=capacity),
+        buf: List[UInt8, True] = List[UInt8, True](capacity=capacity),
         start: Int = 0,
         end: Int = 0,
         empties: Int = 0,
@@ -61,6 +63,11 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
         done: Bool = False,
     ):
         """Initializes a new Scanner.
+
+        Params:
+            R: The type of io.Reader.
+            split: The split function to use.
+            capacity: The capacity of the internal buffer.
 
         Args:
             reader: The reader to scan.
@@ -131,7 +138,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
             # a chance to recover any remaining, possibly empty token.
             if (self.end > self.start) or self.err:
                 var advance: Int
-                var token = List[UInt8, True](capacity=io.BUFFER_SIZE)
+                var token = List[UInt8, True](capacity=capacity)
                 var err = Error()
                 var at_eof = False
                 if self.err:
@@ -179,6 +186,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
                 memcpy(self.buf.unsafe_ptr(), self.buf.unsafe_ptr().offset(self.start), self.end - self.start)
                 self.end -= self.start
                 self.start = 0
+                self.buf.size = self.end
 
             # Is the buffer full? If so, resize.
             if self.end == len(self.buf):
@@ -193,8 +201,8 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
 
                 # Make a new List[UInt8, True] buffer and copy the elements in
                 new_size = min(new_size, self.max_token_size)
-                var new_buf = List[UInt8, True](capacity=new_size)
-                _ = copy(new_buf, self.buf[self.start : self.end])
+                var new_buf = self.buf[self.start : self.end]  # slicing returns a new list
+                new_buf.reserve(new_size)
                 self.buf = new_buf
                 self.end -= self.start
                 self.start = 0
@@ -204,8 +212,8 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
             # be extra careful: Scanner is for safe, simple jobs.
             var loop = 0
             while True:
-                var dest_ptr = self.buf.unsafe_ptr().offset(self.end)
                 # Catch any reader errors and set the internal error field to that err instead of bubbling it up.
+                var dest_ptr = self.buf.unsafe_ptr().offset(self.end)
                 var bytes_read: Int
                 var err: Error
                 bytes_read, err = self.reader._read(dest_ptr, self.buf.capacity - self.buf.size)

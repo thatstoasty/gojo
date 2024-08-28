@@ -289,7 +289,8 @@ struct Buffer(
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         var bytes_to_read = self.as_bytes_slice()[self.offset :]
-        var bytes_read = copy(dest, bytes_to_read.unsafe_ptr(), source_length=len(bytes_to_read))
+        var count = min(capacity, len(bytes_to_read))
+        var bytes_read = copy(dest, bytes_to_read.unsafe_ptr(), count)
         self.offset += bytes_read
 
         if bytes_read > 0:
