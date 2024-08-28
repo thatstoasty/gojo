@@ -47,7 +47,7 @@ from .ip import (
     convert_sockaddr_to_host_port,
 )
 from .address import Addr, BaseAddr, HostPort
-from sys import sizeof
+from sys import sizeof, external_call
 
 alias SocketClosedError = Error("Socket: Socket is already closed")
 
@@ -231,8 +231,11 @@ struct Socket(FileDescriptorBase):
             port: The port number to bind the socket to.
         """
         var sockaddr_pointer = build_sockaddr_pointer(address, port, self.address_family)
-
-        if bind(self.fd.fd, sockaddr_pointer, sizeof[sockaddr_in]()) == -1:
+        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_family)
+        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_port)
+        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_addr.s_addr)
+        if bind(self.fd.fd, sockaddr_pointer, sizeof[sockaddr]()) == -1:
+            _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("bind").unsafe_ptr())
             _ = shutdown(self.fd.fd, SHUT_RDWR)
             raise Error("Binding socket failed. Wait a few seconds and try again?")
 
@@ -415,7 +418,7 @@ struct Socket(FileDescriptorBase):
 
         return bytes_sent, Error()
 
-    fn receive(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8], Error):
+    fn receive(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8, True], Error):
         """Receive data from the socket into the buffer with capacity of `size` bytes.
 
         Args:
@@ -432,15 +435,15 @@ struct Socket(FileDescriptorBase):
             0,
         )
         if bytes_received == -1:
-            return List[UInt8](), Error("Socket.receive: Failed to receive message from socket.")
+            return List[UInt8, True](), Error("Socket.receive: Failed to receive message from socket.")
 
-        var bytes = List[UInt8](unsafe_pointer=buffer, size=bytes_received, capacity=size)
+        var bytes = List[UInt8, True](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
             return bytes, io.EOF
 
         return bytes, Error()
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
         """Receive data from the socket into the buffer dest. Equivalent to recv_into().
 
         Args:
@@ -452,7 +455,7 @@ struct Socket(FileDescriptorBase):
         """
         return self.fd._read(dest, capacity)
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Receive data from the socket into the buffer dest. Equivalent to recv_into().
 
         Args:
@@ -461,16 +464,18 @@ struct Socket(FileDescriptorBase):
         Returns:
             The number of bytes read, and an error if one occurred.
         """
-        var span = Span(dest)
+        if dest.size == dest.capacity:
+            return 0, Error("net.socket.Socket.read: no space left in destination buffer.")
 
+        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = self._read(span, dest.capacity)
+        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
         return bytes_read, err
 
-    fn receive_from(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8], HostPort, Error):
+    fn receive_from(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8, True], HostPort, Error):
         """Receive data from the socket into the buffer dest.
 
         Args:
@@ -492,21 +497,21 @@ struct Socket(FileDescriptorBase):
         )
 
         if bytes_received == -1:
-            return List[UInt8](), HostPort(), Error("Failed to read from socket, received a -1 response.")
+            return List[UInt8, True](), HostPort(), Error("Failed to read from socket, received a -1 response.")
 
         var remote: HostPort
         var err: Error
         remote, err = convert_sockaddr_to_host_port(remote_address_ptr)
         if err:
-            return List[UInt8](), HostPort(), err
+            return List[UInt8, True](), HostPort(), err
 
-        var bytes = List[UInt8](unsafe_pointer=buffer, size=bytes_received, capacity=size)
+        var bytes = List[UInt8, True](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
             return bytes, remote, io.EOF
 
         return bytes, remote, Error()
 
-    fn receive_from_into(inout self, inout dest: List[UInt8]) -> (Int, HostPort, Error):
+    fn receive_from_into(inout self, inout dest: List[UInt8, True]) -> (Int, HostPort, Error):
         """Receive data from the socket into the buffer dest."""
         var remote_address_ptr = UnsafePointer[sockaddr].alloc(1)
         var remote_address_ptr_size = socklen_t(sizeof[sockaddr]())

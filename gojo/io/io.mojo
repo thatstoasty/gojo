@@ -32,7 +32,7 @@ fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error
     return writer.write_string(string)
 
 
-fn read_at_least[R: Reader](inout reader: R, inout dest: List[UInt8], min: Int) -> (Int, Error):
+fn read_at_least[R: Reader](inout reader: R, inout dest: List[UInt8, True], min: Int) -> (Int, Error):
     """Reads from r into buf until it has read at least min bytes.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -68,7 +68,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: List[UInt8], min: Int) 
     return total_bytes_read, error
 
 
-fn read_full[R: Reader](inout reader: R, inout dest: List[UInt8]) -> (Int, Error):
+fn read_full[R: Reader](inout reader: R, inout dest: List[UInt8, True]) -> (Int, Error):
     """Reads exactly len(buf) bytes from r into buf.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is EOF only if no bytes were read.
@@ -405,7 +405,7 @@ fn read_full[R: Reader](inout reader: R, inout dest: List[UInt8]) -> (Int, Error
 
 
 # TODO: read directly into dest
-fn read_all[R: Reader](inout reader: R) -> (List[UInt8], Error):
+fn read_all[R: Reader](inout reader: R) -> (List[UInt8, True], Error):
     """Reads from r until an error or EOF and returns the data it read.
     A successful call returns err == nil, not err == EOF. Because ReadAll is
     defined to read from src until EOF, it does not treat an EOF from Read
@@ -416,11 +416,11 @@ fn read_all[R: Reader](inout reader: R) -> (List[UInt8], Error):
 
     Returns:
         The data read."""
-    var dest = List[UInt8](capacity=BUFFER_SIZE)
+    var dest = List[UInt8, True](capacity=BUFFER_SIZE)
     var at_eof: Bool = False
 
     while True:
-        var temp = List[UInt8](capacity=BUFFER_SIZE)
+        var temp = List[UInt8, True](capacity=BUFFER_SIZE)
         var bytes_read: Int
         var err: Error
         bytes_read, err = reader.read(temp)

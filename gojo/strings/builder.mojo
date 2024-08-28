@@ -15,9 +15,9 @@ struct StringBuilder[growth_factor: Float32 = 2](
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
     together. The performance increase is not linear. Compared to string concatenation,
-    I've observed around 20-30x faster for writing and rending ~4KB and up to 2100x-2300x
+    I've observed around 20-30x faster for writing and rending ~4KB and up to 400x-500x
     for ~4MB. This is because it avoids the overhead of creating and destroying many
-    intermediate strings and performs memcopy operations.
+    intermediate strings and performs memcpy operations.
 
     The result is a more efficient when building larger string concatenations. It
     is generally not recommended to use this class for small concatenations such as

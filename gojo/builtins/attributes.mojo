@@ -1,7 +1,9 @@
 from collections import InlineList
 
 
-fn copy[T: CollectionElement](inout target: List[T], source: List[T], start: Int = 0) -> Int:
+fn copy[
+    T: CollectionElement, is_trivial: Bool
+](inout target: List[T, is_trivial], source: List[T, is_trivial], start: Int = 0) -> Int:
     """Copies the contents of source into target at the same index. Returns the number of bytes copied.
     Added a start parameter to specify the index to start copying into.
 
@@ -116,7 +118,7 @@ fn copy(target: UnsafePointer[UInt8], source: UnsafePointer[UInt8], source_lengt
 
 
 fn copy(
-    inout target: List[UInt8],
+    inout target: List[UInt8, True],
     source: UnsafePointer[Scalar[DType.uint8]],
     source_start: Int,
     source_end: Int,

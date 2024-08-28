@@ -61,8 +61,8 @@ struct Reader(
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self.data, len=self.size)
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
-        """Reads from the internal buffer into the dest List[UInt8] struct.
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+        """Reads from the internal buffer into the dest List[UInt8, True] struct.
         Implements the [io.Reader] Interface.
 
         Args:
@@ -78,26 +78,24 @@ struct Reader(
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
         var bytes_to_write = self.as_bytes_slice()[self.index : self.size]
-        var bytes_written = copy(dest.unsafe_ptr(), bytes_to_write.unsafe_ptr(), len(bytes_to_write))
-        dest._len += bytes_written
+        var bytes_written = copy(dest, bytes_to_write.unsafe_ptr(), len(bytes_to_write))
         self.index += bytes_written
 
         return bytes_written, Error()
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
-        """Reads from the internal buffer into the dest List[UInt8] struct.
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+        """Reads from the internal buffer into the dest List[UInt8, True] struct.
         Implements the [io.Reader] Interface.
 
         Args:
-            dest: The destination List[UInt8] struct to read into.
+            dest: The destination List[UInt8, True] struct to read into.
 
         Returns:
             Int: The number of bytes read into dest."""
-        var span = Span(dest)
-
+        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = self._read(span, dest.capacity)
+        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
         return bytes_read, err
@@ -128,12 +126,12 @@ struct Reader(
 
         return bytes_written, Error()
 
-    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
+    fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
         """Reads len(dest) bytes into dest beginning at byte offset off.
         Implements the [io.ReaderAt] Interface.
 
         Args:
-            dest: The destination List[UInt8] struct to read into.
+            dest: The destination List[UInt8, True] struct to read into.
             off: The offset to start reading from.
 
         Returns:
@@ -249,7 +247,7 @@ struct Reader(
 
         return write_count, Error()
 
-    fn reset(inout self, owned buffer: List[UInt8]):
+    fn reset(inout self, owned buffer: List[UInt8, True]):
         """Resets the [Reader.Reader] to be reading from buffer.
 
         Args:

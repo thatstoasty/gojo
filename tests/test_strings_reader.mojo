@@ -9,7 +9,7 @@ fn test_read():
     var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
-    var buffer = List[UInt8](capacity=16)
+    var buffer = List[UInt8, True](capacity=16)
     var bytes_read = reader.read(buffer)
     buffer.append(0)
 
@@ -23,7 +23,7 @@ fn test_read_slice():
     var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
-    var buffer = List[UInt8](capacity=16)
+    var buffer = List[UInt8, True](capacity=16)
     var bytes_read = reader.read(buffer)
     buffer.append(0)
 
@@ -37,7 +37,7 @@ fn test_read_at():
     var reader = Reader("Hello, World!")
 
     # Test reading from the reader.
-    var buffer = List[UInt8](capacity=128)
+    var buffer = List[UInt8, True](capacity=128)
     var bytes_read = reader.read_at(buffer, 7)
     buffer.append(0)
 

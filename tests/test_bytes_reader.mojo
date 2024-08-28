@@ -6,7 +6,7 @@ import gojo.io
 fn test_read() raises:
     var test = MojoTest("Testing bytes.Reader.read")
     var reader = reader.Reader(String("0123456789").as_bytes())
-    var dest = List[UInt8](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "0123456789")
@@ -30,7 +30,7 @@ fn test_read_after_big_seek() raises:
     var test = MojoTest("Testing bytes.Reader.read after big seek")
     var reader = reader.Reader(String("0123456789").as_bytes())
     _ = reader.seek(123456789, io.SEEK_START)
-    var dest = List[UInt8](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
 
     var bytes_read: Int
     var err: Error
@@ -48,12 +48,12 @@ fn test_read_at() raises:
     var test = MojoTest("Testing bytes.Reader.read_at")
     var reader = reader.Reader(String("0123456789").as_bytes())
 
-    var dest = List[UInt8](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
     var pos = reader.read_at(dest, 0)
     dest.append(0)
     test.assert_equal(String(dest), "0123456789")
 
-    dest = List[UInt8](capacity=16)
+    dest = List[UInt8, True](capacity=16)
     pos = reader.read_at(dest, 1)
     dest.append(0)
     test.assert_equal(String(dest), "123456789")
@@ -64,21 +64,21 @@ fn test_seek() raises:
     var reader = reader.Reader(String("0123456789").as_bytes())
     var pos = reader.seek(5, io.SEEK_START)
 
-    var dest = List[UInt8](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "56789")
 
     # Test SEEK_END relative seek
     pos = reader.seek(-2, io.SEEK_END)
-    dest = List[UInt8](capacity=16)
+    dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "89")
 
     # Test SEEK_CURRENT relative seek (should be at the end of the reader, ie [:-4])
     pos = reader.seek(-4, io.SEEK_CURRENT)
-    dest = List[UInt8](capacity=16)
+    dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "6789")

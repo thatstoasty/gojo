@@ -24,7 +24,7 @@ fn main() raises:
     var bytes = List[UInt8](capacity=16)
     var bytes_read: Int
     bytes_read, err = socket.read(bytes)
-    if str(err) != io.EOF:
+    if str(err) != str(io.EOF):
         raise err
 
     bytes.append(0)

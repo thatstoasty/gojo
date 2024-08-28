@@ -170,7 +170,7 @@ fn printf(formatting: String, *args: Args) raises:
         var argument = args[i]
         if argument.isa[String]():
             text = format_string(text, argument[String])
-        elif argument.isa[List[UInt8]]():
+        elif argument.isa[List[UInt8, True]]():
             text = format_bytes(text, argument[List[UInt8, True]])
         elif argument.isa[Int]():
             text = format_integer(text, argument[Int])

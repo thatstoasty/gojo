@@ -1,4 +1,3 @@
-from collections import InlineList
 from utils import Span
 import ..io
 from ..builtins import copy, panic
@@ -21,24 +20,45 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     """Implements buffering for an io.Reader object."""
 
-    var buf: List[UInt8]
-    var reader: R  # reader provided by the client
+    var buf: List[UInt8, True]
+    """Internal buffer."""
+    var reader: R
+    """Reader provided by the client."""
     var read_pos: Int
-    var write_pos: Int  # buf read and write positions
+    """Buffer read position."""
+    var write_pos: Int
+    """Buffer write position."""
     var last_byte: Int  # last byte read for unread_byte; -1 means invalid
+    """Last byte read for unread_byte; -1 means invalid."""
     var last_rune_size: Int  # size of last rune read for unread_rune; -1 means invalid
+    """Size of last rune read for unread_rune; -1 means invalid."""
     var err: Error
+    """Error encountered during reading."""
+    var initial_capacity: Int
+    """Initial internal buffer capacity, used when resetting to it's initial state."""
 
     fn __init__(
         inout self,
         owned reader: R,
+        *,
         capacity: Int = io.BUFFER_SIZE,
         read_pos: Int = 0,
         write_pos: Int = 0,
         last_byte: Int = -1,
         last_rune_size: Int = -1,
     ):
-        self.buf = List[UInt8](capacity=capacity)
+        """Initializes a new buffered reader with the provided reader and buffer capacity.
+
+        Args:
+            reader: The reader to buffer.
+            capacity: The initial buffer capacity.
+            read_pos: The buffer read position.
+            write_pos: The buffer write position.
+            last_byte: The last byte read for unread_byte; -1 means invalid.
+            last_rune_size: The size of the last rune read for unread_rune; -1 means invalid.
+        """
+        self.initial_capacity = capacity
+        self.buf = List[UInt8, True](capacity=capacity)
         self.reader = reader^
         self.read_pos = read_pos
         self.write_pos = write_pos
@@ -47,6 +67,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
+        self.initial_capacity = existing.initial_capacity
         self.buf = existing.buf^
         self.reader = existing.reader^
         self.read_pos = existing.read_pos
@@ -55,8 +76,8 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_rune_size = existing.last_rune_size
         self.err = existing.err^
 
-    # size returns the size of the underlying buffer in bytes.
     fn __len__(self) -> Int:
+        """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
     # reset discards any buffered data, resets all state, and switches
@@ -107,19 +128,20 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         # Compares to the length of the entire InlineList[UInt8, io.BUFFER_SIZE] object, including 0 initialized positions.
         # IE. var b = InlineList[UInt8, io.BUFFER_SIZE](capacity=4096), then trying to write at b[4096] and onwards will fail.
-        if self.write_pos >= io.BUFFER_SIZE:
+        if self.write_pos >= self.buf.capacity:
             panic("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
-            # var span = self.as_bytes_slice()
+            var dest_ptr = self.buf.unsafe_ptr().offset(self.buf.size)
             var bytes_read: Int
             var err: Error
-            bytes_read, err = self.reader.read(self.buf)
+            bytes_read, err = self.reader._read(dest_ptr, self.buf.capacity - self.buf.size)
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
 
+            self.buf.size += bytes_read
             self.write_pos += bytes_read
 
             if err:
@@ -159,13 +181,13 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         self.last_byte = -1
         self.last_rune_size = -1
 
-        while self.write_pos - self.read_pos < number_of_bytes and self.write_pos - self.read_pos < io.BUFFER_SIZE:
+        while self.write_pos - self.read_pos < number_of_bytes and self.write_pos - self.read_pos < self.buf.capacity:
             self.fill()  # self.write_pos-self.read_pos < self.capacity => buffer is not full
 
-        if number_of_bytes > io.BUFFER_SIZE:
+        if number_of_bytes > self.buf.size:
             return self.as_bytes_slice()[self.read_pos : self.write_pos], Error(ERR_BUFFER_FULL)
 
-        # 0 <= n <= io.BUFFER_SIZE
+        # 0 <= n <= self.buf.size
         var err = Error()
         var available_space = self.write_pos - self.read_pos
         if available_space < number_of_bytes:
@@ -207,14 +229,22 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             if remain == 0:
                 return number_of_bytes, Error()
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
         """Reads data into dest.
         It returns the number of bytes read into dest.
         The bytes are taken from at most one Read on the underlying [Reader],
         hence n may be less than len(src).
         To read exactly len(src) bytes, use io.ReadFull(b, src).
         If the underlying [Reader] can return a non-zero count with io.EOF,
-        then this Read method can do so as well; see the [io.Reader] docs."""
+        then this Read method can do so as well; see the [io.Reader] docs.
+
+        Args:
+            dest: The buffer to read data into.
+            capacity: The capacity of the destination buffer.
+
+        Returns:
+            The number of bytes read into dest.
+        """
         if capacity == 0:
             if self.buffered() > 0:
                 return 0, Error()
@@ -241,9 +271,9 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             # Do not use self.fill, which will loop.
             self.read_pos = 0
             self.write_pos = 0
-            var buf = self.as_bytes_slice()  # TODO: I'm hoping this reads into self.data directly lol
+            var buf = self.buf.unsafe_ptr().offset(self.buf.size)
             var bytes_read: Int
-            bytes_read, self.err = self.reader._read(buf, len(buf))
+            bytes_read, self.err = self.reader._read(buf, self.buf.capacity - self.buf.size)
 
             if bytes_read < 0:
                 panic(ERR_NEGATIVE_READ)
@@ -255,19 +285,13 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         # copy as much as we can
         var source = self.as_bytes_slice()[self.read_pos : self.write_pos]
-        bytes_read = 0
-        var start = len(dest)
-        var target = dest.unsafe_ptr()
-        for i in range(len(source)):
-            target[i + start] = source[i]
-            bytes_read += 1
-        dest._len += bytes_read
+        bytes_read = copy(dest, source.unsafe_ptr(), capacity)
         self.read_pos += bytes_read
         self.last_byte = int(self.buf[self.read_pos - 1])
         self.last_rune_size = -1
         return bytes_read, Error()
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads data into dest.
         It returns the number of bytes read into dest.
         The bytes are taken from at most one Read on the underlying [Reader],
@@ -276,11 +300,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         If the underlying [Reader] can return a non-zero count with io.EOF,
         then this Read method can do so as well; see the [io.Reader] docs."""
 
-        var span = Span(dest)
-
+        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = self._read(span, dest.capacity)
+        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
         return bytes_read, err
@@ -399,7 +422,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
                 break
 
             # Buffer full?
-            if self.buffered() >= io.BUFFER_SIZE:
+            if self.buffered() >= self.buf.capacity:
                 self.read_pos = self.write_pos
                 line = self.as_bytes_slice()
                 err = Error(ERR_BUFFER_FULL)
@@ -416,7 +439,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
         return line, err
 
-    fn read_line(inout self: Self) -> (List[UInt8], Bool):
+    fn read_line(inout self: Self) -> (List[UInt8, True], Bool):
         """Low-level line-reading primitive. Most callers should use
         [Reader.read_bytes]('\n') or [Reader.read_string]('\n') instead or use a [Scanner].
 
@@ -449,10 +472,10 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
                 self.read_pos -= 1
                 line = line[: len(line) - 1]
-            return List[UInt8](line), True
+            return List[UInt8, True](line), True
 
         if len(line) == 0:
-            return List[UInt8](line), False
+            return List[UInt8, True](line), False
 
         if line[len(line) - 1] == ord("\n"):
             var drop = 1
@@ -461,9 +484,11 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
 
             line = line[: len(line) - drop]
 
-        return List[UInt8](line), False
+        return List[UInt8, True](line), False
 
-    fn collect_fragments(inout self, delim: UInt8) -> (List[List[UInt8]], Span[UInt8, __lifetime_of(self)], Int, Error):
+    fn collect_fragments(
+        inout self, delim: UInt8
+    ) -> (List[List[UInt8, True]], Span[UInt8, __lifetime_of(self)], Int, Error):
         """Reads until the first occurrence of delim in the input. It
         returns (slice of full buffers, remaining bytes before delim, total number
         of bytes in the combined first two elements, error).
@@ -473,7 +498,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         """
         # Use read_slice to look for delim, accumulating full buffers.
         var err = Error()
-        var full_buffers = List[List[UInt8]]()
+        var full_buffers = List[List[UInt8, True]]()
         var total_len = 0
         var frag: Span[UInt8, __lifetime_of(self)]
         while True:
@@ -487,14 +512,14 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
                 break
 
             # Make a copy of the buffer Span.
-            var buf = List[UInt8](frag)
+            var buf = List[UInt8, True](frag)
             full_buffers.append(buf)
             total_len += len(buf)
 
         total_len += len(frag)
         return full_buffers, frag, total_len, err
 
-    fn read_bytes(inout self, delim: UInt8) -> (List[UInt8], Error):
+    fn read_bytes(inout self, delim: UInt8) -> (List[UInt8, True], Error):
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -507,16 +532,16 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
             delim: The delimiter to search for.
 
         Returns:
-            The List[UInt8] from the internal buffer.
+            The List[UInt8, True] from the internal buffer.
         """
-        var full: List[List[UInt8]]
+        var full: List[List[UInt8, True]]
         var frag: Span[UInt8, __lifetime_of(self)]
         var n: Int
         var err: Error
         full, frag, n, err = self.collect_fragments(delim)
 
         # Allocate new buffer to hold the full pieces and the fragment.
-        var buf = List[UInt8](capacity=n)
+        var buf = List[UInt8, True](capacity=n)
         n = 0
 
         # copy full pieces and fragment in.
@@ -543,7 +568,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         Returns:
             The String from the internal buffer.
         """
-        var full: List[List[UInt8]]
+        var full: List[List[UInt8, True]]
         var frag: Span[UInt8, __lifetime_of(self)]
         var n: Int
         var err: Error
@@ -582,7 +607,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     #         return bytes_written, err
 
     #     # internal buffer not full, fill before writing to writer
-    #     if (self.write_pos - self.read_pos) < io.BUFFER_SIZE:
+    #     if (self.write_pos - self.read_pos) < :
     #         self.fill()
 
     #     while self.read_pos < self.write_pos:
@@ -613,7 +638,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
     #     var bytes_written: Int
     #     var err: Error
     #     var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
-    #     bytes_written, err = writer.write(List[UInt8](buf_to_write))
+    #     bytes_written, err = writer.write(List[UInt8, True](buf_to_write))
     #     if err:
     #         return bytes_written, err
 
@@ -633,23 +658,27 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
     # [Writer.flush] method to guarantee all data has been forwarded to
     # the underlying [io.Writer]."""
 
-    var buf: List[UInt8]
+    var buf: List[UInt8, True]
     var bytes_written: Int
     var writer: W
     var err: Error
+    var initial_capacity: Int
 
     fn __init__(
         inout self,
         owned writer: W,
+        *,
         capacity: Int = io.BUFFER_SIZE,
         bytes_written: Int = 0,
     ):
-        self.buf = List[UInt8](capacity=capacity)
+        self.initial_capacity = capacity
+        self.buf = List[UInt8, True](capacity=capacity)
         self.bytes_written = bytes_written
         self.writer = writer^
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
+        self.initial_capacity = existing.initial_capacity
         self.buf = existing.buf^
         self.bytes_written = existing.bytes_written
         self.writer = existing.writer^
@@ -697,19 +726,14 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             if bytes_written > 0 and bytes_written < self.bytes_written:
                 # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
                 var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
-                for i in range(len(temp)):
-                    self.buf[i] = temp[i]
-                    # if i > len(temp):
-                    #     self.buf[i] = temp[i]
-                    # else:
-                    #     self.buf.append(temp[i])
+                _ = copy(self.buf.unsafe_ptr().offset(self.buf.size), temp.unsafe_ptr(), len(temp))
 
             self.bytes_written -= bytes_written
             self.err = err
             return err
 
         # Reset the buffer
-        self.buf = List[UInt8](capacity=io.BUFFER_SIZE)
+        self.buf = List[UInt8, True](capacity=self.initial_capacity)
         self.bytes_written = 0
         return err
 
@@ -740,22 +764,19 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         var total_bytes_written: Int = 0
         var src_copy = src  # TODO: Make a copy, maybe try a non owning Span
         var err = Error()
+
+        # When writing more than the available buffer.
         while len(src_copy) > self.available() and not self.err:
             var bytes_written: Int = 0
+            # Large write, empty buffer. Write directly from p to avoid copy.
             if self.buffered() == 0:
-                # Large write, empty buffer.
-                # write directly from p to avoid copy.
                 bytes_written, err = self.writer.write(src_copy)
                 self.err = err
-            else:
-                # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-                for i in range(len(src_copy)):
-                    if i + self.bytes_written > len(src_copy):
-                        self.buf[i + self.bytes_written] = src_copy[i]
-                    else:
-                        self.buf.append(src_copy[i])
-                    bytes_written += 1
 
+            # Write whatever we can to fill the internal buffer, then flush it to the underlying writer.
+            else:
+                bytes_written = copy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), len(src_copy))
+                self.buf.size += bytes_written
                 self.bytes_written += bytes_written
                 _ = self.flush()
 
@@ -765,14 +786,9 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         if self.err:
             return total_bytes_written, self.err
 
-        # TODO: Temp copying of elements until I figure out a better pattern or slice refs are added
-        var n = 0
-        for i in range(len(src_copy)):
-            if i + self.bytes_written > len(src_copy):
-                self.buf[i + self.bytes_written] = src_copy[i]
-            else:
-                self.buf.append(src_copy[i])
-            n += 1
+        # Write up to the remaining buffer capacity to the internal buffer, starting from the first available position.
+        var n = copy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), len(src_copy))
+        self.buf.size += n
         self.bytes_written += n
         total_bytes_written += n
         return total_bytes_written, err
@@ -864,8 +880,8 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             var nr = 0
             while nr < MAX_CONSECUTIVE_EMPTY_READS:
                 # Read into remaining unused space in the buffer.
-                var buf = self.as_bytes_slice()[self.bytes_written : len(self.buf)]
-                bytes_read, err = reader._read(buf, self.bytes_written - len(self.buf))
+                var buf = self.buf.unsafe_ptr().offset(self.buf.size)
+                bytes_read, err = reader._read(buf, self.buf.capacity - self.buf.size)
 
                 if bytes_read != 0 or err:
                     break

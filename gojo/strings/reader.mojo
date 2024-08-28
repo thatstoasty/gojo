@@ -45,13 +45,13 @@ struct Reader(
         """
         return len(self.string)
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
-        """Reads from the underlying string into the provided List[UInt8] object.
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+        """Reads from the underlying string into the provided List[UInt8, True] object.
         Implements the [io.Reader] trait.
 
         Args:
-            dest: The destination List[UInt8] object to read into.
-            capacity: The capacity of the destination List[UInt8] object.
+            dest: The destination List[UInt8, True] object to read into.
+            capacity: The capacity of the destination List[UInt8, True] object.
 
         Returns:
             The number of bytes read into dest.
@@ -61,38 +61,43 @@ struct Reader(
 
         self.prev_rune = -1
         var bytes_to_read = self.string.as_bytes_slice()[self.read_pos :]
-        var bytes_written = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), len(bytes_to_read))
-        dest._len += bytes_written
+        if len(bytes_to_read) > capacity:
+            return 0, Error("strings.Reader._read: no space left in destination buffer.")
+
+        var bytes_written = copy(dest, bytes_to_read.unsafe_ptr(), len(bytes_to_read))
         self.read_pos += bytes_written
         return bytes_written, Error()
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
-        """Reads from the underlying string into the provided List[UInt8] object.
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+        """Reads from the underlying string into the provided List[UInt8, True] object.
         Implements the [io.Reader] trait.
 
         Args:
-            dest: The destination List[UInt8] object to read into.
+            dest: The destination List[UInt8, True] object to read into.
 
         Returns:
             The number of bytes read into dest.
         """
-        var span = Span(dest)
+        if dest.size == dest.capacity:
+            return 0, Error("strings.Reader.read: no space left in destination buffer.")
+
+        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
 
         var bytes_read: Int
         var err: Error
-        bytes_read, err = self._read(span, dest.capacity)
+        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
         return bytes_read, err
 
     fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
-        """Reads from the Reader into the dest List[UInt8] starting at the offset off.
+        """Reads from the Reader into the dest List[UInt8, True] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
 
         Args:
-            dest: The destination List[UInt8] object to read into.
+            dest: The destination List[UInt8, True] object to read into.
             off: The byte offset to start reading from.
-            capacity: The capacity of the destination List[UInt8] object.
+            capacity: The capacity of the destination List[UInt8, True] object.
 
         Returns:
             The number of bytes read into dest.
@@ -113,12 +118,12 @@ struct Reader(
 
         return copied_elements_count, error
 
-    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
-        """Reads from the Reader into the dest List[UInt8] starting at the offset off.
+    fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
+        """Reads from the Reader into the dest List[UInt8, True] starting at the offset off.
         It returns the number of bytes read into dest and an error if any.
 
         Args:
-            dest: The destination List[UInt8] object to read into.
+            dest: The destination List[UInt8, True] object to read into.
             off: The byte offset to start reading from.
 
         Returns:

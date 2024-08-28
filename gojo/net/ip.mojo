@@ -1,5 +1,5 @@
-from utils.variant import Variant
-from utils.static_tuple import StaticTuple
+from collections import InlineArray
+from utils import Variant, StaticTuple
 from sys.info import os_is_linux, os_is_macos
 from ..syscall import (
     c_int,
@@ -158,8 +158,8 @@ fn build_sockaddr_pointer(ip_address: String, port: Int, address_family: Int) ->
     var bin_port = convert_port_to_binary(port)
     var bin_ip = convert_ip_to_binary(ip_address, address_family)
 
-    var ai = sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8]())
-    return UnsafePointer[sockaddr_in].address_of(ai).bitcast[sockaddr]()
+    var ai = sockaddr_in(address_family, bin_port, bin_ip, InlineArray[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
+    return UnsafePointer.address_of(ai).bitcast[sockaddr]()
 
 
 fn convert_sockaddr_to_host_port(sockaddr: UnsafePointer[sockaddr]) -> (HostPort, Error):

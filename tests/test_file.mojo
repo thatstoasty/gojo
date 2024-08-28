@@ -5,7 +5,7 @@ from gojo.io import read_all, FileWrapper
 fn test_read() raises:
     var test = MojoTest("Testing FileWrapper.read")
     var file = FileWrapper("tests/data/test.txt", "r")
-    var dest = List[UInt8](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
     _ = file.read(dest)
     dest.append(0)
     test.assert_equal(String(dest), "12345")

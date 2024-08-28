@@ -50,21 +50,21 @@ struct Buffer(
     var offset: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    fn __init__(inout self, capacity: Int = io.BUFFER_SIZE):
+    fn __init__(inout self, *, capacity: Int = io.BUFFER_SIZE):
         self._capacity = capacity
         self._size = 0
         self._data = UnsafePointer[UInt8]().alloc(capacity)
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn __init__(inout self, owned buf: List[UInt8, True]):
+    fn __init__(inout self, *, owned buf: List[UInt8, True]):
         self._capacity = buf.capacity
         self._size = buf.size
         self._data = buf.steal_data()
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn __init__(inout self, owned data: UnsafePointer[UInt8], capacity: Int, size: Int):
+    fn __init__(inout self, *, owned data: UnsafePointer[UInt8], capacity: Int, size: Int):
         self._capacity = capacity
         self._size = size
         self._data = data
@@ -215,7 +215,7 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn _read(inout self, inout dest: Span[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -232,15 +232,13 @@ struct Buffer(
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            # TODO: How to check if the span's pointer has 0 capacity? We want to return early if the span can't receive any data.
             if capacity == 0:
                 return 0, Error()
             return 0, io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         var bytes_to_read = self.as_bytes_slice()[self.offset :]
-        var bytes_read = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), source_length=len(bytes_to_read))
-        dest._len += bytes_read
+        var bytes_read = copy(dest, bytes_to_read.unsafe_ptr(), source_length=len(bytes_to_read))
         self.offset += bytes_read
 
         if bytes_read > 0:
@@ -248,7 +246,7 @@ struct Buffer(
 
         return bytes_read, Error()
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
         is drained. The return value n is the number of bytes read. If the
         buffer has no data to return, err is io.EOF (unless len(dest) is zero);
@@ -260,11 +258,10 @@ struct Buffer(
         Returns:
             The number of bytes read from the buffer.
         """
-        var span = Span(dest)
-
+        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
         var bytes_read: Int
         var err: Error
-        bytes_read, err = self._read(span, dest.capacity)
+        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
         return bytes_read, err
@@ -299,7 +296,7 @@ struct Buffer(
 
         return Error()
 
-    fn read_bytes(inout self, delim: UInt8) -> (List[UInt8], Error):
+    fn read_bytes(inout self, delim: UInt8) -> (List[UInt8, True], Error):
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -311,13 +308,13 @@ struct Buffer(
             delim: The delimiter to read until.
 
         Returns:
-            A List[UInt8] struct containing the data up to and including the delimiter.
+            A List[UInt8, True] struct containing the data up to and including the delimiter.
         """
         var slice: Span[UInt8, __lifetime_of(self)]
         var err: Error
         slice, err = self.read_slice(delim)
 
-        var bytes = List[UInt8](capacity=len(slice) + 1)
+        var bytes = List[UInt8, True](capacity=len(slice) + 1)
         for byte in slice:
             bytes.append(byte[])
 
@@ -330,7 +327,7 @@ struct Buffer(
             delim: The delimiter to read until.
 
         Returns:
-            A List[UInt8] struct containing the data up to and including the delimiter.
+            A List[UInt8, True] struct containing the data up to and including the delimiter.
         """
         var i = index_byte(bytes=self.as_bytes_slice(), delim=delim)
         var end = self.offset + i + 1
@@ -360,7 +357,7 @@ struct Buffer(
         Returns:
             A string containing the data up to and including the delimiter.
         """
-        var bytes: List[UInt8]
+        var bytes: List[UInt8, True]
         var err: Error
         bytes, err = self.read_bytes(delim)
         bytes.append(0)

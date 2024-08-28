@@ -81,10 +81,10 @@ trait Reader(Movable):
 
     Implementations must not retain p."""
 
-    fn read(inout self, inout dest: List[UInt8]) -> (Int, Error):
+    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         ...
 
-    fn _read(inout self, inout dest: Span[UInt8, _], capacity: Int) -> (Int, Error):
+    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
         ...
 
 
@@ -233,7 +233,7 @@ trait ReaderAt:
 
     Implementations must not retain p."""
 
-    fn read_at(self, inout dest: List[UInt8], off: Int) -> (Int, Error):
+    fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
         ...
 
     fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
@@ -260,7 +260,7 @@ trait WriterAt:
     fn _write_at(self, src: Span[UInt8], off: Int) -> (Int, Error):
         ...
 
-    fn write_at(self, src: List[UInt8], off: Int) -> (Int, Error):
+    fn write_at(self, src: List[UInt8, True], off: Int) -> (Int, Error):
         ...
 
 

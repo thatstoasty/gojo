@@ -13,7 +13,7 @@ fn main() raises:
         var bytes_read: Int
         var err: Error
         bytes_read, err = connection.read(bytes)
-        if str(err) != io.EOF:
+        if str(err) != str(io.EOF):
             raise err
 
         bytes.append(0)

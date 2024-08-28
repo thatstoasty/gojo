@@ -1,7 +1,7 @@
 from tests.wrapper import MojoTest
 from gojo.bytes import buffer
 from gojo.io import FileWrapper
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, scan_runes
 
 
 fn test_scan_words():
@@ -9,7 +9,7 @@ fn test_scan_words():
 
     # Create a reader from a string buffer
     var s: String = "Testing🔥 this🔥 string🔥!"
-    var buf = buffer.Buffer(s.as_bytes())
+    var buf = buffer.Buffer(buf=s.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -28,7 +28,7 @@ fn test_scan_lines():
 
     # Create a reader from a string buffer
     var s: String = "Testing\nthis\nstring!"
-    var buf = buffer.Buffer(s.as_bytes())
+    var buf = buffer.Buffer(buf=s.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -44,7 +44,7 @@ fn test_scan_lines():
 
 fn scan_no_newline_test(test_case: String, result_lines: List[String], test: MojoTest):
     # Create a reader from a string buffer
-    var buf = buffer.Buffer(test_case.as_bytes())
+    var buf = buffer.Buffer(buf=test_case.as_bytes())
     # var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -94,7 +94,7 @@ fn test_scan_bytes():
 
     for test_case in test_cases:
         # Create a reader from a string buffer
-        var buf = buffer.Buffer(test_case[].as_bytes())
+        var buf = buffer.Buffer(buf=test_case[].as_bytes())
         # var reader = Reader(buf^)
 
         # Create a scanner from the reader
@@ -120,23 +120,23 @@ fn test_file_wrapper_scanner() raises:
         i += 1
 
 
-# fn test_scan_runes():
-#     var test = MojoTest("Testing bufio.scan_runes")
+fn test_scan_runes():
+    var test = MojoTest("Testing bufio.scan_runes")
 
-#     # Create a reader from a string buffer
-#     var s: String = "🔪🔥🔪🔥"
-#     var buf = buffer.Buffer(s.as_bytes())
-#     # var r = Reader(buf^)
+    # Create a reader from a string buffer
+    var s: String = "🔪🔥🔪🔥"
+    var buf = buffer.Buffer(buf=s.as_bytes())
+    # var r = Reader(buf^)
 
-#     # Create a scanner from the reader
-#     var scanner = Scanner[split=scan_runes](buf^)
+    # Create a scanner from the reader
+    var scanner = Scanner[split=scan_runes](buf^)
 
-#     var expected_results = List[String]("🔪", "🔥", "🔪", "🔥")
-#     var i = 0
+    var expected_results = List[String]("🔪", "🔥", "🔪", "🔥")
+    var i = 0
 
-#     while scanner.scan():
-#         test.assert_equal(scanner.current_token(), expected_results[i])
-#         i += 1
+    while scanner.scan():
+        test.assert_equal(scanner.current_token(), expected_results[i])
+        i += 1
 
 
 fn main() raises:
@@ -148,4 +148,4 @@ fn main() raises:
     test_scan_lines_cr_empty_final_line()
     test_scan_bytes()
     test_file_wrapper_scanner()
-    # test_scan_runes()
+    test_scan_runes()

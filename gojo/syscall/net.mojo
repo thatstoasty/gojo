@@ -1,3 +1,4 @@
+from collections import InlineArray
 from utils.static_tuple import StaticTuple
 from sys import external_call
 from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t
@@ -305,19 +306,17 @@ struct in6_addr:
 
 
 @value
-@register_passable("trivial")
 struct sockaddr:
     var sa_family: sa_family_t
-    var sa_data: StaticTuple[c_char, 14]
+    var sa_data: InlineArray[c_char, 14]
 
 
 @value
-@register_passable("trivial")
 struct sockaddr_in:
     var sin_family: sa_family_t
     var sin_port: in_port_t
     var sin_addr: in_addr
-    var sin_zero: StaticTuple[c_char, 8]
+    var sin_zero: InlineArray[c_char, 8]
 
 
 @value
