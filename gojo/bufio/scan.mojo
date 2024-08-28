@@ -176,7 +176,7 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines]():
             # First, shift data to beginning of buffer if there's lots of empty space
             # or space is needed.
             if self.start > 0 and (self.end == len(self.buf) or self.start > int(len(self.buf) / 2)):
-                _ = copy(self.buf, self.as_bytes_slice()[self.start : self.end])
+                memcpy(self.buf.unsafe_ptr(), self.buf.unsafe_ptr().offset(self.start), self.end - self.start)
                 self.end -= self.start
                 self.start = 0
 

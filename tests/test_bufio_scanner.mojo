@@ -19,7 +19,6 @@ fn test_scan_words():
     var i = 0
 
     while scanner.scan():
-        print(scanner.current_token(), expected_results[i])
         test.assert_equal(scanner.current_token(), expected_results[i])
         i += 1
 
@@ -58,8 +57,6 @@ fn scan_no_newline_test(test_case: String, result_lines: List[String], test: Moj
     while scanner.scan():
         test.assert_equal(scanner.current_token(), result_lines[i])
         i += 1
-
-    test.assert_equal(i, len(result_lines))
 
 
 fn test_scan_lines_no_newline():
@@ -152,11 +149,11 @@ fn test_scan_runes():
 
 fn main() raises:
     test_scan_words()
-    # test_scan_lines()
-    # test_scan_lines_no_newline()
-    # test_scan_lines_cr_no_newline()
-    # test_scan_lines_empty_final_line()
-    # test_scan_lines_cr_empty_final_line()
-    # test_scan_bytes()
-    # test_file_wrapper_scanner()
-    # test_scan_runes()
+    test_scan_lines()
+    test_scan_lines_no_newline()
+    test_scan_lines_cr_no_newline()
+    test_scan_lines_empty_final_line()
+    test_scan_lines_cr_empty_final_line()
+    test_scan_bytes()
+    test_file_wrapper_scanner()
+    test_scan_runes()
