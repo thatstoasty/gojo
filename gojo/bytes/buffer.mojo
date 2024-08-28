@@ -194,7 +194,7 @@ struct Buffer(
         """
         return self.as_string_slice()
 
-    @deprecated("Buffer.render() has been deprecated. Use Buffer.as_string_slice() instead.")
+    @deprecated("Buffer.render() has been deprecated. Use Buffer.as_string_slice() or call str() instead.")
     fn render(self) -> StringSlice[__lifetime_of(self)]:
         """
         Return a StringSlice view of the data owned by the builder.

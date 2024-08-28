@@ -51,6 +51,7 @@ fn test_read_at() raises:
     var dest = List[UInt8, True](capacity=16)
     var pos = reader.read_at(dest, 0)
     dest.append(0)
+    print(dest[0])
     test.assert_equal(String(dest), "0123456789")
 
     dest = List[UInt8, True](capacity=16)
@@ -132,7 +133,7 @@ fn test_unread_byte_at_beginning() raises:
     var test = MojoTest("Testing bytes.Reader.unread_byte before reading any bytes")
     var reader = reader.Reader(String("0123456789").as_bytes())
 
-    alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of slice"
+    alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of buffer."
 
     var err = reader.unread_byte()
     if str(err) != AT_BEGINNING_ERROR:
