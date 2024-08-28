@@ -4,7 +4,7 @@ from gojo.bufio import Reader, Scanner, scan_words
 
 fn print_words(owned text: String):
     # Create a reader from a string buffer
-    var buf = buffer.new_buffer(text^)
+    var buf = buffer.Buffer(buf=text.as_bytes())
     var r = Reader(buf^)
 
     # Create a scanner from the reader
@@ -16,7 +16,7 @@ fn print_words(owned text: String):
 
 fn print_lines(owned text: String):
     # Create a reader from a string buffer
-    var buf = buffer.new_buffer(text^)
+    var buf = buffer.Buffer(buf=text.as_bytes())
     var r = Reader(buf^)
 
     # Create a scanner from the reader
