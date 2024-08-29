@@ -342,7 +342,6 @@ struct sockaddr_in6:
 
 
 @value
-@register_passable("trivial")
 struct addrinfo:
     """Struct field ordering can vary based on platform.
     For MacOS, I had to swap the order of ai_canonname and ai_addr.
@@ -358,9 +357,28 @@ struct addrinfo:
     var ai_addr: UnsafePointer[sockaddr]
     var ai_next: UnsafePointer[addrinfo]
 
+    fn __init__(
+        inout self,
+        ai_flags: c_int = 0,
+        ai_family: c_int = 0,
+        ai_socktype: c_int = 0,
+        ai_protocol: c_int = 0,
+        ai_addrlen: socklen_t = 0,
+        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
+        ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
+        ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
+    ):
+        self.ai_flags = ai_flags
+        self.ai_family = ai_family
+        self.ai_socktype = ai_socktype
+        self.ai_protocol = ai_protocol
+        self.ai_addrlen = ai_addrlen
+        self.ai_canonname = ai_canonname
+        self.ai_addr = ai_addr
+        self.ai_next = ai_next
+
 
 @value
-@register_passable("trivial")
 struct addrinfo_unix:
     """Struct field ordering can vary based on platform.
     For MacOS, I had to swap the order of ai_canonname and ai_addr.
@@ -375,6 +393,26 @@ struct addrinfo_unix:
     var ai_addr: UnsafePointer[sockaddr]
     var ai_canonname: UnsafePointer[UInt8]
     var ai_next: UnsafePointer[addrinfo]
+
+    fn __init__(
+        inout self,
+        ai_flags: c_int = 0,
+        ai_family: c_int = 0,
+        ai_socktype: c_int = 0,
+        ai_protocol: c_int = 0,
+        ai_addrlen: socklen_t = 0,
+        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
+        ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
+        ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
+    ):
+        self.ai_flags = ai_flags
+        self.ai_family = ai_family
+        self.ai_socktype = ai_socktype
+        self.ai_protocol = ai_protocol
+        self.ai_addrlen = ai_addrlen
+        self.ai_canonname = ai_canonname
+        self.ai_addr = ai_addr
+        self.ai_next = ai_next
 
 
 # --- ( Network Related Syscalls & Structs )------------------------------------

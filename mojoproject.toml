@@ -1,0 +1,14 @@
+[project]
+authors = ["Mikhail Tavarez <miktavarez@gmail.com>"]
+channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
+description = "Add a short description here"
+name = "gojo"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+test = "bash scripts/run_tests.sh"
+prepare-tests = "bash scripts/build.sh tests"
+package = "bash scripts/build.sh package"
+
+[dependencies]
