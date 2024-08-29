@@ -87,7 +87,7 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn __init__(inout self, *, owned buf: List[UInt8, True]):
+    fn __init__(inout self, owned buf: List[UInt8, True]):
         """Creates a new buffer with List buffer provided.
 
         Args:
@@ -96,6 +96,18 @@ struct Buffer(
         self._capacity = buf.capacity
         self._size = buf.size
         self._data = buf.steal_data()
+        self.offset = 0
+        self.last_read = OP_INVALID
+
+    fn __init__(inout self, owned buf: String):
+        """Creates a new buffer with String provided.
+
+        Args:
+            buf: The String to initialize the buffer with.
+        """
+        self._capacity = buf._buffer.capacity
+        self._size = len(buf)
+        self._data = buf._steal_ptr()
         self.offset = 0
         self.last_read = OP_INVALID
 

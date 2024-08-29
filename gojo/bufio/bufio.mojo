@@ -16,8 +16,7 @@ alias ERR_NEGATIVE_WRITE = "bufio: writer returned negative count from write"
 
 
 # buffered input
-# TODO: Uncomment write_to and write_buf once the bug with the trait's Span argument is fixed.
-struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
+struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object.
 
     Examples:
@@ -617,68 +616,66 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner):
         _ = buf.write(frag)
         return str(buf), err
 
-    # fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
-    #     """Writes the internal buffer to the writer. This may make multiple calls to the [Reader.Read] method of the underlying [Reader].
-    #     If the underlying reader supports the [Reader.WriteTo] method,
-    #     this calls the underlying [Reader.WriteTo] without buffering.
-    #     write_to implements io.WriterTo.
+    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+        """Writes the internal buffer to the writer.
+        This may make multiple calls to the `Reader.read` method of the underlying `Reader`.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written.
-    #     """
-    #     self.last_byte = -1
-    #     self.last_rune_size = -1
+        Returns:
+            The number of bytes written.
+        """
+        self.last_byte = -1
+        self.last_rune_size = -1
 
-    #     var bytes_written: Int
-    #     var err: Error
-    #     bytes_written, err = self.write_buf(writer)
-    #     if err:
-    #         return bytes_written, err
+        var bytes_written: Int
+        var err: Error
+        bytes_written, err = self.write_buf(writer)
+        if err:
+            return bytes_written, err
 
-    #     # internal buffer not full, fill before writing to writer
-    #     if (self.write_pos - self.read_pos) < :
-    #         self.fill()
+        # internal buffer not full, fill before writing to writer
+        if (self.write_pos - self.read_pos) < self.buf.capacity:
+            self.fill()
 
-    #     while self.read_pos < self.write_pos:
-    #         # self.read_pos < self.write_pos => buffer is not empty
-    #         var bw: Int
-    #         var err: Error
-    #         bw, err = self.write_buf(writer)
-    #         bytes_written += bw
+        while self.read_pos < self.write_pos:
+            # self.read_pos < self.write_pos => buffer is not empty
+            var bw: Int
+            var err: Error
+            bw, err = self.write_buf(writer)
+            bytes_written += bw
 
-    #         self.fill()  # buffer is empty
+            self.fill()  # buffer is empty
 
-    #     return bytes_written, Error()
+        return bytes_written, Error()
 
-    # fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
-    #     """Writes the [Reader]'s buffer to the writer.
+    fn write_buf[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+        """Writes the `Reader`'s buffer to the `writer`.
 
-    #     Args:
-    #         writer: The writer to write to.
+        Args:
+            writer: The writer to write to.
 
-    #     Returns:
-    #         The number of bytes written.
-    #     """
-    #     # Nothing to write
-    #     if self.read_pos == self.write_pos:
-    #         return Int(0), Error()
+        Returns:
+            The number of bytes written.
+        """
+        # Nothing to write
+        if self.read_pos == self.write_pos:
+            return Int(0), Error()
 
-    #     # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
-    #     var bytes_written: Int
-    #     var err: Error
-    #     var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
-    #     bytes_written, err = writer.write(List[UInt8, True](buf_to_write))
-    #     if err:
-    #         return bytes_written, err
+        # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
+        var bytes_written: Int
+        var err: Error
+        var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
+        bytes_written, err = writer.write(List[UInt8, True](buf_to_write))
+        if err:
+            return bytes_written, err
 
-    #     if bytes_written < 0:
-    #         panic(ERR_NEGATIVE_WRITE)
+        if bytes_written < 0:
+            panic(ERR_NEGATIVE_WRITE)
 
-    #     self.read_pos += bytes_written
-    #     return Int(bytes_written), Error()
+        self.read_pos += bytes_written
+        return Int(bytes_written), Error()
 
 
 # buffered output
@@ -942,6 +939,7 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
                 # Read into remaining unused space in the buffer.
                 var buf = self.buf.unsafe_ptr().offset(self.buf.size)
                 bytes_read, err = reader._read(buf, self.buf.capacity - self.buf.size)
+                self.buf.size += bytes_read
 
                 if bytes_read != 0 or err:
                     break
