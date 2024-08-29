@@ -21,7 +21,7 @@ fn main() raises:
     bytes_sent, err = socket.write(message.as_bytes())
     print("Message sent:", message)
 
-    var bytes = List[UInt8](capacity=16)
+    var bytes = List[UInt8, True](capacity=16)
     var bytes_read: Int
     bytes_read, err = socket.read(bytes)
     if str(err) != str(io.EOF):

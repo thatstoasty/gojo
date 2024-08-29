@@ -43,6 +43,7 @@ from .fd import FileDescriptor, FileDescriptorBase
 from .ip import (
     convert_binary_ip_to_string,
     build_sockaddr_pointer,
+    build_sockaddr_in,
     convert_binary_port_to_int,
     convert_sockaddr_to_host_port,
 )
@@ -178,21 +179,22 @@ struct Socket(FileDescriptorBase):
         The return value is a connection where conn is a new socket object usable to send and receive data on the connection,
         and address is the address bound to the socket on the other end of the connection.
         """
-        var remote_address_ptr = UnsafePointer[sockaddr].alloc(1)
-        var sin_size = socklen_t(sizeof[socklen_t]())
+        var remote_address = sockaddr()
         var new_fd = accept(
             self.fd.fd,
-            remote_address_ptr,
-            UnsafePointer[socklen_t].address_of(sin_size),
+            UnsafePointer.address_of(remote_address),
+            UnsafePointer.address_of(socklen_t(sizeof[socklen_t]())),
         )
         if new_fd == -1:
+            _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("accept").unsafe_ptr())
             raise Error("Failed to accept connection")
 
         var remote: HostPort
         var err: Error
-        remote, err = convert_sockaddr_to_host_port(remote_address_ptr)
+        remote, err = convert_sockaddr_to_host_port(UnsafePointer.address_of(remote_address))
         if err:
             raise err
+        _ = remote_address
 
         return Socket(
             new_fd,
@@ -230,14 +232,14 @@ struct Socket(FileDescriptorBase):
             address: String - The IP address to bind the socket to.
             port: The port number to bind the socket to.
         """
-        var sockaddr_pointer = build_sockaddr_pointer(address, port, self.address_family)
-        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_family)
-        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_port)
-        print(sockaddr_pointer.bitcast[sockaddr_in]()[].sin_addr.s_addr)
-        if bind(self.fd.fd, sockaddr_pointer, sizeof[sockaddr]()) == -1:
+        # var sockaddr_pointer = build_sockaddr_pointer(address, port, self.address_family)
+        var sa_in = build_sockaddr_in(address, port, self.address_family)
+        # var sa_in = build_sockaddr_in(address, port, self.address_family)
+        if bind(self.fd.fd, UnsafePointer.address_of(sa_in), sizeof[sockaddr_in]()) == -1:
             _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("bind").unsafe_ptr())
             _ = shutdown(self.fd.fd, SHUT_RDWR)
             raise Error("Binding socket failed. Wait a few seconds and try again?")
+        _ = sa_in
 
         var local = self.get_sock_name()
         self.local_address = BaseAddr(local.host, local.port)
@@ -252,21 +254,26 @@ struct Socket(FileDescriptorBase):
             raise SocketClosedError
 
         # TODO: Add check to see if the socket is bound and error if not.
-
-        var local_address_ptr = UnsafePointer[sockaddr].alloc(1)
-        var local_address_ptr_size = socklen_t(sizeof[sockaddr]())
+        var sa = sockaddr()
+        # print(sa.sa_family)
         var status = getsockname(
             self.fd.fd,
-            local_address_ptr,
-            UnsafePointer[socklen_t].address_of(local_address_ptr_size),
+            UnsafePointer.address_of(sa),
+            UnsafePointer.address_of(socklen_t(sizeof[sockaddr]())),
         )
         if status == -1:
+            _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("getsockname").unsafe_ptr())
             raise Error("Socket.get_sock_name: Failed to get address of local socket.")
-        var addr_in = local_address_ptr.bitcast[sockaddr_in]().take_pointee()
-
+        # print(sa.sa_family)
+        var addr_in = UnsafePointer.address_of(sa).bitcast[sockaddr_in]()
+        # print(sa.sa_family, addr_in.sin_addr.s_addr, addr_in.sin_port)
+        # var addr_in = local_address_ptr.bitcast[sockaddr_in]().take_pointee()
+        # print(convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16), convert_binary_port_to_int(addr_in.sin_port))
+        # _ = sa
+        _ = addr_in
         return HostPort(
-            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
-            port=convert_binary_port_to_int(addr_in.sin_port),
+            host=convert_binary_ip_to_string(addr_in[].sin_addr.s_addr, AddressFamily.AF_INET, 16),
+            port=convert_binary_port_to_int(addr_in[].sin_port),
         )
 
     fn get_peer_name(self) -> (HostPort, Error):
@@ -340,11 +347,12 @@ struct Socket(FileDescriptorBase):
             address: String - The IP address to connect to.
             port: The port number to connect to.
         """
-        var sockaddr_pointer = build_sockaddr_pointer(address, port, self.address_family)
-
-        if connect(self.fd.fd, sockaddr_pointer, sizeof[sockaddr_in]()) == -1:
+        var sa_in = build_sockaddr_in(address, port, self.address_family)
+        if connect(self.fd.fd, UnsafePointer.address_of(sa_in), sizeof[sockaddr_in]()) == -1:
+            _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("connect").unsafe_ptr())
             self.shutdown()
             return Error("Socket.connect: Failed to connect to the remote socket at: " + address + ":" + str(port))
+        _ = sa_in
 
         var remote: HostPort
         var err: Error
@@ -444,7 +452,7 @@ struct Socket(FileDescriptorBase):
         return bytes, Error()
 
     fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
-        """Receive data from the socket into the buffer dest. Equivalent to recv_into().
+        """Receive data from the socket into the buffer dest.
 
         Args:
             dest: The buffer to read data into.
@@ -456,7 +464,7 @@ struct Socket(FileDescriptorBase):
         return self.fd._read(dest, capacity)
 
     fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
-        """Receive data from the socket into the buffer dest. Equivalent to recv_into().
+        """Receive data from the socket into the buffer dest. Equivalent to `recv_into()`.
 
         Args:
             dest: The buffer to read data into.
@@ -464,16 +472,18 @@ struct Socket(FileDescriptorBase):
         Returns:
             The number of bytes read, and an error if one occurred.
         """
-        if dest.size == dest.capacity:
-            return 0, Error("net.socket.Socket.read: no space left in destination buffer.")
+        return self.fd.read(dest)
+        # if dest.size == dest.capacity:
+        #     return 0, Error("net.socket.Socket.read: no space left in destination buffer.")
 
-        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
-        dest.size += bytes_read
+        # var dest_ptr = dest.unsafe_ptr().offset(dest.size)
+        # var bytes_read: Int
+        # var err: Error
+        # bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
+        # dest.size += bytes_read
 
-        return bytes_read, err
+        # print(bytes_read, str(err))
+        # return bytes_read, err
 
     fn receive_from(inout self, size: Int = io.BUFFER_SIZE) -> (List[UInt8, True], HostPort, Error):
         """Receive data from the socket into the buffer dest.

@@ -289,6 +289,9 @@ struct SocketOptions:
 struct in_addr:
     var s_addr: in_addr_t
 
+    fn __init__(inout self, addr: in_addr_t = 0):
+        self.s_addr = addr
+
 
 @value
 @register_passable("trivial")
@@ -297,17 +300,35 @@ struct in6_addr:
 
 
 @value
+@register_passable("trivial")
 struct sockaddr:
     var sa_family: sa_family_t
-    var sa_data: InlineArray[c_char, 14]
+    var sa_data: StaticTuple[c_char, 14]
+
+    fn __init__(inout self, family: sa_family_t = 0, data: StaticTuple[c_char, 14] = StaticTuple[c_char, 14]()):
+        self.sa_family = family
+        self.sa_data = data
 
 
 @value
+@register_passable("trivial")
 struct sockaddr_in:
     var sin_family: sa_family_t
     var sin_port: in_port_t
     var sin_addr: in_addr
-    var sin_zero: InlineArray[c_char, 8]
+    var sin_zero: StaticTuple[c_char, 8]
+
+    fn __init__(
+        inout self,
+        family: sa_family_t = 0,
+        port: in_port_t = 0,
+        addr: in_addr = in_addr(),
+        zero: StaticTuple[c_char, 8] = StaticTuple[c_char, 8](),
+    ):
+        self.sin_family = family
+        self.sin_port = port
+        self.sin_addr = addr
+        self.sin_zero = zero
 
 
 @value
@@ -337,26 +358,6 @@ struct addrinfo:
     var ai_addr: UnsafePointer[sockaddr]
     var ai_next: UnsafePointer[addrinfo]
 
-    fn __init__(
-        inout self,
-        ai_flags: c_int = 0,
-        ai_family: c_int = 0,
-        ai_socktype: c_int = 0,
-        ai_protocol: c_int = 0,
-        ai_addrlen: socklen_t = 0,
-        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
-        ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
-        ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
-    ):
-        self.ai_flags = ai_flags
-        self.ai_family = ai_family
-        self.ai_socktype = ai_socktype
-        self.ai_protocol = ai_protocol
-        self.ai_addrlen = ai_addrlen
-        self.ai_canonname = ai_canonname
-        self.ai_addr = ai_addr
-        self.ai_next = ai_next
-
 
 @value
 @register_passable("trivial")
@@ -374,26 +375,6 @@ struct addrinfo_unix:
     var ai_addr: UnsafePointer[sockaddr]
     var ai_canonname: UnsafePointer[UInt8]
     var ai_next: UnsafePointer[addrinfo]
-
-    fn __init__(
-        inout self,
-        ai_flags: c_int = 0,
-        ai_family: c_int = 0,
-        ai_socktype: c_int = 0,
-        ai_protocol: c_int = 0,
-        ai_addrlen: socklen_t = 0,
-        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
-        ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
-        ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
-    ):
-        self.ai_flags = ai_flags
-        self.ai_family = ai_family
-        self.ai_socktype = ai_socktype
-        self.ai_protocol = ai_protocol
-        self.ai_addrlen = ai_addrlen
-        self.ai_canonname = ai_canonname
-        self.ai_addr = ai_addr
-        self.ai_next = ai_next
 
 
 # --- ( Network Related Syscalls & Structs )------------------------------------
@@ -675,6 +656,16 @@ fn bind(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen_t)
     )
 
 
+fn bind(socket: c_int, address: UnsafePointer[sockaddr_in], address_len: socklen_t) -> c_int:
+    """Libc POSIX `bind` function
+    Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
+    Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
+    """
+    return external_call["bind", c_int, c_int, UnsafePointer[sockaddr_in], socklen_t](  # FnName, RetType  # Args
+        socket, address, address_len
+    )
+
+
 fn listen(socket: c_int, backlog: c_int) -> c_int:
     """Libc POSIX `listen` function
     Reference: https://man7.org/linux/man-pages/man3/listen.3p.html
@@ -730,6 +721,24 @@ fn connect(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen
         0 on success, -1 on error.
     """
     return external_call["connect", c_int, c_int, UnsafePointer[sockaddr], socklen_t](  # FnName, RetType  # Args
+        socket, address, address_len
+    )
+
+
+fn connect(socket: c_int, address: UnsafePointer[sockaddr_in], address_len: socklen_t) -> c_int:
+    """Libc POSIX `connect` function
+    Reference: https://man7.org/linux/man-pages/man3/connect.3p.html
+    Fn signature: `int connect(int socket, const struct sockaddr *address, socklen_t address_len)`.
+
+    Args:
+        socket: A File Descriptor.
+        address: A pointer to the address to connect to.
+        address_len: The size of the address.
+
+    Returns:
+        0 on success, -1 on error.
+    """
+    return external_call["connect", c_int, c_int, UnsafePointer[sockaddr_in], socklen_t](  # FnName, RetType  # Args
         socket, address, address_len
     )
 

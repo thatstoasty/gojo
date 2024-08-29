@@ -19,7 +19,7 @@ fn main() raises:
         print("Serving", str(connection.remote_address_as_tcp()))
 
         # Read the contents of the message from the client.
-        var bytes = List[UInt8](capacity=4096)
+        var bytes = List[UInt8, True](capacity=4096)
         var bytes_read: Int
         var err: Error
         bytes_read, err = connection.read(bytes)

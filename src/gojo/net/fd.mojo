@@ -6,6 +6,7 @@ from ..syscall import (
     close,
     FileDescriptorBase,
 )
+from sys import external_call
 
 alias O_RDWR = 0o2
 
