@@ -3,7 +3,6 @@ from memory import memcpy
 from bit import count_leading_zeros
 import ..io
 from ..builtins import copy, panic, index_byte
-from .bufio import MAX_CONSECUTIVE_EMPTY_READS
 
 
 alias MAX_INT: Int = 2147483647
