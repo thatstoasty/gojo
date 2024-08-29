@@ -36,7 +36,7 @@ underlying buffer."""
 alias ERR_TOO_LARGE = "buffer.Buffer: too large"
 """ERR_TOO_LARGE is passed to panic if memory cannot be allocated to store data in a buffer."""
 alias ERR_NEGATIVE_READ = "buffer.Buffer: reader returned negative count from read"
-alias ERR_SHORTwrite = "short write"
+alias ERR_SHORT_WRITE = "short write"
 
 
 struct Buffer(
@@ -99,15 +99,16 @@ struct Buffer(
         self.offset = 0
         self.last_read = OP_INVALID
 
-    fn __init__(inout self, owned buf: String):
+    fn __init__(inout self, buf: String):
         """Creates a new buffer with String provided.
 
         Args:
             buf: The String to initialize the buffer with.
         """
-        self._capacity = buf._buffer.capacity
-        self._size = len(buf)
-        self._data = buf._steal_ptr()
+        var bytes = buf.as_bytes()
+        self._capacity = bytes.capacity
+        self._size = bytes.size
+        self._data = bytes.steal_data()
         self.offset = 0
         self.last_read = OP_INVALID
 
@@ -489,7 +490,7 @@ struct Buffer(
 
             # all bytes should have been written, by definition of write method in io.Writer
             if bytes_written != bytes_to_write:
-                return total_bytes_written, Error(ERR_SHORTwrite)
+                return total_bytes_written, Error(ERR_SHORT_WRITE)
 
         # Buffer is now empty; reset.
         self.reset()

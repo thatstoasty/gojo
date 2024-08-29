@@ -47,9 +47,13 @@ build_dependencies() {
 }
 
 if [ "$1" == "package" ]; then
-    mojo package gojo
+    mojo package src/gojo
 elif [ "$1" == "dependencies" ]; then
     echo "No dependencies to build"
+elif [ "$1" == "tests" ]; then
+    mojo package src/gojo
+    cp gojo.mojopkg benchmarks
+    mv gojo.mojopkg test
 else
     echo "Invalid argument. Use 'package' to package the project or 'dependencies' to build only the dependencies."
 fi

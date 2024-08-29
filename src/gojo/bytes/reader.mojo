@@ -54,6 +54,19 @@ struct Reader(
         self.index = 0
         self.prev_rune = -1
 
+    fn __init__(inout self, text: String):
+        """Initializes a new `Reader` with the given String.
+
+        Args:
+            text: The String to initialize the `Reader` with.
+        """
+        var bytes = text.as_bytes()
+        self._capacity = bytes.capacity
+        self._size = bytes.size
+        self._data = bytes.steal_data()
+        self.index = 0
+        self.prev_rune = -1
+
     fn __moveinit__(inout self, owned other: Reader):
         self._capacity = other._capacity
         self._size = other._size

@@ -525,7 +525,7 @@ fn inet_ntoa(addr: in_addr) -> UnsafePointer[UInt8]:
     Fn signature: `char *inet_ntoa(struct in_addr in)`.
 
     Args:
-        in: A pointer to a string containing the address.
+        addr: A pointer to a string containing the address.
 
     Returns:
         The address in network byte order.

@@ -1,9 +1,9 @@
-from tests.wrapper import MojoTest
 from gojo.fmt import sprintf, printf
+import testing
 
 
-fn test_sprintf() raises:
-    var test = MojoTest("Testing sprintf")
+def test_sprintf():
+    # var test = MojoTest("Testing sprintf")
     var s = sprintf(
         "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),
@@ -11,17 +11,17 @@ fn test_sprintf() raises:
         Float64(29.5),
         True,
     )
-    test.assert_equal(
+    testing.assert_equal(
         s,
         "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It is True that I like Mojo!",
     )
 
     s = sprintf("Hello %s", String("world").as_bytes())
-    test.assert_equal(s, "Hello world")
+    testing.assert_equal(s, "Hello world")
 
 
-fn test_printf() raises:
-    var test = MojoTest("Testing printf")
+def test_printf():
+    # var test = MojoTest("Testing printf")
     printf(
         "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),
@@ -29,8 +29,3 @@ fn test_printf() raises:
         Float64(29.5),
         True,
     )
-
-
-fn main() raises:
-    test_sprintf()
-    # test_printf()

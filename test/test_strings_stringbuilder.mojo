@@ -1,9 +1,9 @@
-from tests.wrapper import MojoTest
 from gojo.strings import StringBuilder
+import testing
 
 
-fn test_write_string() raises:
-    var test = MojoTest("Testing strings.StringBuilder.write_string")
+def test_write_string():
+    # var test = MojoTest("Testing strings.StringBuilder.write_string")
 
     # Create a string from the builder by writing strings to it.
     var builder = StringBuilder()
@@ -11,45 +11,45 @@ fn test_write_string() raises:
     for _ in range(3):
         _ = builder.write_string("Lorem ipsum dolor sit amet ")
 
-    test.assert_equal(
+    testing.assert_equal(
         str(builder),
         "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet ",
     )
 
 
-fn test_big_write():
-    var test = MojoTest("Testing strings.StringBuilder.write_string with big Write")
+def test_big_write():
+    # var test = MojoTest("Testing strings.StringBuilder.write_string with big Write")
 
     # Create a string from the builder by writing strings to it.
     var builder = StringBuilder(capacity=1)
 
     _ = builder.write_string("Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet")
 
-    test.assert_equal(
+    testing.assert_equal(
         str(builder),
         "Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet",
     )
 
 
-fn test_write() raises:
-    var test = MojoTest("Testing strings.StringBuilder.write")
+def test_write():
+    # var test = MojoTest("Testing strings.StringBuilder.write")
 
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
     _ = builder.write(String("Hello").as_bytes_slice())
-    test.assert_equal(str(builder), "Hello")
+    testing.assert_equal(str(builder), "Hello")
 
 
-fn test_write_byte() raises:
-    var test = MojoTest("Testing strings.StringBuilder.write_byte")
+def test_write_byte():
+    # var test = MojoTest("Testing strings.StringBuilder.write_byte")
 
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
     _ = builder.write_byte(ord("H"))
-    test.assert_equal(str(builder), "H")
+    testing.assert_equal(str(builder), "H")
 
 
-fn main() raises:
+def main():
     test_write_string()
     test_write()
     test_write_byte()
