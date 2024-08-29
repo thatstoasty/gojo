@@ -783,7 +783,8 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         if err:
             if bytes_written > 0 and bytes_written < self.bytes_written:
                 var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
-                _ = copy(self.buf.unsafe_ptr().offset(self.buf.size), temp.unsafe_ptr(), len(temp))
+                var copied_bytes = copy(self.buf.unsafe_ptr().offset(self.buf.size), temp.unsafe_ptr(), len(temp))
+                self.buf.size += copied_bytes
 
             self.bytes_written -= bytes_written
             self.err = err
