@@ -168,3 +168,6 @@ cython_debug/
 
 # magic environments
 .magic
+
+# Rattler
+output

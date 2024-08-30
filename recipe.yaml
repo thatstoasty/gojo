@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+
+context:
+  version: "13.4.2"
+
+package:
+  name: "gojo"
+  version: 0.1.0
+
+source:
+  - path: ./src
+
+build:
+  script:
+    - mkdir -p ${PREFIX}/lib/mojo
+    - mojo package gojo -o ${PREFIX}/lib/mojo/gojo.mojopkg
+
+tests:
+  - script:
+      # commands to run to test the package. If any of the commands
+      # returns with an error code, the test is considered failed.
+      - mojo package info/recipe/src/gojo -o info/recipe/test/gojo.mojopkg
+      - mojo test info/recipe/test/
+
+    # requirements:
+    #   run:
+    #     - mojo
+
+    files:
+      # Extra files to be copied to the test directory from the "work directory"
+      source:
+        - test/**/*
+
+about:
+  homepage: https://github.com/thatstoasty/gojo
+  license: MIT
+  license_file: LICENSE
+  summary: Experiments in porting over Golang stdlib into Mojo.
+  repository: https://github.com/thatstoasty/gojo
