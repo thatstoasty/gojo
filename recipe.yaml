@@ -5,35 +5,45 @@ context:
 
 package:
   name: "gojo"
-  version: 0.1.0
+  version: 0.1.2
 
 source:
   - path: ./src
+  # - path: ./LICENSE
 
 build:
+  # files:
+  #   - src/gojo/*.mojo
   script:
     - mkdir -p ${PREFIX}/lib/mojo
     - mojo package gojo -o ${PREFIX}/lib/mojo/gojo.mojopkg
 
-tests:
-  - script:
-      # commands to run to test the package. If any of the commands
-      # returns with an error code, the test is considered failed.
-      - mojo package info/recipe/src/gojo -o info/recipe/test/gojo.mojopkg
-      - mojo test info/recipe/test/
+requirements:
+  run:
+    - max >= 24.5.0.dev2024083105
 
-    # requirements:
-    #   run:
-    #     - mojo
+# tests:
+#   - script:
+#       # commands to run to test the package. If any of the commands
+#       # returns with an error code, the test is considered failed.
+#       - mojo test test/
+#       - ls -la info/recipe
+#       - cp ${PREFIX}/lib/mojo/gojo.mojopkg info/recipe/test/gojo.mojopkg
+#       - mojo test info/recipe/test/
 
-    files:
-      # Extra files to be copied to the test directory from the "work directory"
-      source:
-        - test/**/*
+#     # requirements:
+#     #   run:
+#     #     - mojo
+
+#     files:
+#       # Extra files to be copied to the test directory from the "work directory"
+#       source:
+#         - ../src/
+#         - ../test/
 
 about:
   homepage: https://github.com/thatstoasty/gojo
   license: MIT
   license_file: LICENSE
-  summary: Experiments in porting over Golang stdlib into Mojo.
+  summary: Experiments in porting over Golang stdlib into Mojo. https://github.com/thatstoasty/gojo
   repository: https://github.com/thatstoasty/gojo
