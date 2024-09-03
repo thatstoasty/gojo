@@ -110,7 +110,7 @@ struct HostPort(Stringable):
         self.port = port
 
     fn __str__(self) -> String:
-        return join_host_port(self.host, str(self.port))
+        return self.host + ":" + str(self.port)
 
 
 fn join_host_port(host: String, port: String) -> String:

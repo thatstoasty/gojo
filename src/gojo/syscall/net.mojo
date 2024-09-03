@@ -17,7 +17,6 @@ struct FD:
 
 alias SUCCESS = 0
 alias GRND_NONBLOCK: UInt8 = 1
-alias char_pointer = UnsafePointer[UInt8]
 
 
 # --- ( error.h Constants )-----------------------------------------------------
@@ -493,14 +492,7 @@ fn inet_ntop(
     Returns:
         A pointer to the buffer containing the result.
     """
-    return external_call[
-        "inet_ntop",
-        UnsafePointer[UInt8],  # FnName, RetType
-        c_int,
-        UnsafePointer[UInt8],
-        UnsafePointer[UInt8],
-        socklen_t,  # Args
-    ](af, src, dst, size)
+    return external_call["inet_ntop", UnsafePointer[UInt8]](af, src, dst, size)
 
 
 fn inet_pton(af: c_int, src: UnsafePointer[UInt8], dst: UnsafePointer[UInt8]) -> c_int:
@@ -517,10 +509,10 @@ fn inet_pton(af: c_int, src: UnsafePointer[UInt8], dst: UnsafePointer[UInt8]) ->
     """
     return external_call[
         "inet_pton",
-        c_int,  # FnName, RetType
+        c_int,
         c_int,
         UnsafePointer[UInt8],
-        UnsafePointer[UInt8],  # Args
+        UnsafePointer[UInt8],
     ](af, src, dst)
 
 
@@ -565,7 +557,7 @@ fn socket(domain: c_int, type: c_int, protocol: c_int) -> c_int:
     Returns:
         A File Descriptor or -1 in case of failure.
     """
-    return external_call["socket", c_int, c_int, c_int, c_int](domain, type, protocol)  # FnName, RetType  # Args
+    return external_call["socket", c_int, c_int, c_int, c_int](domain, type, protocol)
 
 
 fn setsockopt(
@@ -591,12 +583,12 @@ fn setsockopt(
     """
     return external_call[
         "setsockopt",
-        c_int,  # FnName, RetType
+        c_int,
         c_int,
         c_int,
         c_int,
         UnsafePointer[UInt8],
-        socklen_t,  # Args
+        socklen_t,
     ](socket, level, option_name, option_value, option_len)
 
 
@@ -605,7 +597,7 @@ fn getsockopt(
     level: c_int,
     option_name: c_int,
     option_value: UnsafePointer[UInt8],
-    option_len: UnsafePointer[socklen_t],
+    option_len: Reference[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockopt` function
     Reference: https://man7.org/linux/man-pages/man3/getsockopt.3p.html
@@ -616,26 +608,18 @@ fn getsockopt(
         level: The protocol level.
         option_name: The option to get.
         option_value: A pointer to the value to get.
-        option_len: DTypePointer to the size of the value.
+        option_len: Reference to the size of the value.
 
     Returns:
         0 on success, -1 on error.
     """
-    return external_call[
-        "getsockopt",
-        c_int,  # FnName, RetType
-        c_int,
-        c_int,
-        c_int,
-        UnsafePointer[UInt8],
-        UnsafePointer[socklen_t],  # Args
-    ](socket, level, option_name, option_value, option_len)
+    return external_call["getsockopt", c_int](socket, level, option_name, option_value, option_len)
 
 
 fn getsockname(
     socket: c_int,
-    address: UnsafePointer[sockaddr],
-    address_len: UnsafePointer[socklen_t],
+    address: Reference[sockaddr],
+    address_len: Reference[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockname` function
     Reference: https://man7.org/linux/man-pages/man3/getsockname.3p.html
@@ -643,25 +627,19 @@ fn getsockname(
 
     Args:
         socket: A File Descriptor.
-        address: A pointer to a buffer to store the address of the peer.
-        address_len: A pointer to the size of the buffer.
+        address: A reference to a buffer to store the address of the peer.
+        address_len: A reference to the size of the buffer.
 
     Returns:
         0 on success, -1 on error.
     """
-    return external_call[
-        "getsockname",
-        c_int,  # FnName, RetType
-        c_int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],  # Args
-    ](socket, address, address_len)
+    return external_call["getsockname", c_int](socket, address, address_len)
 
 
 fn getpeername(
     sockfd: c_int,
-    addr: UnsafePointer[sockaddr],
-    address_len: UnsafePointer[socklen_t],
+    addr: Reference[sockaddr],
+    address_len: Reference[socklen_t],
 ) -> c_int:
     """Libc POSIX `getpeername` function
     Reference: https://man7.org/linux/man-pages/man2/getpeername.2.html
@@ -675,33 +653,23 @@ fn getpeername(
     Returns:
         0 on success, -1 on error.
     """
-    return external_call[
-        "getpeername",
-        c_int,  # FnName, RetType
-        c_int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],  # Args
-    ](sockfd, addr, address_len)
+    return external_call["getpeername", c_int](sockfd, addr, address_len)
 
 
-fn bind(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen_t) -> c_int:
+fn bind(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) -> c_int:
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
     """
-    return external_call["bind", c_int, c_int, UnsafePointer[sockaddr], socklen_t](  # FnName, RetType  # Args
-        socket, address, address_len
-    )
+    return external_call["bind", c_int](socket, address, address_len)
 
 
-fn bind(socket: c_int, address: UnsafePointer[sockaddr_in], address_len: socklen_t) -> c_int:
+fn bind(socket: c_int, address: Reference[sockaddr_in], address_len: socklen_t) -> c_int:
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
     """
-    return external_call["bind", c_int, c_int, UnsafePointer[sockaddr_in], socklen_t](  # FnName, RetType  # Args
-        socket, address, address_len
-    )
+    return external_call["bind", c_int](socket, address, address_len)
 
 
 fn listen(socket: c_int, backlog: c_int) -> c_int:
@@ -721,8 +689,8 @@ fn listen(socket: c_int, backlog: c_int) -> c_int:
 
 fn accept(
     socket: c_int,
-    address: UnsafePointer[sockaddr],
-    address_len: UnsafePointer[socklen_t],
+    address: Reference[sockaddr],
+    address_len: Reference[socklen_t],
 ) -> c_int:
     """Libc POSIX `accept` function
     Reference: https://man7.org/linux/man-pages/man3/accept.3p.html
@@ -736,16 +704,10 @@ fn accept(
     Returns:
         A File Descriptor or -1 in case of failure.
     """
-    return external_call[
-        "accept",
-        c_int,  # FnName, RetType
-        c_int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],  # Args
-    ](socket, address, address_len)
+    return external_call["accept", c_int](socket, address, address_len)
 
 
-fn connect(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen_t) -> c_int:
+fn connect(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) -> c_int:
     """Libc POSIX `connect` function
     Reference: https://man7.org/linux/man-pages/man3/connect.3p.html
     Fn signature: `int connect(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -758,12 +720,10 @@ fn connect(socket: c_int, address: UnsafePointer[sockaddr], address_len: socklen
     Returns:
         0 on success, -1 on error.
     """
-    return external_call["connect", c_int, c_int, UnsafePointer[sockaddr], socklen_t](  # FnName, RetType  # Args
-        socket, address, address_len
-    )
+    return external_call["connect", c_int](socket, address, address_len)
 
 
-fn connect(socket: c_int, address: UnsafePointer[sockaddr_in], address_len: socklen_t) -> c_int:
+fn connect(socket: c_int, address: Reference[sockaddr_in], address_len: socklen_t) -> c_int:
     """Libc POSIX `connect` function
     Reference: https://man7.org/linux/man-pages/man3/connect.3p.html
     Fn signature: `int connect(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -776,9 +736,7 @@ fn connect(socket: c_int, address: UnsafePointer[sockaddr_in], address_len: sock
     Returns:
         0 on success, -1 on error.
     """
-    return external_call["connect", c_int, c_int, UnsafePointer[sockaddr_in], socklen_t](  # FnName, RetType  # Args
-        socket, address, address_len
-    )
+    return external_call["connect", c_int](socket, address, address_len)
 
 
 fn recv(
@@ -820,8 +778,8 @@ fn recvfrom(
     buffer: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
-    address: UnsafePointer[sockaddr],
-    address_len: UnsafePointer[socklen_t],
+    address: Reference[sockaddr],
+    address_len: Reference[socklen_t],
 ) -> c_ssize_t:
     """Libc POSIX `recvfrom` function
     Reference: https://man7.org/linux/man-pages/man3/recvfrom.3p.html
@@ -845,16 +803,7 @@ fn recvfrom(
         `MSG_OOB`: Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific.
         `MSG_WAITALL`: On SOCK_STREAM sockets this requests that the function block until the full amount of data can be returned. The function may return the smaller amount of data if the socket is a message-based socket, if a signal is caught, if the connection is terminated, if MSG_PEEK was specified, or if an error is pending for the socket.
     """
-    return external_call[
-        "recvfrom",
-        c_ssize_t,
-        c_int,
-        UnsafePointer[UInt8],
-        c_size_t,
-        c_int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],
-    ](socket, buffer, length, flags, address, address_len)
+    return external_call["recvfrom", c_ssize_t](socket, buffer, length, flags, address, address_len)
 
 
 fn send(
@@ -878,11 +827,11 @@ fn send(
     """
     return external_call[
         "send",
-        c_ssize_t,  # FnName, RetType
+        c_ssize_t,
         c_int,
         UnsafePointer[UInt8],
         c_size_t,
-        c_int,  # Args
+        c_int,
     ](socket, buffer, length, flags)
 
 
@@ -891,7 +840,7 @@ fn sendto(
     message: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
-    dest_addr: UnsafePointer[sockaddr],
+    dest_addr: Reference[sockaddr],
     dest_len: socklen_t,
 ) -> c_ssize_t:
     """Libc POSIX `sendto` function
@@ -916,9 +865,7 @@ fn sendto(
         MSG_OOB: Sends out-of-band data on sockets that support out-of-band data. The significance and semantics of out-of-band data are protocol-specific.
         MSG_NOSIGNAL: Requests not to send the SIGPIPE signal if an attempt to send is made on a stream-oriented socket that is no longer connected. The [EPIPE] error shall still be returned.
     """
-    return external_call[
-        "sendto", c_ssize_t, c_int, UnsafePointer[UInt8], c_size_t, c_int, UnsafePointer[sockaddr], socklen_t
-    ](socket, message, length, flags, dest_addr, dest_len)
+    return external_call["sendto", c_ssize_t](socket, message, length, flags, dest_addr, dest_len)
 
 
 fn shutdown(socket: c_int, how: c_int) -> c_int:
@@ -933,14 +880,14 @@ fn shutdown(socket: c_int, how: c_int) -> c_int:
     Returns:
         0 on success, -1 on error.
     """
-    return external_call["shutdown", c_int, c_int, c_int](socket, how)  # FnName, RetType  # Args
+    return external_call["shutdown", c_int, c_int, c_int](socket, how)
 
 
 fn getaddrinfo(
     nodename: UnsafePointer[UInt8],
     servname: UnsafePointer[UInt8],
-    hints: UnsafePointer[addrinfo],
-    res: UnsafePointer[UnsafePointer[addrinfo]],
+    hints: Reference[addrinfo],
+    res: Reference[UnsafePointer[addrinfo]],
 ) -> c_int:
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html
@@ -948,19 +895,15 @@ fn getaddrinfo(
     """
     return external_call[
         "getaddrinfo",
-        c_int,  # FnName, RetType
-        UnsafePointer[UInt8],
-        UnsafePointer[UInt8],
-        UnsafePointer[addrinfo],  # Args
-        UnsafePointer[UnsafePointer[addrinfo]],  # Args
+        c_int,
     ](nodename, servname, hints, res)
 
 
 fn getaddrinfo_unix(
     nodename: UnsafePointer[UInt8],
     servname: UnsafePointer[UInt8],
-    hints: UnsafePointer[addrinfo_unix],
-    res: UnsafePointer[UnsafePointer[addrinfo_unix]],
+    hints: Reference[addrinfo_unix],
+    res: Reference[UnsafePointer[addrinfo_unix]],
 ) -> c_int:
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html
@@ -968,11 +911,7 @@ fn getaddrinfo_unix(
     """
     return external_call[
         "getaddrinfo",
-        c_int,  # FnName, RetType
-        UnsafePointer[UInt8],
-        UnsafePointer[UInt8],
-        UnsafePointer[addrinfo_unix],  # Args
-        UnsafePointer[UnsafePointer[addrinfo_unix]],  # Args
+        c_int,
     ](nodename, servname, hints, res)
 
 
@@ -987,4 +926,4 @@ fn gai_strerror(ecode: c_int) -> UnsafePointer[UInt8]:
     Returns:
         A pointer to a string describing the error.
     """
-    return external_call["gai_strerror", UnsafePointer[UInt8], c_int](ecode)  # FnName, RetType  # Args
+    return external_call["gai_strerror", UnsafePointer[UInt8], c_int](ecode)
