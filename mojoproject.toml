@@ -7,8 +7,8 @@ platforms = ["osx-arm64"]
 version = "0.1.3"
 
 [tasks]
-test = "bash scripts/run_tests.sh"
-prepare-tests = "bash scripts/build.sh tests"
+tests = "bash scripts/tests.sh"
+benchmarks = "bash scripts/benchmarks.sh"
 package = "bash scripts/build.sh package"
 build = "MODULAR_MOJO_NIGHTLY_IMPORT_PATH=$CONDA_PREFIX/lib/mojo rattler-build build --no-include-recipe"
 

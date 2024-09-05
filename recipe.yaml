@@ -16,11 +16,11 @@ build:
   #   - src/gojo/*.mojo
   script:
     - mkdir -p ${PREFIX}/lib/mojo
-    - mojo package gojo -o ${PREFIX}/lib/mojo/gojo.mojopkg
+    - magic run mojo package gojo -o ${PREFIX}/lib/mojo/gojo.mojopkg
 
 requirements:
   run:
-    - max >= 24.6.0.dev2024090315
+    - max >= 24.6.0.dev2024090405
 
 # tests:
 #   - script:
