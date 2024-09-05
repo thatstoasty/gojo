@@ -7,8 +7,6 @@ import testing
 
 
 def test_read():
-    # var test = MojoTest("Testing bufio.Reader.read")
-
     # Create a reader from a string buffer
     var reader = bufio.Reader(bytes.Buffer("Hello"))
 
@@ -21,16 +19,12 @@ def test_read():
 
 
 def test_read_all():
-    # var test = MojoTest("Testing bufio.Reader with io.read_all")
-
     var reader = bufio.Reader(bytes.Reader("0123456789"))
     var result = io.read_all(reader)
     testing.assert_equal(to_string(result[0]), "0123456789")
 
 
 def test_write_to():
-    # var test = MojoTest("Testing bufio.Reader.write_to")
-
     var reader = bufio.Reader(bytes.Buffer("0123456789"))
 
     # Create a new writer containing the content "Hello World"
@@ -44,8 +38,6 @@ def test_write_to():
 
 
 def test_read_and_unread_byte():
-    # var test = MojoTest("Testing bufio.Reader.read_byte and bufio.Reader.unread_byte")
-
     # Read the first byte from the reader.
     var reader = bufio.Reader(bytes.Buffer("Hello, World!"))
     var result = reader.read_byte()
@@ -58,21 +50,18 @@ def test_read_and_unread_byte():
 
 
 def test_read_slice():
-    # var test = MojoTest("Testing bufio.Reader.read_slice")
     var reader = bufio.Reader(bytes.Buffer("0123456789"))
     var result = reader.read_slice(ord("5"))
     testing.assert_equal(to_string(result[0]), "012345")
 
 
 def test_read_bytes():
-    # var test = MojoTest("Testing bufio.Reader.read_bytes")
     var reader = bufio.Reader(bytes.Buffer("01234\n56789"))
     var result = reader.read_bytes(ord("\n"))
     testing.assert_equal(to_string(result[0]), "01234\n")
 
 
 def test_read_line():
-    # var test = MojoTest("Testing bufio.Reader.read_line")
     var reader = bufio.Reader(bytes.Buffer("01234\n56789"))
     var line: List[UInt8, True]
     var b: Bool
@@ -81,7 +70,6 @@ def test_read_line():
 
 
 def test_peek():
-    # var test = MojoTest("Testing bufio.Reader.peek")
     var reader = bufio.Reader(bytes.Buffer("01234\n56789"))
 
     # Peek doesn't advance the reader, so we should see the same content twice.
@@ -92,7 +80,6 @@ def test_peek():
 
 
 def test_discard():
-    # var test = MojoTest("Testing bufio.Reader.discard")
     var reader = bufio.Reader(bytes.Buffer("0123456789"))
     var result = reader.discard(5)
     testing.assert_equal(result[0], 5)

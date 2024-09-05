@@ -71,9 +71,9 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self.buf)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](self.buf)
+        return Span[UInt8, __lifetime_of(self.buf)](unsafe_ptr=self.buf.unsafe_ptr(), len=len(self.buf))
 
     fn reset(inout self, owned writer: W) -> None:
         """Discards any unflushed buffered data, clears any error, and

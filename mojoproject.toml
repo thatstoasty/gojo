@@ -13,4 +13,4 @@ package = "bash scripts/build.sh package"
 build = "MODULAR_MOJO_NIGHTLY_IMPORT_PATH=$CONDA_PREFIX/lib/mojo rattler-build build --no-include-recipe"
 
 [dependencies]
-max = ">=24.6.0.dev2024090315,<25"
+max = ">=24.6.0.dev2024090405,<25"
