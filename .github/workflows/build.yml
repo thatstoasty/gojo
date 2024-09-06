@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - { target: linux-64, os: ubuntu-latest }
-          - { target: osx-arm64, os: macos-14 }
+          # - { target: osx-arm64, os: macos-14 } # mac runner crashes on mojo test
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
