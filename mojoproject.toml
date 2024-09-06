@@ -3,7 +3,7 @@ authors = ["Mikhail Tavarez <miktavarez@gmail.com>"]
 channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 description = "Experiments in porting over Golang stdlib into Mojo."
 name = "gojo"
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-64"]
 version = "0.1.3.nightly"
 
 [tasks]
