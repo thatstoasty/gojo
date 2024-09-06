@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.4] - 2024-09-10
+
+- Preparation for Mojo 24.5 release.
+
 ## [0.0.2] - 2024-06-19
 
 ### Added
