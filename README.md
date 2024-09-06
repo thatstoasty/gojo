@@ -2,6 +2,12 @@
 
 Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
+## Installation
+
+1. First, you'll need to configure your `mojoproject.toml` file to include my Conda channel. Add `"https://repo.prefix.dev/mojo-community"` to the list of channels.
+2. Next, add `gojo` to your project's dependencies by running `magic add gojo`.
+3. Finally, run `magic install` to install in `gojo`. You should see the `.mojopkg` files in `$CONDA_PREFIX/lib/mojo/`.
+
 ## Projects that use Gojo
 
 ### My projects
