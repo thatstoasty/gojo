@@ -4,18 +4,46 @@ on: ["push"]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    environment: basic
+    name: with ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-14"]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+
+    defaults:
+      run:
+        shell: bash
+
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install magic
         run: |
-          curl https://get.modular.com | MODULAR_AUTH=${{ secrets.MODULAR_AUTH }} sh -
-          modular auth ${{ secrets.MODULAR_AUTH }}
-          modular install mojo
-      - name: Unit Tests
+          curl -ssL https://magic.modular.com | bash
+
+      - name: Run tests
         run: |
-          export MODULAR_HOME="/home/runner/.modular"
-          export PATH="/home/runner/.modular/pkg/packages.modular.com_mojo/bin:$PATH"
-          bash scripts/run_tests.sh
+          magic run tests
+
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     environment: basic
+#     steps:
+#       - name: Check out repository code
+#         uses: actions/checkout@v2
+#       - name: Install dependencies
+#         run: |
+#           curl https://get.modular.com | MODULAR_AUTH=${{ secrets.MODULAR_AUTH }} sh -
+#           modular auth ${{ secrets.MODULAR_AUTH }}
+#           modular install mojo
+#       - name: Unit Tests
+#         run: |
+#           export MODULAR_HOME="/home/runner/.modular"
+#           export PATH="/home/runner/.modular/pkg/packages.modular.com_mojo/bin:$PATH"
+#           bash scripts/run_tests.sh
