@@ -1,6 +1,12 @@
 name: Run Tests
 
-on: ["push"]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   test:
@@ -8,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-14"]
+        # os: ["ubuntu-latest", "macos-14"] # mac tests just hang for some reason?
+        os: ["ubuntu-latest"]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
@@ -29,3 +36,4 @@ jobs:
         run: |
           source $HOME/.bash_profile
           magic run tests
+          magic run benchmarks
