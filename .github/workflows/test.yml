@@ -24,8 +24,8 @@ jobs:
       - name: Install magic
         run: |
           curl -ssL https://magic.modular.com | bash
-          source /home/runner/.bash_profile
 
       - name: Run tests
         run: |
+          source /home/runner/.bash_profile
           magic run tests
