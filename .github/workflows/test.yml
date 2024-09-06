@@ -27,5 +27,5 @@ jobs:
 
       - name: Run tests
         run: |
-          source /home/runner/.bash_profile
+          source $HOME/.bash_profile
           magic run tests
