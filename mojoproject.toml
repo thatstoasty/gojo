@@ -9,7 +9,8 @@ version = "0.1.3.nightly"
 [tasks]
 tests = "bash scripts/tests.sh"
 benchmarks = "bash scripts/benchmarks.sh"
-build = { cmd = "rattler-build build -r src -c https://conda.modular.com/max-nightly -c conda-forge", env = {MODULAR_MOJO_NIGHTLY_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
+build = { cmd = "rattler-build build -r src -c https://conda.modular.com/max-nightly -c conda-forge --skip-existing=all", env = {MODULAR_MOJO_NIGHTLY_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
+publish = { cmd = "bash scripts/publish.sh", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
 
 [dependencies]
 max = ">=24.6.0.dev2024090605,<25"

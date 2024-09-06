@@ -1,11 +1,12 @@
 #!/bin/bash
 
 TEMP_DIR=~/tmp
+PACKAGE_NAME=gojo
 mkdir -p $TEMP_DIR
 
-echo "[INFO] Building gojo package and copying tests."
+echo "[INFO] Building $PACKAGE_NAME package and copying tests."
 cp -R test/ $TEMP_DIR
-magic run mojo package src/gojo -o $TEMP_DIR/gojo.mojopkg
+magic run mojo package src/$PACKAGE_NAME -o $TEMP_DIR/$PACKAGE_NAME.mojopkg
 
 echo "[INFO] Running tests..."
 magic run mojo test $TEMP_DIR
