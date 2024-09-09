@@ -160,7 +160,7 @@ struct Buffer(
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    fn as_string_slice(self) -> StringSlice[__lifetime_of(self)]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """
         Return a StringSlice view of the data owned by the builder.
 
@@ -208,7 +208,7 @@ struct Buffer(
         return self.as_string_slice()
 
     @deprecated("Buffer.render() has been deprecated. Use Buffer.as_string_slice() or call str() instead.")
-    fn render(self) -> StringSlice[__lifetime_of(self)]:
+    fn render(self) -> String:
         """
         Return a StringSlice view of the data owned by the builder.
 

@@ -4,7 +4,7 @@ channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 description = "Experiments in porting over Golang stdlib into Mojo."
 name = "gojo"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.3.nightly"
+version = "0.1.5.nightly"
 
 [tasks]
 tests = "bash scripts/tests.sh"
@@ -13,4 +13,4 @@ build = { cmd = "rattler-build build -r src -c https://conda.modular.com/max-nig
 publish = { cmd = "bash scripts/publish.sh", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
 
 [dependencies]
-max = ">=24.6.0.dev2024090605,<25"
+max = ">=24.6.0.dev2024090917,<25"

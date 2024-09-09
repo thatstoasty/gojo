@@ -52,6 +52,7 @@ def test_read_and_unread_byte():
 def test_read_slice():
     var reader = bufio.Reader(bytes.Buffer("0123456789"))
     var result = reader.read_slice(ord("5"))
+    print(result[0][0])
     testing.assert_equal(to_string(result[0]), "012345")
 
 
@@ -74,8 +75,8 @@ def test_peek():
 
     # Peek doesn't advance the reader, so we should see the same content twice.
     var result = reader.peek(5)
-    var second_result = reader.peek(5)
     testing.assert_equal(to_string(result[0]), "01234")
+    var second_result = reader.peek(5)
     testing.assert_equal(to_string(second_result[0]), "01234")
 
 
@@ -87,3 +88,7 @@ def test_discard():
     # Peek doesn't advance the reader, so we should see the same content twice.
     var second_result = reader.peek(5)
     testing.assert_equal(to_string(second_result[0]), "56789")
+
+
+def main():
+    test_read_slice()

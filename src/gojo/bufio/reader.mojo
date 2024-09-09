@@ -103,7 +103,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](self.buf)
+        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self.buf.unsafe_ptr(), len=self.buf.size)
 
     fn reset(inout self, owned reader: R) -> None:
         """Discards any buffered data, resets all state, and switches
@@ -410,6 +410,34 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         """
         return self.write_pos - self.read_pos
 
+    fn _search_buffer(inout self, delim: UInt8) -> (Span[UInt8, __lifetime_of(self)], Error):
+        var start = 0  # search start index
+        while True:
+            # Search buffer.
+            var i = index_byte(self.as_bytes_slice()[self.read_pos + start : self.write_pos], delim)
+            if i >= 0:
+                i += start
+                line = self.as_bytes_slice()[self.read_pos : self.read_pos + i + 1]
+                self.read_pos += i + 1
+                return line, Error()
+
+            # Pending error?
+            if self.err:
+                line = self.as_bytes_slice()[self.read_pos : self.write_pos]
+                self.read_pos = self.write_pos
+                err = self.read_error()
+                return line, err
+
+            # Buffer full?
+            if self.buffered() >= self.buf.capacity:
+                self.read_pos = self.write_pos
+                line = self.as_bytes_slice()
+                err = Error(ERR_BUFFER_FULL)
+                return line, err
+
+            start = self.write_pos - self.read_pos  # do not rescan area we scanned before
+            self.fill()  # buffer is not full
+
     fn read_slice(inout self, delim: UInt8) -> (Span[UInt8, __lifetime_of(self)], Error):
         """Reads until the first occurrence of `delim` in the input, returning a slice pointing at the bytes in the buffer.
         It includes the first occurrence of the delimiter. The bytes stop being valid at the next read.
@@ -426,42 +454,15 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         Returns:
             A reference to a Span of bytes from the internal buffer.
         """
-        var err = Error()
-        var s = 0  # search start index
-        var line: Span[UInt8, __lifetime_of(self)]
-        while True:
-            # Search buffer.
-            var i = index_byte(self.as_bytes_slice()[self.read_pos + s : self.write_pos], delim)
-            if i >= 0:
-                i += s
-                line = self.as_bytes_slice()[self.read_pos : self.read_pos + i + 1]
-                self.read_pos += i + 1
-                break
-
-            # Pending error?
-            if self.err:
-                line = self.as_bytes_slice()[self.read_pos : self.write_pos]
-                self.read_pos = self.write_pos
-                err = self.read_error()
-                break
-
-            # Buffer full?
-            if self.buffered() >= self.buf.capacity:
-                self.read_pos = self.write_pos
-                line = self.as_bytes_slice()
-                err = Error(ERR_BUFFER_FULL)
-                break
-
-            s = self.write_pos - self.read_pos  # do not rescan area we scanned before
-            self.fill()  # buffer is not full
+        var result = self._search_buffer(delim)
 
         # Handle last byte, if any.
-        var i = len(line) - 1
+        var i = len(result[0]) - 1
         if i >= 0:
-            self.last_byte = int(line[i])
+            self.last_byte = int(result[0][i])
             self.last_rune_size = -1
 
-        return line, err
+        return result[0], result[1]
 
     fn read_line(inout self) -> (List[UInt8, True], Bool):
         """Low-level line-reading primitive. Most callers should use

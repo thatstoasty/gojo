@@ -4,7 +4,6 @@ import testing
 
 
 def test_read():
-    # var test = MojoTest("Testing bytes.Buffer.read")
     var s = "Hello World!"
     var buf = Buffer(s)
     var dest = List[UInt8, True](capacity=16)
@@ -13,14 +12,12 @@ def test_read():
 
 
 def test_read_byte():
-    # var test = MojoTest("Testing bytes.Buffer.read_byte")
     var buf = Buffer("Hello World!")
     var result = buf.read_byte()
     testing.assert_equal(int(result[0]), 72)
 
 
 def test_unread_byte():
-    # var test = MojoTest("Testing bytes.Buffer.unread_byte")
     var buf = Buffer("Hello World!")
     var result = buf.read_byte()
     testing.assert_equal(int(result[0]), 72)
@@ -31,14 +28,12 @@ def test_unread_byte():
 
 
 def test_read_bytes():
-    # var test = MojoTest("Testing bytes.Buffer.read_bytes")
     var buf = Buffer("Hello World!")
     var result = buf.read_bytes(ord("o"))
     testing.assert_equal(to_string(result[0]), "Hello")
 
 
 def test_read_slice():
-    # var test = MojoTest("Testing bytes.Buffer.read_slice")
     var buf = Buffer("Hello World!")
     var result = buf.read_slice(ord("o"))
     var text = List[UInt8, True](result[0])
@@ -47,14 +42,12 @@ def test_read_slice():
 
 
 def test_read_string():
-    # var test = MojoTest("Testing bytes.Buffer.read_string")
     var buf = Buffer("Hello World!")
     var result = buf.read_string(ord("o"))
     testing.assert_equal(result[0], "Hello")
 
 
 def test_next():
-    # var test = MojoTest("Testing bytes.Buffer.next")
     var buf = Buffer("Hello World!")
     var text = List[UInt8, True](buf.next(5))
     text.append(0)
@@ -62,14 +55,12 @@ def test_next():
 
 
 def test_write():
-    # var test = MojoTest("Testing bytes.Buffer.write")
     var buf = Buffer(List[UInt8, True](capacity=16))
     _ = buf.write("Hello World!".as_bytes_slice())
     testing.assert_equal(str(buf), "Hello World!")
 
 
 def test_muliple_writes():
-    # var test = MojoTest("Testing bytes.Buffer.write multiple times")
     var buf = Buffer(List[UInt8, True](capacity=1200))
     var text = "Hello World!".as_bytes_slice()
     for _ in range(100):
@@ -82,21 +73,18 @@ def test_muliple_writes():
 
 
 def test_write_string():
-    # var test = MojoTest("Testing bytes.Buffer.write_string")
     var buf = Buffer(List[UInt8, True](capacity=16))
     _ = buf.write_string("\nGoodbye World!")
     testing.assert_equal(str(buf), String("\nGoodbye World!"))
 
 
 def test_write_byte():
-    # var test = MojoTest("Testing bytes.Buffer.write_byte")
     var buf = Buffer(List[UInt8, True](capacity=16))
     _ = buf.write_byte(0x41)
     testing.assert_equal(str(buf), String("A"))
 
 
 def test_buffer():
-    # var test = MojoTest("Testing bytes.Buffer")
     var b = "Hello World!"
     var buf = Buffer(b)
     testing.assert_equal(str(buf), b)

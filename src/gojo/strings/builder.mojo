@@ -93,7 +93,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
     @deprecated(
         "StringBuilder.render() has been deprecated. Use StringBuilder.as_string_slice() or call str() instead."
     )
-    fn render(ref [_]self) -> StringSlice[__lifetime_of(self)]:
+    fn render(ref [_]self) -> String:
         """Return a StringSlice view of the data owned by the builder.
 
         Returns:
