@@ -8,7 +8,7 @@ from ..builtins import copy, panic, index_byte
 alias MAX_INT: Int = 2147483647
 
 
-struct Scanner[R: io.Reader, split: SplitFunction = scan_lines, capacity: Int = io.BUFFER_SIZE]():
+struct Scanner[R: io.Reader, //, split: SplitFunction = scan_lines]():
     """`Scanner` provides a convenient interface for reading data such as
     a file of newline-delimited lines of text. Successive calls to
     the `Scanner.scan` method will step through the 'tokens' of a file, skipping
@@ -52,43 +52,42 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines, capacity: Int = 
         inout self,
         owned reader: R,
         *,
+        capacity: Int = START_BUF_SIZE,
         max_token_size: Int = MAX_SCAN_TOKEN_SIZE,
-        token: List[UInt8, True] = List[UInt8, True](capacity=capacity),
-        buf: List[UInt8, True] = List[UInt8, True](capacity=capacity),
-        start: Int = 0,
-        end: Int = 0,
-        empties: Int = 0,
-        scan_called: Bool = False,
-        done: Bool = False,
     ):
         """Initializes a new Scanner.
 
         Params:
             R: The type of io.Reader.
             split: The split function to use.
-            capacity: The capacity of the internal buffer.
 
         Args:
             reader: The reader to scan.
+            capacity: The initial capacity of the internal buffer.
             max_token_size: The maximum size of a token.
-            token: The token buffer.
-            buf: The buffer to use for scanning.
-            start: The start index of the buffer.
-            end: The end index of the buffer.
-            empties: The number of empty tokens.
-            scan_called: Whether the scan method has been called.
-            done: Whether scanning is done.
         """
         self.reader = reader^
         self.max_token_size = max_token_size
-        self.token = token
-        self.buf = buf
-        self.start = start
-        self.end = end
-        self.empties = empties
-        self.scan_called = scan_called
-        self.done = done
+        self.token = List[UInt8, True](capacity=capacity)
+        self.buf = List[UInt8, True](capacity=capacity)
+        self.start = 0
+        self.end = 0
+        self.empties = 0
+        self.scan_called = False
+        self.done = False
         self.err = Error()
+
+    fn __moveinit__(inout self, owned other: Self) -> None:
+        self.reader = other.reader^
+        self.max_token_size = other.max_token_size
+        self.token = other.token^
+        self.buf = other.buf^
+        self.start = other.start
+        self.end = other.end
+        self.empties = other.empties
+        self.scan_called = other.scan_called
+        self.done = other.done
+        self.err = other.err^
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
@@ -137,8 +136,8 @@ struct Scanner[R: io.Reader, split: SplitFunction = scan_lines, capacity: Int = 
             # a chance to recover any remaining, possibly empty token.
             if (self.end > self.start) or self.err:
                 var advance: Int
-                var token = List[UInt8, True](capacity=capacity)
-                var err = Error()
+                var token: List[UInt8, True]
+                var err: Error
                 var at_eof = False
                 if self.err:
                     at_eof = True

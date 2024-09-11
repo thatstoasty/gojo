@@ -1,12 +1,12 @@
 from utils import Span
 import ..io
-from ..builtins import copy, panic
+from ..builtins import copy
 from ..builtins.bytes import index_byte
-from ..strings import StringBuilder
+from algorithm.memory import parallel_memcpy
 
 
 # buffered output
-struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
+struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter, io.ReaderFrom):
     """Implements buffering for an `io.Writer` object.
     If an error occurs writing to a `Writer`, no more data will be
     accepted and all subsequent writes, and `Writer.flush`, will return the error.
@@ -37,31 +37,25 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
     """Writer provided by the client."""
     var err: Error
     """Error encountered during writing."""
-    var initial_capacity: Int
-    """Initial internal buffer capacity, used when resetting to it's initial state."""
 
     fn __init__(
         inout self,
         owned writer: W,
         *,
         capacity: Int = io.BUFFER_SIZE,
-        bytes_written: Int = 0,
     ):
         """Initializes a new buffered writer with the provided writer and buffer capacity.
 
         Args:
             writer: The writer to buffer.
             capacity: The initial buffer capacity.
-            bytes_written: The number of bytes written to the buffer.
         """
-        self.initial_capacity = capacity
         self.buf = List[UInt8, True](capacity=capacity)
-        self.bytes_written = bytes_written
+        self.bytes_written = 0
         self.writer = writer^
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.initial_capacity = existing.initial_capacity
         self.buf = existing.buf^
         self.bytes_written = existing.bytes_written
         self.writer = existing.writer^
@@ -110,15 +104,15 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
         if err:
             if bytes_written > 0 and bytes_written < self.bytes_written:
                 var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
-                var copied_bytes = copy(self.buf.unsafe_ptr().offset(self.buf.size), temp.unsafe_ptr(), len(temp))
-                self.buf.size += copied_bytes
+                parallel_memcpy(self.buf.unsafe_ptr(), temp.unsafe_ptr(), len(temp))
+                self.buf.size += len(temp)
 
             self.bytes_written -= bytes_written
             self.err = err
             return err
 
         # Reset the buffer
-        self.buf = List[UInt8, True](capacity=self.initial_capacity)
+        self.buf.resize(0)
         self.bytes_written = 0
         return err
 
@@ -159,9 +153,11 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
 
             # Write whatever we can to fill the internal buffer, then flush it to the underlying writer.
             else:
-                bytes_written = copy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), len(src_copy))
-                self.buf.size += bytes_written
-                self.bytes_written += bytes_written
+                var bytes_to_write = min(len(src_copy), self.buf.capacity - self.buf.size)
+                parallel_memcpy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), bytes_to_write)
+                bytes_written += bytes_to_write
+                self.buf.size += bytes_to_write
+                self.bytes_written += bytes_to_write
                 _ = self.flush()
 
             total_bytes_written += bytes_written
@@ -171,10 +167,10 @@ struct Writer[W: io.Writer](Sized, io.Writer, io.ByteWriter, io.StringWriter, io
             return total_bytes_written, self.err
 
         # Write up to the remaining buffer capacity to the internal buffer, starting from the first available position.
-        var n = copy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), len(src_copy))
-        self.buf.size += n
-        self.bytes_written += n
-        total_bytes_written += n
+        parallel_memcpy(self.buf.unsafe_ptr().offset(self.buf.size), src_copy.unsafe_ptr(), len(src_copy))
+        self.buf.size += len(src_copy)
+        self.bytes_written += len(src_copy)
+        total_bytes_written += len(src_copy)
         return total_bytes_written, err
 
     fn write_byte(inout self, src: UInt8) -> (Int, Error):

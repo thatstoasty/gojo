@@ -6,7 +6,7 @@ from ..strings import StringBuilder
 
 
 # buffered input
-struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
+struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object.
 
     Examples:
@@ -38,40 +38,28 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
     """Size of last rune read for unread_rune; -1 means invalid."""
     var err: Error
     """Error encountered during reading."""
-    var initial_capacity: Int
-    """Initial internal buffer capacity, used when resetting to it's initial state."""
 
     fn __init__(
         inout self,
         owned reader: R,
         *,
         capacity: Int = io.BUFFER_SIZE,
-        read_pos: Int = 0,
-        write_pos: Int = 0,
-        last_byte: Int = -1,
-        last_rune_size: Int = -1,
     ):
         """Initializes a new buffered reader with the provided reader and buffer capacity.
 
         Args:
             reader: The reader to buffer.
             capacity: The initial buffer capacity.
-            read_pos: The buffer read position.
-            write_pos: The buffer write position.
-            last_byte: The last byte read for unread_byte; -1 means invalid.
-            last_rune_size: The size of the last rune read for unread_rune; -1 means invalid.
         """
-        self.initial_capacity = capacity
         self.buf = List[UInt8, True](capacity=capacity)
         self.reader = reader^
-        self.read_pos = read_pos
-        self.write_pos = write_pos
-        self.last_byte = last_byte
-        self.last_rune_size = last_rune_size
+        self.read_pos = 0
+        self.write_pos = 0
+        self.last_byte = -1
+        self.last_rune_size = -1
         self.err = Error()
 
     fn __moveinit__(inout self, owned existing: Self):
-        self.initial_capacity = existing.initial_capacity
         self.buf = existing.buf^
         self.reader = existing.reader^
         self.read_pos = existing.read_pos
@@ -112,11 +100,7 @@ struct Reader[R: io.Reader](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.
         Args:
             reader: The reader to buffer.
         """
-        self = Reader[R](
-            reader=reader^,
-            last_byte=-1,
-            last_rune_size=-1,
-        )
+        self = Reader(reader^)
 
     fn fill(inout self) -> None:
         """Reads a new chunk into the internal buffer from the reader."""

@@ -6,13 +6,11 @@ from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, scan_runes
 
 
 def test_scan_words():
-    # var test = MojoTest("Testing bufio.scan_words")
-
     # Create a reader from a string buffer
     var buf = buffer.Buffer("Testing🔥 this🔥 string🔥!")
 
     # Create a scanner from the reader
-    var scanner = Scanner[split=scan_words](buf^)
+    var scanner = Scanner[scan_words](buf^)
     var expected_results = List[String]("Testing🔥", "this🔥", "string🔥!")
     var i = 0
     while scanner.scan():

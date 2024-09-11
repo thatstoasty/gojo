@@ -1,6 +1,5 @@
 from .reader import Reader
 from .writer import Writer
-from .read_writer import ReadWriter
 from .scan import Scanner, scan_words, scan_bytes, scan_lines, scan_runes
 
 

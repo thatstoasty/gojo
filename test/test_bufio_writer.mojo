@@ -51,8 +51,8 @@ def test_several_writes_small_buffer():
         _ = writer.write_string(src)
     _ = writer.flush()
 
-    testing.assert_equal(len(writer.writer), 1000)
     var text = str(writer.writer)
+    testing.assert_equal(len(text), 1000)
     testing.assert_equal(text[0], "0")
     testing.assert_equal(text[999], "9")
 
