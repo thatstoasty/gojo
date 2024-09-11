@@ -1,8 +1,9 @@
 from utils import StringSlice, Span
-from memory import memcpy
+from os import abort
+from algorithm.memory import parallel_memcpy
 from bit import count_leading_zeros
 import ..io
-from ..builtins import copy, panic, index_byte
+from ..builtins import index_byte
 
 
 alias MAX_INT: Int = 2147483647
@@ -165,7 +166,7 @@ struct Scanner[R: io.Reader, //, split: SplitFunction = scan_lines]():
                         # Returning tokens not advancing input at EOF.
                         self.empties += 1
                         if self.empties > MAX_CONSECUTIVE_EMPTY_READS:
-                            panic("bufio.Scan: too many empty tokens without progressing")
+                            abort("bufio.Scan: too many empty tokens without progressing")
 
                     return True
 
@@ -181,7 +182,7 @@ struct Scanner[R: io.Reader, //, split: SplitFunction = scan_lines]():
             # First, shift data to beginning of buffer if there's lots of empty space
             # or space is needed.
             if self.start > 0 and (self.end == len(self.buf) or self.start > int(len(self.buf) / 2)):
-                memcpy(self.buf.unsafe_ptr(), self.buf.unsafe_ptr().offset(self.start), self.end - self.start)
+                parallel_memcpy(self.buf.unsafe_ptr(), self.buf.unsafe_ptr().offset(self.start), self.end - self.start)
                 self.end -= self.start
                 self.start = 0
                 self.buf.size = self.end
@@ -364,7 +365,7 @@ fn scan_runes(data: Span[UInt8], at_eof: Bool) -> (Int, List[UInt8, True], Error
 
     # Copy N bytes into new pointer and construct List.
     var sp = UnsafePointer[UInt8].alloc(char_length)
-    memcpy(sp, data.unsafe_ptr(), char_length)
+    parallel_memcpy(sp, data.unsafe_ptr(), char_length)
     var result = List[UInt8, True](unsafe_pointer=sp, size=char_length, capacity=char_length)
 
     return char_length, result, Error()

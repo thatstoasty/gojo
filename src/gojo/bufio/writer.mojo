@@ -1,6 +1,5 @@
 from utils import Span
 import ..io
-from ..builtins import copy
 from ..builtins.bytes import index_byte
 from algorithm.memory import parallel_memcpy
 

@@ -1,7 +1,8 @@
 from utils import Span
+from os import abort
+from algorithm.memory import parallel_memcpy
 import ..io
-from ..builtins import copy, panic
-from ..builtins.bytes import index_byte
+from ..builtins import index_byte, copy
 from ..strings import StringBuilder
 
 
@@ -116,7 +117,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
         # Compares to the capacity of the internal buffer.
         # IE. var b = List[UInt8, True](capacity=4096), then trying to write at b[4096] and onwards will fail.
         if self.write_pos >= self.buf.capacity:
-            panic("bufio.Reader: tried to fill full buffer")
+            abort("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
@@ -126,7 +127,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             var err: Error
             bytes_read, err = self.reader._read(dest_ptr, self.buf.capacity - self.buf.size)
             if bytes_read < 0:
-                panic(ERR_NEGATIVE_READ)
+                abort(ERR_NEGATIVE_READ)
 
             self.buf.size += bytes_read
             self.write_pos += bytes_read
@@ -257,7 +258,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
                 bytes_read, self.err = self.reader._read(dest, capacity)
 
                 if bytes_read < 0:
-                    panic(ERR_NEGATIVE_READ)
+                    abort(ERR_NEGATIVE_READ)
 
                 if bytes_read > 0:
                     self.last_byte = int(dest[bytes_read - 1])
@@ -274,7 +275,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             bytes_read, self.err = self.reader._read(buf, self.buf.capacity - self.buf.size)
 
             if bytes_read < 0:
-                panic(ERR_NEGATIVE_READ)
+                abort(ERR_NEGATIVE_READ)
 
             if bytes_read == 0:
                 return 0, self.read_error()
@@ -283,11 +284,12 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
 
         # copy as much as we can
         var source = self.as_bytes_slice()[self.read_pos : self.write_pos]
-        bytes_read = copy(dest, source.unsafe_ptr(), capacity)
-        self.read_pos += bytes_read
+        var bytes_to_write = min(capacity, len(source))
+        parallel_memcpy(dest, source.unsafe_ptr(), bytes_to_write)
+        self.read_pos += bytes_to_write
         self.last_byte = int(self.buf[self.read_pos - 1])
         self.last_rune_size = -1
-        return bytes_read, Error()
+        return bytes_to_write, Error()
 
     fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads data into `dest`.
@@ -471,7 +473,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
                 # Let the next call to read_line check for "\r\n".
                 if self.read_pos == 0:
                     # should be unreachable
-                    panic("bufio: tried to rewind past start of buffer")
+                    abort("bufio: tried to rewind past start of buffer")
 
                 self.read_pos -= 1
                 line = line[: len(line) - 1]
@@ -552,11 +554,9 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
 
         # copy full pieces and fragment in.
         for i in range(len(full)):
-            var buffer = full[i]
-            n += copy(buf, buffer, n)
+            n += copy(buf, full[i], n)
 
         _ = copy(buf, frag, n)
-
         return buf, err
 
     fn read_string(inout self, delim: UInt8) -> (String, Error):
@@ -647,7 +647,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             return bytes_written, err
 
         if bytes_written < 0:
-            panic(ERR_NEGATIVE_WRITE)
+            abort(ERR_NEGATIVE_WRITE)
 
         self.read_pos += bytes_written
         return Int(bytes_written), Error()
