@@ -1,10 +1,9 @@
 from utils import Span
-from ..builtins import copy, panic
+from os import abort
+from algorithm.memory import parallel_memcpy
 import ..io
 
 
-# TODO: Maybe try a non owning reader, but I'm concerned about the lifetime of the buffer.
-# Is making it unsafe a good idea? The source data would need to be ensured to outlive the reader by the user.
 struct Reader(
     Sized,
     io.Reader,
@@ -109,10 +108,12 @@ struct Reader(
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
         var bytes_to_write = self.as_bytes_slice()[self.index : self._size]
-        var bytes_written = copy(dest, bytes_to_write.unsafe_ptr(), len(bytes_to_write))
-        self.index += bytes_written
+        var count = min(len(bytes_to_write), capacity)
+        parallel_memcpy(dest, bytes_to_write.unsafe_ptr(), count)
+        # var bytes_written = copy(dest, bytes_to_write.unsafe_ptr(), len(bytes_to_write))
+        self.index += count
 
-        return bytes_written, Error()
+        return count, Error()
 
     fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads from the internal buffer into the destination buffer.
@@ -150,11 +151,13 @@ struct Reader(
             return 0, io.EOF
 
         var unread_bytes = self.as_bytes_slice()[off : self._size]
-        var bytes_written = copy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), len(unread_bytes))
-        if bytes_written < len(dest):
+        var count = min(len(unread_bytes), capacity)
+        parallel_memcpy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), count)
+        # var bytes_written = copy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), len(unread_bytes))
+        if count < len(dest):
             return 0, io.EOF
 
-        return bytes_written, Error()
+        return count, Error()
 
     fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
         """Reads `len(dest)` bytes into `dest` beginning at byte offset `off`.
@@ -270,7 +273,7 @@ struct Reader(
         var err: Error
         write_count, err = writer.write(bytes)
         if write_count > len(bytes):
-            panic("bytes.Reader.write_to: invalid Write count")
+            abort("bytes.Reader.write_to: invalid Write count")
 
         self.index += write_count
         if write_count != len(bytes):

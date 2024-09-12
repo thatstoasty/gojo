@@ -1,7 +1,8 @@
 from utils import StringSlice, Span
-from memory import memcpy
+from algorithm.memory import parallel_memcpy
+from os import abort
 import ..io
-from ..builtins import copy, panic, index_byte
+from ..builtins import index_byte
 
 
 alias SMALL_BUFFER_SIZE: Int = 64
@@ -153,7 +154,7 @@ struct Buffer(
     fn bytes(self) -> List[UInt8, True]:
         """Returns a list of bytes holding a copy of the unread portion of the buffer."""
         var copy = UnsafePointer[UInt8]().alloc(self._size)
-        memcpy(copy, self._data.offset(self.offset), self._size)
+        parallel_memcpy(copy, self._data.offset(self.offset), self._size)
         return List[UInt8, True](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
 
     fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
@@ -177,7 +178,7 @@ struct Buffer(
           capacity: The new capacity of the string builder buffer.
         """
         var new_data = UnsafePointer[UInt8]().alloc(capacity)
-        memcpy(new_data, self._data, self._size)
+        parallel_memcpy(new_data, self._data, self._size)
         self._data.free()
         self._data = new_data
         self._capacity = capacity
@@ -229,7 +230,7 @@ struct Buffer(
         """
         self._resize_if_needed(len(src))
 
-        memcpy(self._data.offset(self._size), src._data, len(src))
+        parallel_memcpy(self._data.offset(self._size), src._data, len(src))
         self._size += len(src)
 
         return len(src), Error()
@@ -303,13 +304,13 @@ struct Buffer(
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         var bytes_to_read = self.as_bytes_slice()[self.offset :]
         var count = min(capacity, len(bytes_to_read))
-        var bytes_read = copy(dest, bytes_to_read.unsafe_ptr(), count)
-        self.offset += bytes_read
+        parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
+        self.offset += count
 
-        if bytes_read > 0:
+        if count > 0:
             self.last_read = OP_READ
 
-        return bytes_read, Error()
+        return count, Error()
 
     fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads the next len(dest) bytes from the buffer or until the buffer
@@ -481,7 +482,7 @@ struct Buffer(
             var err: Error
             bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
             if bytes_written > bytes_to_write:
-                panic("bytes.Buffer.write_to: invalid write count")
+                abort("bytes.Buffer.write_to: invalid write count")
 
             self.offset += bytes_written
             total_bytes_written = bytes_written
