@@ -12,36 +12,33 @@ alias SPACE = " "
 
 
 fn benchmark_scan_runes[batches: Int]() -> None:
-    var builder = strings.StringBuilder(capacity=batches)
+    var builder = strings.StringBuilder(capacity=batches * 4)
     for _ in range(batches):
         _ = builder.write_string(FIRE)
 
-    var buf = bytes.Buffer(buf=str(builder).as_bytes())
-    var scanner = bufio.Scanner[split = bufio.scan_runes, capacity=batches](buf^)
+    var scanner = bufio.Scanner[bufio.scan_runes](bytes.Buffer(buf=str(builder).as_bytes()), capacity=batches)
     while scanner.scan():
         _ = scanner.current_token()
 
 
 fn benchmark_scan_words[batches: Int]() -> None:
-    var builder = strings.StringBuilder(capacity=batches)
+    var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
         _ = builder.write_string(FIRE)
         _ = builder.write_string(SPACE)
 
-    var buf = bytes.Buffer(str(builder))
-    var scanner = bufio.Scanner[split = bufio.scan_words, capacity=batches](buf^)
+    var scanner = bufio.Scanner[bufio.scan_words](bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
         _ = scanner.current_token()
 
 
 fn benchmark_scan_lines[batches: Int]() -> None:
-    var builder = strings.StringBuilder(capacity=batches)
+    var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
         _ = builder.write_string(FIRE)
         _ = builder.write_string(NEWLINE)
 
-    var buf = bytes.Buffer(str(builder))
-    var scanner = bufio.Scanner[capacity=batches](buf^)
+    var scanner = bufio.Scanner(bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
         _ = scanner.current_token()
 
@@ -51,14 +48,13 @@ fn benchmark_scan_bytes[batches: Int]() -> None:
     for _ in range(batches):
         _ = builder.write_string(SPACE)
 
-    var buf = bytes.Buffer(str(builder))
-    var scanner = bufio.Scanner[split = bufio.scan_bytes, capacity=batches](buf^)
+    var scanner = bufio.Scanner[bufio.scan_bytes](bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
         _ = scanner.current_token()
 
 
 fn benchmark_newline_split[batches: Int]() -> None:
-    var builder = strings.StringBuilder(capacity=batches)
+    var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
         _ = builder.write_string(FIRE)
         _ = builder.write_string(NEWLINE)

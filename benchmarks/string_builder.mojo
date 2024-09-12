@@ -2,19 +2,13 @@ import benchmark
 from gojo.strings import StringBuilder
 from gojo.bytes.buffer import Buffer
 
+alias SAMPLE_TEXT = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."""
 
-fn benchmark_concat[batches: Int = 10000]():
-    var vec = List[String]()
+
+fn benchmark_concat[batches: Int]():
+    var vec = List[String](capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        vec.append(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
-            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
-            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
-            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
-            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
-            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
-            " mollit anim id est laborum."
-        )
+        vec.append(SAMPLE_TEXT)
 
     var concat_output: String = ""
     for i in range(len(vec)):
@@ -22,33 +16,17 @@ fn benchmark_concat[batches: Int = 10000]():
     _ = concat_output
 
 
-fn benchmark_string_builder[batches: Int = 10000]():
-    var new_builder = StringBuilder()
+fn benchmark_string_builder[batches: Int]():
+    var new_builder = StringBuilder(capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        _ = new_builder.write_string(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
-            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
-            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
-            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
-            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
-            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
-            " mollit anim id est laborum."
-        )
+        _ = new_builder.write_string(SAMPLE_TEXT)
     _ = str(new_builder)
 
 
-fn benchmark_bytes_buffer[batches: Int = 10000]():
-    var buffer = Buffer()
+fn benchmark_bytes_buffer[batches: Int]():
+    var buffer = Buffer(capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        _ = buffer.write_string(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod"
-            " tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim"
-            " veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea"
-            " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate"
-            " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
-            " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
-            " mollit anim id est laborum."
-        )
+        _ = buffer.write_string(SAMPLE_TEXT)
     _ = str(buffer)
 
 
