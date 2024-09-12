@@ -1,6 +1,8 @@
 from utils import StringSlice, Span
+from os import abort
+from algorithm.memory import parallel_memcpy
 import ..io
-from ..builtins import copy, panic
+from ..builtins import copy
 
 
 @value
@@ -65,9 +67,10 @@ struct Reader(
         if len(bytes_to_read) > capacity:
             return 0, Error("strings.Reader._read: no space left in destination buffer.")
 
-        var bytes_written = copy(dest, bytes_to_read.unsafe_ptr(), len(bytes_to_read))
-        self.read_pos += bytes_written
-        return bytes_written, Error()
+        var count = min(len(bytes_to_read), capacity)
+        parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
+        self.read_pos += count
+        return count, Error()
 
     fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
         """Reads from the underlying string into the provided `dest` buffer.
@@ -110,12 +113,13 @@ struct Reader(
 
         var error = Error()
         var bytes_to_read = self.string.as_bytes_slice()[off:]
-        var copied_elements_count = copy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), len(bytes_to_read))
-        dest._len += copied_elements_count
-        if copied_elements_count < len(dest):
+        var count = min(len(bytes_to_read), capacity)
+        parallel_memcpy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), count)
+        dest._len += count
+        if count < len(dest):
             error = Error(str(io.EOF))
 
-        return copied_elements_count, error
+        return count, error
 
     fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
         """Reads from the Reader into the `dest` buffer starting at the offset off.
@@ -212,7 +216,7 @@ struct Reader(
         self.read_pos = position
         return position, Error()
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+    fn write_to[W: io.Writer, //](inout self, inout writer: W) -> (Int, Error):
         """Writes the remaining portion of the underlying string to the provided writer.
 
         Args:
@@ -230,7 +234,7 @@ struct Reader(
         var bytes_written: Int
         bytes_written, err = writer.write(chunk_to_write)
         if bytes_written > len(chunk_to_write):
-            panic("strings.Reader.write_to: invalid write_string count")
+            abort("strings.Reader.write_to: invalid write_string count")
 
         self.read_pos += bytes_written
         if bytes_written != len(chunk_to_write) and not err:

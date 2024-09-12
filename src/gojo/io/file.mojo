@@ -1,5 +1,4 @@
 import ..io
-from ..builtins import copy
 
 
 struct FileWrapper(io.ReadWriteCloser, io.ByteReader):

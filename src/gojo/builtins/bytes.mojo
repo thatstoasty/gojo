@@ -3,7 +3,7 @@ from utils import Span
 alias Byte = UInt8
 
 
-fn equals[is_trivial: Bool](left: List[UInt8, is_trivial], right: List[UInt8, is_trivial]) -> Bool:
+fn equals(left: List[UInt8, True], right: List[UInt8, True]) -> Bool:
     """Reports if `left` and `right` are equal.
 
     Args:
@@ -18,7 +18,7 @@ fn equals[is_trivial: Bool](left: List[UInt8, is_trivial], right: List[UInt8, is
     return True
 
 
-fn has_prefix[is_trivial: Bool](bytes: List[Byte, is_trivial], prefix: List[Byte, is_trivial]) -> Bool:
+fn has_prefix(bytes: List[UInt8, True], prefix: List[UInt8, True]) -> Bool:
     """Reports if the list begins with prefix.
 
     Args:
@@ -30,7 +30,7 @@ fn has_prefix[is_trivial: Bool](bytes: List[Byte, is_trivial], prefix: List[Byte
     return len_comparison and prefix_comparison
 
 
-fn has_suffix[is_trivial: Bool](bytes: List[Byte, is_trivial], suffix: List[Byte, is_trivial]) -> Bool:
+fn has_suffix(bytes: List[UInt8, True], suffix: List[UInt8, True]) -> Bool:
     """Reports if the list ends with suffix.
 
     Args:
@@ -42,7 +42,7 @@ fn has_suffix[is_trivial: Bool](bytes: List[Byte, is_trivial], suffix: List[Byte
     return len_comparison and suffix_comparison
 
 
-fn index_byte[is_trivial: Bool](bytes: List[Byte, is_trivial], delim: Byte) -> Int:
+fn index_byte(bytes: List[UInt8, True], delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte `delim`.
 
     Args:
@@ -94,7 +94,7 @@ fn index_byte(bytes: Span[UInt8], delim: Byte) -> Int:
     return -1
 
 
-fn to_string[is_trivial: Bool](bytes: List[Byte, is_trivial]) -> String:
+fn to_string(bytes: List[UInt8, True]) -> String:
     """Makes a deep copy of the list supplied and converts it to a string.
     If it's not null terminated, it will append a null byte.
 

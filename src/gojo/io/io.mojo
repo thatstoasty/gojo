@@ -1,10 +1,8 @@
-from ..builtins import copy, panic
-
 alias BUFFER_SIZE = 4096
 """The default buffer size for reading and writing operations."""
 
 
-fn write_string[W: Writer](inout writer: W, string: String) -> (Int, Error):
+fn write_string[W: Writer, //](inout writer: W, string: String) -> (Int, Error):
     """Writes the contents of the `string` to `writer`, which accepts a Span of bytes.
     If `writer` implements `StringWriter`, `StringWriter.write_string` is invoked directly.
     Otherwise, `Writer.write` is called exactly once.
@@ -19,7 +17,7 @@ fn write_string[W: Writer](inout writer: W, string: String) -> (Int, Error):
     return writer.write(string.as_bytes_slice())
 
 
-fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error):
+fn write_string[W: StringWriter, //](inout writer: W, string: String) -> (Int, Error):
     """Writes the contents of the `string` to `writer`, which accepts a Span of bytes.
     If `writer` implements `StringWriter`, `StringWriter.write_string` is invoked directly.
     Otherwise, `Writer.write` is called exactly once.
@@ -34,7 +32,7 @@ fn write_string[W: StringWriter](inout writer: W, string: String) -> (Int, Error
     return writer.write_string(string)
 
 
-fn read_at_least[R: Reader](inout reader: R, inout dest: List[UInt8, True], min: Int) -> (Int, Error):
+fn read_at_least[R: Reader, //](inout reader: R, inout dest: List[UInt8, True], min: Int) -> (Int, Error):
     """Reads from `reader` into `dest` until it has read at least `min` bytes.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is `EOF` only if no bytes were read.
@@ -71,7 +69,7 @@ fn read_at_least[R: Reader](inout reader: R, inout dest: List[UInt8, True], min:
     return total_bytes_read, error
 
 
-fn read_full[R: Reader](inout reader: R, inout dest: List[UInt8, True]) -> (Int, Error):
+fn read_full[R: Reader, //](inout reader: R, inout dest: List[UInt8, True]) -> (Int, Error):
     """Reads exactly `len(dest)` bytes from `reader` into `dest`.
     It returns the number of bytes copied and an error if fewer bytes were read.
     The error is `EOF` only if no bytes were read.
@@ -84,7 +82,7 @@ fn read_full[R: Reader](inout reader: R, inout dest: List[UInt8, True]) -> (Int,
 
 
 # TODO: read directly into dest
-fn read_all[R: Reader](inout reader: R) -> (List[UInt8, True], Error):
+fn read_all[R: Reader, //](inout reader: R) -> (List[UInt8, True], Error):
     """Reads from `reader` until an error or `EOF` and returns the data it read.
     A successful call returns an empty err, and not err == `EOF`. Because `read_all` is
     defined to read from `src` until `EOF`, it does not treat an `EOF` from `read`

@@ -25,7 +25,6 @@ TODO:
 """
 
 from utils.variant import Variant
-from math import floor
 
 alias Args = Variant[String, Int, Float64, Bool, List[UInt8, True]]
 
