@@ -2,7 +2,7 @@ from utils import StringSlice, Span
 from algorithm.memory import parallel_memcpy
 from os import abort
 import ..io
-from ..builtins import index_byte
+from ..bytes import index_byte
 
 
 alias SMALL_BUFFER_SIZE: Int = 64

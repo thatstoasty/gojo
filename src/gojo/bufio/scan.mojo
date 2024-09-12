@@ -3,7 +3,7 @@ from os import abort
 from algorithm.memory import parallel_memcpy
 from bit import count_leading_zeros
 import ..io
-from ..builtins import index_byte
+from ..bytes import index_byte
 
 
 alias MAX_INT: Int = 2147483647
