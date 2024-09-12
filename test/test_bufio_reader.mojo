@@ -1,7 +1,7 @@
 import gojo.bytes
 import gojo.bufio
 import gojo.io
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 from gojo.strings import StringBuilder
 import testing
 

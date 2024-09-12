@@ -1,5 +1,5 @@
 from gojo.strings import StringBuilder, Reader
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 import gojo.io
 import testing
 

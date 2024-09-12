@@ -1,5 +1,5 @@
 from gojo.io import read_all, FileWrapper
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 import pathlib
 import testing
 

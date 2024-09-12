@@ -1,5 +1,5 @@
 from gojo.bytes.buffer import Buffer
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 import testing
 
 

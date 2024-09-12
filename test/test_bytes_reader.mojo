@@ -1,6 +1,6 @@
 import gojo.bytes
 import gojo.io
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 import testing
 
 
