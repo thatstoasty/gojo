@@ -20,7 +20,7 @@ build:
 
 requirements:
   run:
-    - max >= 24.6.0.dev2024090917
+    - max >= 24.6.0.dev2024091118
 
 tests:
   - script:
