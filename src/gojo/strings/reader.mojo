@@ -2,7 +2,6 @@ from utils import StringSlice, Span
 from os import abort
 from algorithm.memory import parallel_memcpy
 import ..io
-from ..builtins import copy
 
 
 @value

@@ -3,7 +3,6 @@ import testing
 
 
 def test_sprintf():
-    # var test = MojoTest("Testing sprintf")
     var s = sprintf(
         "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),
@@ -21,7 +20,6 @@ def test_sprintf():
 
 
 def test_printf():
-    # var test = MojoTest("Testing printf")
     printf(
         "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),

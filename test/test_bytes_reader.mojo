@@ -5,7 +5,6 @@ import testing
 
 
 def test_read():
-    # var test = MojoTest("Testing bytes.Reader.read")
     var reader = bytes.Reader("0123456789")
     var dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
@@ -27,7 +26,6 @@ def test_read():
 
 
 def test_read_after_big_seek():
-    # var test = MojoTest("Testing bytes.Reader.read after big seek")
     var reader = bytes.Reader("0123456789")
     _ = reader.seek(123456789, io.SEEK_START)
     var dest = List[UInt8, True](capacity=16)
@@ -45,7 +43,6 @@ def test_read_after_big_seek():
 
 
 def test_read_at():
-    # var test = MojoTest("Testing bytes.Reader.read_at")
     var reader = bytes.Reader("0123456789")
 
     var dest = List[UInt8, True](capacity=16)
@@ -58,7 +55,6 @@ def test_read_at():
 
 
 def test_seek():
-    # var test = MojoTest("Testing bytes.Reader.seek")
     var reader = bytes.Reader("0123456789")
     var pos = reader.seek(5, io.SEEK_START)
 
@@ -80,15 +76,12 @@ def test_seek():
 
 
 def test_read_all():
-    # var test = MojoTest("Testing io.read_all with bytes.Reader")
     var reader = bytes.Reader("0123456789")
     var result = io.read_all(reader)
     testing.assert_equal(to_string(result[0]), "0123456789")
 
 
 def test_write_to():
-    # var test = MojoTest("Testing bytes.Reader.write_to")
-
     # Create a new reader containing the content "0123456789"
     var reader = bytes.Reader("0123456789")
 
@@ -103,7 +96,6 @@ def test_write_to():
 
 
 def test_read_and_unread_byte():
-    # var test = MojoTest("Testing bytes.Reader.read_byte and bytes.Reader.unread_byte")
     var reader = bytes.Reader("0123456789")
 
     # Read the first byte from the reader.
@@ -121,7 +113,6 @@ def test_read_and_unread_byte():
 
 
 def test_unread_byte_at_beginning():
-    # var test = MojoTest("Testing bytes.Reader.unread_byte before reading any bytes")
     var reader = bytes.Reader("0123456789")
 
     alias AT_BEGINNING_ERROR = "bytes.Reader.unread_byte: at beginning of buffer."

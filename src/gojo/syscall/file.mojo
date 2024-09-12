@@ -1,10 +1,6 @@
 from sys import external_call
 
 
-trait FileDescriptorBase(io.Reader, io.Writer, io.Closer):
-    ...
-
-
 # --- ( File Related Syscalls & Structs )---------------------------------------
 alias O_NONBLOCK = 16384
 alias O_ACCMODE = 3

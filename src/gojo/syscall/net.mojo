@@ -1,7 +1,6 @@
 from collections import InlineArray
 from utils.static_tuple import StaticTuple
 from sys import external_call
-from . import c_char, c_int, c_ushort, c_uint, c_size_t, c_ssize_t
 from .file import O_CLOEXEC, O_NONBLOCK
 
 alias IPPROTO_IPV6 = 41

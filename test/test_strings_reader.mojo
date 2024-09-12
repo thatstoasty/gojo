@@ -5,7 +5,6 @@ import testing
 
 
 def test_read():
-    # var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = Reader("Hello, World!")
 
@@ -19,7 +18,6 @@ def test_read():
 
 
 def test_read_slice():
-    # var test = MojoTest("Testing strings.Reader.read")
     var example: String = "Hello, World!"
     var reader = Reader("Hello, World!")
 
@@ -33,7 +31,6 @@ def test_read_slice():
 
 
 def test_read_at():
-    # var test = MojoTest("Testing strings.Reader.read_at")
     var example: String = "Hello, World!"
     var reader = Reader("Hello, World!")
 
@@ -47,7 +44,6 @@ def test_read_at():
 
 
 def test_seek():
-    # var test = MojoTest("Testing strings.Reader.seek")
     var reader = Reader("Hello, World!")
 
     # Seek to the middle of the reader.
@@ -56,7 +52,6 @@ def test_seek():
 
 
 def test_read_and_unread_byte():
-    # var test = MojoTest("Testing strings.Reader.read_byte and strings.Reader.unread_byte")
     var example: String = "Hello, World!"
     var reader = Reader("Hello, World!")
 
@@ -70,7 +65,6 @@ def test_read_and_unread_byte():
 
 
 def test_write_to():
-    # var test = MojoTest("Testing strings.Reader.write_to")
     var example: String = "Hello, World!"
     var reader = Reader("Hello, World!")
 
@@ -81,7 +75,6 @@ def test_write_to():
 
 
 def test_read_until_delimiter():
-    # var test = MojoTest("Testing strings.Reader.read")
     var reader = Reader("Hello, World!")
 
     # Test reading from the reader.

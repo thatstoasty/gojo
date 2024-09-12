@@ -21,8 +21,6 @@ def test_scan_words():
 
 
 def test_scan_lines():
-    # var test = MojoTest("Testing bufio.scan_lines")
-
     # Create a reader from a string buffer
     var buf = buffer.Buffer("Testing\nthis\nstring!")
 
@@ -50,7 +48,6 @@ def scan_no_newline_test(test_case: String, result_lines: List[String]):
 
 
 def test_scan_lines_no_newline():
-    # var test = MojoTest("Testing bufio.scan_lines with no final newline")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz"
     var result_lines = List[String]("abcdefghijklmn", "opqrstuvwxyz")
 
@@ -58,7 +55,6 @@ def test_scan_lines_no_newline():
 
 
 def test_scan_lines_cr_no_newline():
-    # var test = MojoTest("Testing bufio.scan_lines with no final newline but carriage return")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\r"
     var result_lines = List[String]("abcdefghijklmn", "opqrstuvwxyz")
 
@@ -66,7 +62,6 @@ def test_scan_lines_cr_no_newline():
 
 
 def test_scan_lines_empty_final_line():
-    # var test = MojoTest("Testing bufio.scan_lines with an empty final line")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\n"
     var result_lines = List[String]("abcdefghijklmn", "opqrstuvwxyz", "")
 
@@ -74,7 +69,6 @@ def test_scan_lines_empty_final_line():
 
 
 def test_scan_lines_cr_empty_final_line():
-    # var test = MojoTest("Testing bufio.scan_lines with an empty final line and carriage return")
     var test_case = "abcdefghijklmn\nopqrstuvwxyz\n\r"
     var result_lines = List[String]("abcdefghijklmn", "opqrstuvwxyz", "")
 
@@ -82,8 +76,6 @@ def test_scan_lines_cr_empty_final_line():
 
 
 def test_scan_bytes():
-    # var test = MojoTest("Testing bufio.scan_bytes")
-
     var test_cases = List[String]("", "a", "abc", "abc def\n\t\tgh    ")
     for test_case in test_cases:
         # Create a reader from a string buffer
@@ -100,7 +92,6 @@ def test_scan_bytes():
 
 
 def test_file_wrapper_scanner():
-    # var test = MojoTest("testing io.FileWrapper and bufio.Scanner")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test_multiple_lines.txt"
     var file = FileWrapper(test_file, "r")
 
@@ -115,8 +106,6 @@ def test_file_wrapper_scanner():
 
 
 def test_scan_runes():
-    # var test = MojoTest("Testing bufio.scan_runes")
-
     # Create a reader from a string buffer
     var buf = buffer.Buffer("🔪🔥🔪🔥")
 

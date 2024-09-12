@@ -7,8 +7,6 @@ import testing
 
 
 def test_write():
-    # var test = MojoTest("Testing bufio.Writer.write and flush")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer())
 
@@ -22,8 +20,6 @@ def test_write():
 
 
 def test_several_writes():
-    # var test = MojoTest("Testing several bufio.Writer.write")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer(capacity=1100))
 
@@ -40,8 +36,6 @@ def test_several_writes():
 
 
 def test_several_writes_small_buffer():
-    # var test = MojoTest("Testing several bufio.Writer.write into small buffer")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer(capacity=1000), capacity=16)
 
@@ -58,8 +52,6 @@ def test_several_writes_small_buffer():
 
 
 def test_big_write():
-    # var test = MojoTest("Testing a big bufio.Writer.write")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer())
 
@@ -77,8 +69,6 @@ def test_big_write():
 
 
 def test_write_byte():
-    # var test = MojoTest("Testing bufio.Writer.write_byte")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer("Hello"))
 
@@ -91,8 +81,6 @@ def test_write_byte():
 
 
 def test_write_string():
-    # var test = MojoTest("Testing bufio.Writer.write_string")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer("Hello"))
 
@@ -105,8 +93,6 @@ def test_write_string():
 
 
 def test_read_from():
-    # var test = MojoTest("Testing bufio.Writer.read_from")
-
     # Create a new Buffer Writer and use it to create the buffered Writer
     var writer = bufio.Writer(bytes.Buffer("Hello"))
 

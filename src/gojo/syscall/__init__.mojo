@@ -9,7 +9,6 @@ from .net import (
     sendto,
     recv,
     recvfrom,
-    open,
     addrinfo,
     addrinfo_unix,
     sockaddr,
@@ -36,7 +35,16 @@ from .net import (
     SHUT_RDWR,
     SOL_SOCKET,
 )
-from .file import close, FileDescriptorBase
+
+from .file import (
+    close,
+    open,
+    read,
+    write,
+    O_NONBLOCK,
+    O_ACCMODE,
+    O_CLOEXEC,
+)
 
 # Adapted from https://github.com/crisadamo/mojo-Libc . Huge thanks to Cristian!
 # C types

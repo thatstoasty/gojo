@@ -1,14 +1,5 @@
 from utils import Span
 from ..syscall import (
-    sockaddr,
-    sockaddr_in,
-    addrinfo,
-    addrinfo_unix,
-    socklen_t,
-    c_void,
-    c_uint,
-    c_char,
-    c_int,
     socket,
     connect,
     recv,
@@ -31,15 +22,23 @@ from ..syscall import (
     getsockopt,
     getsockname,
     getpeername,
+    close,
+    sockaddr,
+    sockaddr_in,
+    addrinfo,
+    addrinfo_unix,
+    socklen_t,
+    c_void,
+    c_uint,
+    c_char,
+    c_int,
     AddressFamily,
     AddressInformation,
     SocketOptions,
     SocketType,
     SHUT_RDWR,
     SOL_SOCKET,
-    close,
 )
-from .fd import FileDescriptor, FileDescriptorBase
 from .ip import (
     convert_binary_ip_to_string,
     build_sockaddr,
@@ -47,13 +46,14 @@ from .ip import (
     convert_binary_port_to_int,
     convert_sockaddr_to_host_port,
 )
+from .fd import FileDescriptor
 from .address import Addr, BaseAddr, HostPort
 from sys import sizeof, external_call
 
 alias SocketClosedError = Error("Socket: Socket is already closed")
 
 
-struct Socket(FileDescriptorBase):
+struct Socket(io.ReadWriteCloser):
     """Represents a network file descriptor. Wraps around a file descriptor and provides network functions.
 
     Args:

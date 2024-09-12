@@ -4,14 +4,13 @@ from ..syscall import (
     recv,
     send,
     close,
-    FileDescriptorBase,
 )
 from sys import external_call
 
 alias O_RDWR = 0o2
 
 
-struct FileDescriptor(FileDescriptorBase):
+struct FileDescriptor(io.ReadWriteCloser):
     var fd: Int
     var is_closed: Bool
 

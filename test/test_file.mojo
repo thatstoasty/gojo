@@ -5,7 +5,6 @@ import testing
 
 
 def test_read():
-    # var test = MojoTest("Testing FileWrapper.read")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test.txt"
     var file = FileWrapper(test_file, "r")
     var dest = List[UInt8, True](capacity=16)
@@ -14,7 +13,6 @@ def test_read():
 
 
 def test_read_all():
-    # var test = MojoTest("Testing FileWrapper.read_all")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test_big_file.txt"
     var file = FileWrapper(test_file, "r")
     var result = file.read_all()
@@ -28,7 +26,6 @@ def test_read_all():
 
 
 def test_io_read_all():
-    # var test = MojoTest("Testing io.read_all with FileWrapper")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test_big_file.txt"
     var file = FileWrapper(test_file, "r")
     var result = read_all(file)
@@ -42,14 +39,12 @@ def test_io_read_all():
 
 
 def test_read_byte():
-    # var test = MojoTest("Testing FileWrapper.read_byte")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test.txt"
     var file = FileWrapper(test_file, "r")
     testing.assert_equal(int(file.read_byte()[0]), 49)
 
 
 def test_write():
-    # var test = MojoTest("Testing FileWrapper.write")
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test_write.txt"
     var file = FileWrapper(test_file, "w")
     var content = "12345"
