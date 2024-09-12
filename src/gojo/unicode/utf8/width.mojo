@@ -1,3 +1,4 @@
+from utils import StringSlice
 from collections import InlineArray
 from .table import Interval, narrow, combining, doublewidth, ambiguous, emoji, nonprint
 
@@ -73,7 +74,21 @@ struct Condition:
         """
         var width = 0
         for r in s:
-            width += self.rune_width(ord(String(r)))
+            width += self.rune_width(ord(r))
+        return width
+
+    fn string_width(self, s: StringSlice) -> Int:
+        """Return width as you can see.
+
+        Args:
+            s: The string to calculate the width of.
+
+        Returns:
+            The printable width of the string.
+        """
+        var width = 0
+        for r in s:
+            width += self.rune_width(ord(r))
         return width
 
 
@@ -108,6 +123,18 @@ alias DEFAULT_CONDITION = Condition(east_asian_width=False, strict_emoji_neutral
 
 
 fn string_width(s: String) -> Int:
+    """Return width as you can see.
+
+    Args:
+        s: The string to calculate the width of.
+
+    Returns:
+        The printable width of the string.
+    """
+    return DEFAULT_CONDITION.string_width(s)
+
+
+fn string_width(s: StringSlice) -> Int:
     """Return width as you can see.
 
     Args:

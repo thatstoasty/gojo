@@ -5,9 +5,10 @@ import testing
 def test_string_width_east_asian():
     var s: String = "𡨸漢𡨸漢"
 
-    testing.assert_equal(string_width(s), 8)
+    testing.assert_equal(string_width(s), 8, msg="The length of 𡨸漢𡨸漢 should be 8.")
     for r in s:
-        testing.assert_equal(rune_width(ord(String(r))), 2)
+        testing.assert_equal(rune_width(ord(r)), 2, msg="The width of each character should be 2.")
+        testing.assert_equal(string_width(r), 2, msg="The width of each character should be 2.")
 
 
 def test_string_width_ascii():
@@ -15,7 +16,8 @@ def test_string_width_ascii():
 
     testing.assert_equal(string_width(ascii), 13)
     for r in ascii:
-        testing.assert_equal(rune_width(ord(String(r))), 1)
+        testing.assert_equal(rune_width(ord(r)), 1, msg="The width of each character should be 1.")
+        testing.assert_equal(string_width(r), 1, msg="The width of each character should be 1.")
 
 
 def test_string_width_emoji():
@@ -23,4 +25,5 @@ def test_string_width_emoji():
 
     testing.assert_equal(string_width(s), 8)
     for r in s:
-        testing.assert_equal(rune_width(ord(String(r))), 2)
+        testing.assert_equal(rune_width(ord(r)), 2, msg="The width of each character should be 2.")
+        testing.assert_equal(string_width(r), 2, msg="The width of each character should be 2.")
