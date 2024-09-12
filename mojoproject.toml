@@ -4,7 +4,7 @@ channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 description = "Experiments in porting over Golang stdlib into Mojo."
 name = "gojo"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.5.nightly"
+version = "0.1.6.nightly"
 
 [tasks]
 tests = "bash scripts/tests.sh"
