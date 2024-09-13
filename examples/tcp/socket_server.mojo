@@ -12,18 +12,18 @@ fn main() raises:
     # Bind server to port 8081
     socket.bind(host, port)
     socket.listen()
-    print("Listening on", socket.local_address_as_tcp())
+    print("Listening on", str(socket.local_address_as_tcp()))
     while True:
         # Accept connections from clients and serve them.
         var connection = socket.accept()
-        print("Serving", connection.remote_address_as_tcp())
+        print("Serving", str(connection.remote_address_as_tcp()))
 
         # Read the contents of the message from the client.
-        var bytes = List[UInt8](capacity=4096)
+        var bytes = List[UInt8, True](capacity=4096)
         var bytes_read: Int
         var err: Error
         bytes_read, err = connection.read(bytes)
-        if str(err) != io.EOF:
+        if str(err) != str(io.EOF):
             raise err
 
         bytes.append(0)

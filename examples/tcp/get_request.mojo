@@ -18,7 +18,7 @@ fn main() raises:
         return
 
     # Read the response from the connection
-    var response = List[UInt8](capacity=4096)
+    var response = List[UInt8, True](capacity=4096)
     var bytes_read: Int = 0
     bytes_read, err = connection.read(response)
     if err:
