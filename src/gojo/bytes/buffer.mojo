@@ -482,7 +482,7 @@ struct Buffer(
             var err: Error
             bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
             if bytes_written > bytes_to_write:
-                abort("bytes.Buffer.write_to: invalid write count")
+                panic("bytes.Buffer.write_to: invalid write count")
 
             self.offset += bytes_written
             total_bytes_written = bytes_written

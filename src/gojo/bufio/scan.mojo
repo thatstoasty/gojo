@@ -166,7 +166,7 @@ struct Scanner[R: io.Reader, //, split: SplitFunction = scan_lines]():
                         # Returning tokens not advancing input at EOF.
                         self.empties += 1
                         if self.empties > MAX_CONSECUTIVE_EMPTY_READS:
-                            abort("bufio.Scan: too many empty tokens without progressing")
+                            panic("bufio.Scan: too many empty tokens without progressing")
 
                     return True
 

@@ -233,7 +233,7 @@ struct Reader(
         var bytes_written: Int
         bytes_written, err = writer.write(chunk_to_write)
         if bytes_written > len(chunk_to_write):
-            abort("strings.Reader.write_to: invalid write_string count")
+            panic("strings.Reader.write_to: invalid write_string count")
 
         self.read_pos += bytes_written
         if bytes_written != len(chunk_to_write) and not err:

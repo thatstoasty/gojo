@@ -142,7 +142,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
         # Compares to the capacity of the internal buffer.
         # IE. var b = List[UInt8, True](capacity=4096), then trying to write at b[4096] and onwards will fail.
         if self.write_pos >= self.buf.capacity:
-            abort("bufio.Reader: tried to fill full buffer")
+            panic("bufio.Reader: tried to fill full buffer")
 
         # Read new data: try a limited number of times.
         var i: Int = MAX_CONSECUTIVE_EMPTY_READS
@@ -152,7 +152,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             var err: Error
             bytes_read, err = self.reader._read(dest_ptr, self.buf.capacity - self.buf.size)
             if bytes_read < 0:
-                abort(ERR_NEGATIVE_READ)
+                panic(ERR_NEGATIVE_READ)
 
             self.buf.size += bytes_read
             self.write_pos += bytes_read
@@ -283,7 +283,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
                 bytes_read, self.err = self.reader._read(dest, capacity)
 
                 if bytes_read < 0:
-                    abort(ERR_NEGATIVE_READ)
+                    panic(ERR_NEGATIVE_READ)
 
                 if bytes_read > 0:
                     self.last_byte = int(dest[bytes_read - 1])
@@ -300,7 +300,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             bytes_read, self.err = self.reader._read(buf, self.buf.capacity - self.buf.size)
 
             if bytes_read < 0:
-                abort(ERR_NEGATIVE_READ)
+                panic(ERR_NEGATIVE_READ)
 
             if bytes_read == 0:
                 return 0, self.read_error()
@@ -498,7 +498,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
                 # Let the next call to read_line check for "\r\n".
                 if self.read_pos == 0:
                     # should be unreachable
-                    abort("bufio: tried to rewind past start of buffer")
+                    panic("bufio: tried to rewind past start of buffer")
 
                 self.read_pos -= 1
                 line = line[: len(line) - 1]
@@ -672,7 +672,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             return bytes_written, err
 
         if bytes_written < 0:
-            abort(ERR_NEGATIVE_WRITE)
+            panic(ERR_NEGATIVE_WRITE)
 
         self.read_pos += bytes_written
         return Int(bytes_written), Error()

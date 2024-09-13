@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.9] - 2024-09-13
+
+- Fix usage of abort instead of panic.
+
 ## [0.1.8] - 2024-09-13
 
 - Lot's of changes since Mojo 24.5. Sorry, I don't have a more granualar changelog!

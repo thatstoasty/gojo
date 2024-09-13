@@ -273,7 +273,7 @@ struct Reader(
         var err: Error
         write_count, err = writer.write(bytes)
         if write_count > len(bytes):
-            abort("bytes.Reader.write_to: invalid Write count")
+            panic("bytes.Reader.write_to: invalid Write count")
 
         self.index += write_count
         if write_count != len(bytes):
