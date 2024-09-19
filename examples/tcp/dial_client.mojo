@@ -14,7 +14,7 @@ fn main() raises:
         var bytes_written: Int
         var err: Error
         bytes_written, err = connection.write(
-            String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
+            String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes_slice()
         )
         if err:
             raise err
@@ -27,7 +27,7 @@ fn main() raises:
         var response = List[UInt8, True](capacity=4096)
         var bytes_read: Int = 0
         bytes_read, err = connection.read(response)
-        if err and str(err) != io.EOF:
+        if err and str(err) != str(io.EOF):
             raise err
 
         if bytes_read == 0:

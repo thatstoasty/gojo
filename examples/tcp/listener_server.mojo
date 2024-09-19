@@ -23,5 +23,5 @@ fn main() raises:
 
         # Send a response back to the client.
         var bytes_sent: Int
-        bytes_sent, err = connection.write(message.as_bytes())
+        bytes_sent, err = connection.write(message.as_bytes_slice())
         print("Message sent:", message, bytes_sent)

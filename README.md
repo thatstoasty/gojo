@@ -1,6 +1,13 @@
 # gojo
 
-Experiments in porting over Golang stdlib into Mojo and extra goodies that make use of it. It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
+Experiments in porting over Golang stdlib into Mojo.
+
+It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
+
+![Mojo Version](https://img.shields.io/badge/Mojo%F0%9F%94%A5-24.5-orange)
+![Build Status](https://github.com/thatstoasty/mist/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/thatstoasty/mist/actions/workflows/test.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
@@ -8,24 +15,9 @@ Experiments in porting over Golang stdlib into Mojo and extra goodies that make 
 2. Next, add `gojo` to your project's dependencies by running `magic add gojo`.
 3. Finally, run `magic install` to install in `gojo`. You should see the `.mojopkg` files in `$CONDA_PREFIX/lib/mojo/`.
 
-## Projects that use Gojo
-
-### My projects
-
-- `weave`: A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. [Link to the project.](https://github.com/thatstoasty/weave)
-- `mog`: Terminal text styling library. [Link to the project.](https://github.com/thatstoasty/mog)
-- `stump`: Bound Logger library. [Link to the project.](https://github.com/thatstoasty/stump)
-- `prism`: CLI Library. [Link to the project.](https://github.com/thatstoasty/prism)
-
-### Community projects
-
-- `lightbug_http`: Simple and fast HTTP framework for Mojo! 🔥 [Link to the project.](https://github.com/saviorand/lightbug_http/tree/main)
-
 ## What this includes
 
 All of these packages are partially implemented and do not support unicode characters until Mojo supports them.
-
-### Gojo
 
 - `bufio`
   - `Reader`: Buffered `io.Reader`
@@ -54,6 +46,15 @@ All of these packages are partially implemented and do not support unicode chara
 
 Please check out the `test`, `examples`, and `benchmarks` directories for usage of the various packages!
 
-## Sharp Edges & Bugs
+## Projects that use Gojo
 
-- Unicode characters are not supported until Mojo supports them. Sometimes it happens to work, but it's not guaranteed due to length discrepanices with ASCII and Unicode characters. If the character has a length of 2 or more, it probably will not work.
+### My projects
+
+- `weave`: A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. [Link to the project.](https://github.com/thatstoasty/weave)
+- `mog`: Terminal text styling library. [Link to the project.](https://github.com/thatstoasty/mog)
+- `stump`: Bound Logger library. [Link to the project.](https://github.com/thatstoasty/stump)
+- `prism`: CLI Library. [Link to the project.](https://github.com/thatstoasty/prism)
+
+### Community projects
+
+- `lightbug_http`: Simple and fast HTTP framework for Mojo! 🔥 [Link to the project.](https://github.com/saviorand/lightbug_http/tree/main)

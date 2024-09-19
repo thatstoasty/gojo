@@ -80,7 +80,7 @@
 #     # socket.close()
 
 
-# # def main():
-# #     # test_dial()
-# #     # test_listener()
-# #     test_stuff()
+# def main():
+#     test_dial()
+#     # test_listener()
+#     # test_stuff()
