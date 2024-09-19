@@ -5,8 +5,8 @@ Experiments in porting over Golang stdlib into Mojo.
 It will not always be a 1:1 port, it's more so code inspired by the Golang stdlib and the Mojo community's code. This is not intended to be a full port, but rather a learning exercise and a way to experiment with Mojo's capabilities. Please feel free to contribute or use this as a starting point for your own projects! The codebase will remain in flux and will evolve with Mojo as future releases are created.
 
 ![Mojo Version](https://img.shields.io/badge/Mojo%F0%9F%94%A5-24.5-orange)
-![Build Status](https://github.com/thatstoasty/mist/actions/workflows/build.yml/badge.svg)
-![Test Status](https://github.com/thatstoasty/mist/actions/workflows/test.yml/badge.svg)
+![Build Status](https://github.com/thatstoasty/gojo/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/thatstoasty/gojo/actions/workflows/test.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
