@@ -208,15 +208,17 @@ struct Buffer(
         """
         return self.as_string_slice()
 
-    @deprecated("Buffer.render() has been deprecated. Use Buffer.as_string_slice() or call str() instead.")
-    fn render(self) -> String:
+    fn consume(inout self) -> String:
         """
-        Return a StringSlice view of the data owned by the builder.
+        Transfers the buffer's data to a string and resets the buffer. Effectively consuming the Buffer.
 
         Returns:
-          The string representation of the string builder. Returns an empty string if the string builder is empty.
+          The string representation of the buffer. Returns an empty string if the buffer is empty.
         """
-        return self.as_string_slice()
+        var result = String(self._data, self._size)
+        self._data = UnsafePointer[UInt8]()
+        self._size = 0
+        return result
 
     fn write(inout self, src: Span[UInt8]) -> (Int, Error):
         """
@@ -280,7 +282,7 @@ struct Buffer(
         self.last_read = OP_INVALID
 
     fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
-        """Reads the next len(dest) bytes from the buffer or until the buffer
+        """Reads the next `len(dest)` bytes from the buffer or until the buffer
         is drained. The return value `bytes_read` is the number of bytes read.
 
         If the buffer has no data to return, err is `io.EOF` (unless `len(dest)` is zero);

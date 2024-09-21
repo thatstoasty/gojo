@@ -90,16 +90,17 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """
         return self.as_string_slice()
 
-    @deprecated(
-        "StringBuilder.render() has been deprecated. Use StringBuilder.as_string_slice() or call str() instead."
-    )
-    fn render(ref [_]self) -> String:
-        """Return a StringSlice view of the data owned by the builder.
+    fn consume(inout self) -> String:
+        """
+        Transfers the string builder's data to a string and resets the string builder. Effectively consuming the string builder.
 
         Returns:
-            The string representation of the string builder. Returns an empty string if the string builder is empty.
+          The string representation of the string builder. Returns an empty string if the buffer is empty.
         """
-        return self.as_string_slice()
+        var result = String(self._data, self._size)
+        self._data = UnsafePointer[UInt8]()
+        self._size = 0
+        return result
 
     fn _resize(inout self, capacity: Int) -> None:
         """Resizes the string builder buffer.
