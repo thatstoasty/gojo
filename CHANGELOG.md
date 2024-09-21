@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.10] - 2024-09-21
+
+- Add `consume()` to `StringBuilder` and `Buffer` to take ownership of the internal buffer instead of copying it.
+
 ## [0.1.9] - 2024-09-13
 
 - Fix usage of abort instead of panic.

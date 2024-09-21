@@ -5,7 +5,7 @@ context:
 
 package:
   name: "gojo"
-  version: 0.1.9
+  version: 0.1.10
 
 source:
   - path: .
