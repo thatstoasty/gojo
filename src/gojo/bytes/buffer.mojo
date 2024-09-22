@@ -215,7 +215,9 @@ struct Buffer(
         Returns:
           The string representation of the buffer. Returns an empty string if the buffer is empty.
         """
-        var result = String(self._data, self._size)
+        var bytes = List[UInt8, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
+        bytes.append(0)
+        var result = String(bytes^)
         self._data = UnsafePointer[UInt8]()
         self._size = 0
         return result

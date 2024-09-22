@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.11] - 2024-09-22
+
+- Fix `consume()` missing null terminator.
+
 ## [0.1.10] - 2024-09-21
 
 - Add `consume()` to `StringBuilder` and `Buffer` to take ownership of the internal buffer instead of copying it.
