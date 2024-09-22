@@ -270,6 +270,42 @@ struct Buffer(
 
         return 1, Error()
 
+    fn write_rune(inout self, rune: UInt32) -> (Int, Error):
+        """Appends the UTF-8 encoding of Unicode code point `rune` to the
+        buffer, returning its length and an error. The buffer is grown as needed;
+        if it becomes too large, it will panic with `ErrTooLarge`.
+
+        Args:
+            rune: The Unicode code point to write to the buffer.
+
+        Returns:
+            The number of bytes written to the buffer.
+        """
+        self.last_read = OP_INVALID
+        if rune <= rune1_max:
+            return self.write_byte(rune.cast[DType.uint8]())
+
+        self._resize_if_needed(4)
+        self._data = byte
+        self._size += 1
+
+        return 1, Error()
+
+    # func (b *Buffer) WriteRune(r rune) (n int, err error) {
+    # 	Compare as uint32 to correctly handle negative runes.
+    # 	if uint32(r) < utf8.RuneSelf {
+    # 		b.WriteByte(byte(r))
+    # 		return 1, nil
+    # 	}
+    # 	b.lastRead = opInvalid
+    # 	m, ok := b.tryGrowByReslice(utf8.UTFMax)
+    # 	if !ok {
+    # 		m = b.grow(utf8.UTFMax)
+    # 	}
+    # 	b.buf = utf8.AppendRune(b.buf[:m], r)
+    # 	return len(b.buf) - m, nil
+    # }
+
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty."""
         return self._size <= self.offset
