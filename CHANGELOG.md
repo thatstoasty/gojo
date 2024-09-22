@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.12] - 2024-09-22
+
+- Fix `consume()` missing null terminator in `StringBuilder`.
+
 ## [0.1.11] - 2024-09-22
 
 - Fix `consume()` missing null terminator.
