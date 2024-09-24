@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 TEMP_DIR=~/tmp
 PACKAGE_NAME=gojo
 mkdir -p $TEMP_DIR
