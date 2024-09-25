@@ -53,17 +53,17 @@ fn main() raises:
     report = benchmark.run[benchmark_string_builder[100]](max_iters=20)
     report.print(benchmark.Unit.ms)
 
-    print("Running benchmark_concat - 1000 batches")
-    report = benchmark.run[benchmark_concat[1000]](max_iters=20)
-    report.print(benchmark.Unit.ms)
+    # print("Running benchmark_concat - 1000 batches")
+    # report = benchmark.run[benchmark_concat[1000]](max_iters=20)
+    # report.print(benchmark.Unit.ms)
 
     print("Running benchmark_string_builder - 1000 batches")
     report = benchmark.run[benchmark_string_builder[1000]](max_iters=20)
     report.print(benchmark.Unit.ms)
 
-    print("Running benchmark_concat - 10000 batches")
-    report = benchmark.run[benchmark_concat[10000]](max_iters=2)
-    report.print(benchmark.Unit.ms)
+    # print("Running benchmark_concat - 10000 batches")
+    # report = benchmark.run[benchmark_concat[10000]](max_iters=2)
+    # report.print(benchmark.Unit.ms)
 
     print("Running benchmark_string_builder - 10000 batches")
     report = benchmark.run[benchmark_string_builder[10000]](max_iters=20)
