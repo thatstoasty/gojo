@@ -1,11 +1,12 @@
 from utils import Span
+from memory import UnsafePointer
+from sys import external_call
 import ..io
 from ..syscall import (
     recv,
     send,
     close,
 )
-from sys import external_call
 
 alias O_RDWR = 0o2
 

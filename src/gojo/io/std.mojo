@@ -39,7 +39,7 @@ struct STDWriter[file_descriptor: Int](Copyable, io.Writer, io.StringWriter):
         Returns:
             The number of bytes written to the file descriptor.
         """
-        return self.write(src.as_bytes_slice())
+        return self.write(src.as_bytes_span())
 
     fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int, Error):
         """Reads from the given reader to a temporary buffer and writes to the file descriptor.

@@ -3,6 +3,7 @@ from algorithm.memory import parallel_memcpy
 from os import abort
 import ..io
 from ..bytes import index_byte
+from memory import UnsafePointer
 
 
 alias SMALL_BUFFER_SIZE: Int = 64
@@ -157,7 +158,7 @@ struct Buffer(
         parallel_memcpy(copy, self._data.offset(self.offset), self._size)
         return List[UInt8, True](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes_span(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
@@ -249,7 +250,7 @@ struct Buffer(
         Returns:
             The number of bytes written to the buffer.
         """
-        return self.write(src.as_bytes_slice())
+        return self.write(src.as_bytes_span())
 
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         """Appends a byte to the buffer, growing the buffer as needed.
@@ -306,7 +307,7 @@ struct Buffer(
             return 0, io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
-        var bytes_to_read = self.as_bytes_slice()[self.offset :]
+        var bytes_to_read = self.as_bytes_span()[self.offset :]
         var count = min(capacity, len(bytes_to_read))
         parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
         self.offset += count
@@ -404,7 +405,7 @@ struct Buffer(
         Returns:
             A span containing the data up to and including the delimiter.
         """
-        var i = index_byte(bytes=self.as_bytes_slice(), delim=delim)
+        var i = index_byte(bytes=self.as_bytes_span(), delim=delim)
         var end = self.offset + i + 1
 
         var err = Error()
@@ -412,7 +413,7 @@ struct Buffer(
             end = self._size
             err = Error(str(io.EOF))
 
-        var line = self.as_bytes_slice()[self.offset : end]
+        var line = self.as_bytes_span()[self.offset : end]
         self.offset = end
         self.last_read = OP_READ
 
@@ -458,7 +459,7 @@ struct Buffer(
         if bytes_to_read > bytes_remaining:
             bytes_to_read = bytes_remaining
 
-        var data = self.as_bytes_slice()[self.offset : self.offset + bytes_to_read]
+        var data = self.as_bytes_span()[self.offset : self.offset + bytes_to_read]
 
         self.offset += bytes_to_read
         if bytes_to_read > 0:
@@ -484,7 +485,7 @@ struct Buffer(
         if bytes_to_write > 0:
             var bytes_written: Int
             var err: Error
-            bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
+            bytes_written, err = writer.write(self.as_bytes_span()[self.offset :])
             if bytes_written > bytes_to_write:
                 panic("bytes.Buffer.write_to: invalid write count")
 

@@ -1,6 +1,6 @@
-from collections import InlineArray
 from utils.static_tuple import StaticTuple
 from sys import external_call
+from memory import UnsafePointer
 from .file import O_CLOEXEC, O_NONBLOCK
 
 alias IPPROTO_IPV6 = 41

@@ -1,6 +1,7 @@
 from utils import Span
 from os import abort
 from algorithm.memory import parallel_memcpy
+from memory import UnsafePointer
 import ..io
 from ..bytes import index_byte
 from ..strings import StringBuilder
@@ -115,7 +116,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
 
     #     self.reset(self.buf, r)
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes_span(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self.buf.unsafe_ptr(), len=self.buf.size)
 
@@ -132,7 +133,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
         """Reads a new chunk into the internal buffer from the reader."""
         # Slide existing data to beginning.
         if self.read_pos > 0:
-            var data_to_slide = self.as_bytes_slice()[self.read_pos : self.write_pos]
+            var data_to_slide = self.as_bytes_span()[self.read_pos : self.write_pos]
             for i in range(len(data_to_slide)):
                 self.buf[i] = data_to_slide[i]
 
@@ -193,7 +194,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             A reference to the bytes in the internal buffer, and an error if one occurred.
         """
         if number_of_bytes < 0:
-            return self.as_bytes_slice()[0:0], Error(ERR_NEGATIVE_COUNT)
+            return self.as_bytes_span()[0:0], Error(ERR_NEGATIVE_COUNT)
 
         self.last_byte = -1
         self.last_rune_size = -1
@@ -202,7 +203,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             self.fill()  # self.write_pos-self.read_pos < self.capacity => buffer is not full
 
         if number_of_bytes > self.buf.size:
-            return self.as_bytes_slice()[self.read_pos : self.write_pos], Error(ERR_BUFFER_FULL)
+            return self.as_bytes_span()[self.read_pos : self.write_pos], Error(ERR_BUFFER_FULL)
 
         # 0 <= n <= self.buf.size
         var err = Error()
@@ -213,7 +214,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             if not err:
                 err = Error(ERR_BUFFER_FULL)
 
-        return self.as_bytes_slice()[self.read_pos : self.read_pos + number_of_bytes], err
+        return self.as_bytes_span()[self.read_pos : self.read_pos + number_of_bytes], err
 
     fn discard(inout self, number_of_bytes: Int) -> (Int, Error):
         """Skips the next `number_of_bytes` bytes.
@@ -308,7 +309,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             self.write_pos += bytes_read
 
         # copy as much as we can
-        var source = self.as_bytes_slice()[self.read_pos : self.write_pos]
+        var source = self.as_bytes_span()[self.read_pos : self.write_pos]
         var bytes_to_write = min(capacity, len(source))
         parallel_memcpy(dest, source.unsafe_ptr(), bytes_to_write)
         self.read_pos += bytes_to_write
@@ -352,7 +353,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
                 return UInt8(0), self.read_error()
             self.fill()  # buffer is empty
 
-        var c = self.as_bytes_slice()[self.read_pos]
+        var c = self.as_bytes_span()[self.read_pos]
         self.read_pos += 1
         self.last_byte = int(c)
         return c, Error()
@@ -375,7 +376,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             # self.read_pos == 0 and self.write_pos == 0
             self.write_pos = 1
 
-        self.as_bytes_slice()[self.read_pos] = self.last_byte
+        self.as_bytes_span()[self.read_pos] = self.last_byte
         self.last_byte = -1
         self.last_rune_size = -1
         return Error()
@@ -384,19 +385,19 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
     # # rune and its size in bytes. If the encoded rune is invalid, it consumes one byte
     # # and returns unicode.ReplacementChar (U+FFFD) with a size of 1.
     # fn read_rune(inout self) (r rune, size int, err error):
-    #     for self.read_pos+utf8.UTFMax > self.write_pos and !utf8.FullRune(self.as_bytes_slice()[self.read_pos:self.write_pos]) and self.err == nil and self.write_pos-self.read_pos < self.buf.capacity:
+    #     for self.read_pos+utf8.UTFMax > self.write_pos and !utf8.FullRune(self.as_bytes_span()[self.read_pos:self.write_pos]) and self.err == nil and self.write_pos-self.read_pos < self.buf.capacity:
     #         self.fill() # self.write_pos-self.read_pos < len(buf) => buffer is not full
 
     #     self.last_rune_size = -1
     #     if self.read_pos == self.write_pos:
     #         return 0, 0, self.read_poseadErr()
 
-    #     r, size = rune(self.as_bytes_slice()[self.read_pos]), 1
+    #     r, size = rune(self.as_bytes_span()[self.read_pos]), 1
     #     if r >= utf8.RuneSelf:
-    #         r, size = utf8.DecodeRune(self.as_bytes_slice()[self.read_pos:self.write_pos])
+    #         r, size = utf8.DecodeRune(self.as_bytes_span()[self.read_pos:self.write_pos])
 
     #     self.read_pos += size
-    #     self.last_byte = int(self.as_bytes_slice()[self.read_pos-1])
+    #     self.last_byte = int(self.as_bytes_span()[self.read_pos-1])
     #     self.last_rune_size = size
     #     return r, size, nil
 
@@ -425,16 +426,16 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
         var start = 0  # search start index
         while True:
             # Search buffer.
-            var i = index_byte(self.as_bytes_slice()[self.read_pos + start : self.write_pos], delim)
+            var i = index_byte(self.as_bytes_span()[self.read_pos + start : self.write_pos], delim)
             if i >= 0:
                 i += start
-                line = self.as_bytes_slice()[self.read_pos : self.read_pos + i + 1]
+                line = self.as_bytes_span()[self.read_pos : self.read_pos + i + 1]
                 self.read_pos += i + 1
                 return line, Error()
 
             # Pending error?
             if self.err:
-                line = self.as_bytes_slice()[self.read_pos : self.write_pos]
+                line = self.as_bytes_span()[self.read_pos : self.write_pos]
                 self.read_pos = self.write_pos
                 err = self.read_error()
                 return line, err
@@ -442,7 +443,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
             # Buffer full?
             if self.buffered() >= self.buf.capacity:
                 self.read_pos = self.write_pos
-                line = self.as_bytes_slice()
+                line = self.as_bytes_span()
                 err = Error(ERR_BUFFER_FULL)
                 return line, err
 
@@ -666,7 +667,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner,
         # Write the buffer to the writer, if we hit EOF it's fine. That's not a failure condition.
         var bytes_written: Int
         var err: Error
-        var buf_to_write = self.as_bytes_slice()[self.read_pos : self.write_pos]
+        var buf_to_write = self.as_bytes_span()[self.read_pos : self.write_pos]
         bytes_written, err = writer.write(List[UInt8, True](buf_to_write))
         if err:
             return bytes_written, err

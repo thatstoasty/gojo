@@ -1,4 +1,5 @@
 from utils import Span
+from memory import UnsafePointer
 
 
 fn equals(left: List[UInt8, True], right: List[UInt8, True]) -> Bool:

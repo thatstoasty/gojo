@@ -48,7 +48,7 @@ def test_write():
     var test_file = str(pathlib._dir_of_current_file()) + "/data/test_write.txt"
     var file = FileWrapper(test_file, "w")
     var content = "12345"
-    var bytes_written = file.write(content.as_bytes_slice())
+    var bytes_written = file.write(content.as_bytes_span())
     testing.assert_equal(bytes_written[0], 5)
 
     with open(test_file, "r") as f:

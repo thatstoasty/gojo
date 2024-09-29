@@ -1,6 +1,7 @@
 from utils import Span
-import ..io
+from memory import UnsafePointer
 from algorithm.memory import parallel_memcpy
+import ..io
 
 
 # buffered output
@@ -63,7 +64,7 @@ struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter
         """Returns the size of the underlying buffer in bytes."""
         return len(self.buf)
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self.buf)]:
+    fn as_bytes_span(ref [_]self) -> Span[UInt8, __lifetime_of(self.buf)]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self.buf)](unsafe_ptr=self.buf.unsafe_ptr(), len=self.buf.size)
 
@@ -93,7 +94,7 @@ struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter
             return err
 
         var bytes_written: Int = 0
-        bytes_written, err = self.writer.write(self.as_bytes_slice()[0 : self.bytes_written])
+        bytes_written, err = self.writer.write(self.as_bytes_span()[0 : self.bytes_written])
 
         # If the write was short, set a short write error and try to shift up the remaining bytes.
         if bytes_written < self.bytes_written and not err:
@@ -101,7 +102,7 @@ struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter
 
         if err:
             if bytes_written > 0 and bytes_written < self.bytes_written:
-                var temp = self.as_bytes_slice()[bytes_written : self.bytes_written]
+                var temp = self.as_bytes_span()[bytes_written : self.bytes_written]
                 parallel_memcpy(self.buf.unsafe_ptr(), temp.unsafe_ptr(), len(temp))
                 self.buf.size += len(temp)
 
@@ -216,7 +217,7 @@ struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter
     #             # Can only happen if buffer is silly small.
     #             return self.write_posriteString(string(r))
 
-    #     size = utf8.EncodeRune(self.as_bytes_slice()[self.bytes_written:], r)
+    #     size = utf8.EncodeRune(self.as_bytes_span()[self.bytes_written:], r)
     #     self.bytes_written += size
     #     return size, nil
 
@@ -232,7 +233,7 @@ struct Writer[W: io.Writer, //](Sized, io.Writer, io.ByteWriter, io.StringWriter
         Returns:
             The number of bytes written.
         """
-        return self.write(src.as_bytes_slice())
+        return self.write(src.as_bytes_span())
 
     fn read_from[R: io.Reader](inout self, inout reader: R) -> (Int, Error):
         """If there is buffered data and an underlying `read_from`, this fills

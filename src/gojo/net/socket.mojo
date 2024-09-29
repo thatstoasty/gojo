@@ -1,4 +1,5 @@
 from utils import Span
+from memory import UnsafePointer
 from ..syscall import (
     socket,
     connect,

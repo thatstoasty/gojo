@@ -1,4 +1,5 @@
 from sys import external_call
+from memory import UnsafePointer
 
 
 # --- ( File Related Syscalls & Structs )---------------------------------------

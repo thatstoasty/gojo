@@ -1,6 +1,7 @@
 from collections import InlineArray
 from utils import Variant, StaticTuple
 from sys.info import os_is_linux, os_is_macos
+from memory import UnsafePointer
 from ..syscall import (
     c_int,
     c_char,

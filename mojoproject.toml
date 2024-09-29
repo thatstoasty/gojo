@@ -4,19 +4,19 @@ channels = ["conda-forge", "https://conda.modular.com/max"]
 description = "Experiments in porting over Golang stdlib into Mojo."
 name = "gojo"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.12"
+version = "1.24.6.0.dev2024092805"
 license = "MIT"
 license-file = "LICENSE"
 homepage = "https://github.com/thatstoasty/gojo"
 repository = "https://github.com/thatstoasty/gojo"
 
 [tasks]
-run_file = "bash scripts/run_file.sh"
-tests = "bash scripts/tests.sh"
+tests = "python scripts/util.py run tests"
 benchmarks = "bash scripts/benchmarks.sh"
-template = "magic run python scripts/templater.py"
-build = { cmd = "bash scripts/build.sh", env = {MODULAR_MOJO_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
-publish = { cmd = "bash scripts/publish.sh", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
+examples = "python scripts/util.py run examples"
+template = "python scripts/util.py templater"
+build = { cmd = "python scripts/util.py build", env = {MODULAR_MOJO_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
+publish = { cmd = "python scripts/util.py publish", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
 bp = { depends_on=["build", "publish"] }
 
 [dependencies]
@@ -26,7 +26,7 @@ max = ">=24.5.0,<25"
 channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 
 [feature.nightly.dependencies]
-max = ">=24.6.0.dev2024092405"
+max = ">=24.6.0.dev2024092805"
 
 [environments]
 nightly = ["nightly"]

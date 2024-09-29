@@ -1,6 +1,6 @@
 from collections import InlineArray
 from utils import StringSlice, Span
-from memory import memcpy
+from memory import memcpy, UnsafePointer
 import ..io
 
 
@@ -69,7 +69,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """Returns the length of the string builder."""
         return self._size
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes_span(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
@@ -152,7 +152,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Returns:
             The number of bytes written to the builder buffer.
         """
-        return self.write(src.as_bytes_slice())
+        return self.write(src.as_bytes_span())
 
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         """Appends a byte to the builder buffer.

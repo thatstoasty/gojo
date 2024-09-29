@@ -11,7 +11,7 @@ def test_write():
     var writer = bufio.Writer(bytes.Buffer())
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the Buffer Writer.
-    var src = String("0123456789").as_bytes_slice()
+    var src = String("0123456789").as_bytes_span()
     var result = writer.write(src)
     _ = writer.flush()
 
@@ -62,7 +62,7 @@ def test_big_write():
 
     # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
     var text = str(builder)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text.as_bytes_span())
     testing.assert_equal(len(writer.writer), 5000)
     testing.assert_equal(text[0], "0")
     testing.assert_equal(text[4999], "9")

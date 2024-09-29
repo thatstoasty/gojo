@@ -1,6 +1,7 @@
 from utils import Span
 from os import abort
 from algorithm.memory import parallel_memcpy
+from memory import UnsafePointer
 import ..io
 
 
@@ -88,7 +89,7 @@ struct Reader(
         if self._data:
             self._data.free()
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes_span(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
         return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
 
@@ -107,7 +108,7 @@ struct Reader(
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
         self.prev_rune = -1
-        var bytes_to_write = self.as_bytes_slice()[self.index : self._size]
+        var bytes_to_write = self.as_bytes_span()[self.index : self._size]
         var count = min(len(bytes_to_write), capacity)
         parallel_memcpy(dest, bytes_to_write.unsafe_ptr(), count)
         # var bytes_written = copy(dest, bytes_to_write.unsafe_ptr(), len(bytes_to_write))
@@ -150,7 +151,7 @@ struct Reader(
         if off >= Int(self._size):
             return 0, io.EOF
 
-        var unread_bytes = self.as_bytes_slice()[off : self._size]
+        var unread_bytes = self.as_bytes_span()[off : self._size]
         var count = min(len(unread_bytes), capacity)
         parallel_memcpy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), count)
         # var bytes_written = copy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), len(unread_bytes))
@@ -268,7 +269,7 @@ struct Reader(
         if self.index >= self._size:
             return 0, Error()
 
-        var bytes = self.as_bytes_slice()[self.index : self._size]
+        var bytes = self.as_bytes_span()[self.index : self._size]
         var write_count: Int
         var err: Error
         write_count, err = writer.write(bytes)

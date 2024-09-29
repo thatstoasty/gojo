@@ -1,5 +1,6 @@
 from utils import StringSlice, Span
 from os import abort
+from memory import UnsafePointer
 from algorithm.memory import parallel_memcpy
 import ..io
 
@@ -62,7 +63,7 @@ struct Reader(
             return 0, io.EOF
 
         self.prev_rune = -1
-        var bytes_to_read = self.string.as_bytes_slice()[self.read_pos :]
+        var bytes_to_read = self.string.as_bytes_span()[self.read_pos :]
         if len(bytes_to_read) > capacity:
             return 0, Error("strings.Reader._read: no space left in destination buffer.")
 
@@ -111,7 +112,7 @@ struct Reader(
             return 0, io.EOF
 
         var error = Error()
-        var bytes_to_read = self.string.as_bytes_slice()[off:]
+        var bytes_to_read = self.string.as_bytes_span()[off:]
         var count = min(len(bytes_to_read), capacity)
         parallel_memcpy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), count)
         dest._len += count
@@ -146,7 +147,7 @@ struct Reader(
         if self.read_pos >= len(self.string):
             return UInt8(0), io.EOF
 
-        var b = self.string.as_bytes_slice()[self.read_pos]
+        var b = self.string.as_bytes_span()[self.read_pos]
         self.read_pos += 1
         return UInt8(b), Error()
 
@@ -229,7 +230,7 @@ struct Reader(
         if self.read_pos >= len(self.string):
             return Int(0), err
 
-        var chunk_to_write = self.string.as_bytes_slice()[self.read_pos :]
+        var chunk_to_write = self.string.as_bytes_span()[self.read_pos :]
         var bytes_written: Int
         bytes_written, err = writer.write(chunk_to_write)
         if bytes_written > len(chunk_to_write):
@@ -285,7 +286,7 @@ struct Reader(
             The string slice containing the bytes read until the delimiter.
         """
         var start = self.read_pos
-        var bytes = self.string.as_bytes_slice()
+        var bytes = self.string.as_bytes_span()
         while self.read_pos < len(self.string):
             if bytes[self.read_pos] == ord(delimiter):
                 break

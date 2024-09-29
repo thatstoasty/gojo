@@ -1,4 +1,5 @@
 from collections import InlineArray, InlineList
+from memory import UnsafePointer
 from utils import Span
 from ..syscall import SocketOptions, SocketType
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr
