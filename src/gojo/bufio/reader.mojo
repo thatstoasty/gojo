@@ -31,7 +31,6 @@ fn copy[
     return count
 
 
-# buffered input
 struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner, io.WriterTo):
     """Implements buffering for an io.Reader object.
 
