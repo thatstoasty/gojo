@@ -33,7 +33,7 @@ fn main() raises:
 
         # Send a response back to the client.
         var bytes_sent: Int
-        bytes_sent, err = connection.write(message.as_bytes_slice())
+        bytes_sent, err = connection.write(message.as_bytes())
         print("Message sent:", message, bytes_sent)
         err = connection.close()
         if err:

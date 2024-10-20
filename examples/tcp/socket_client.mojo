@@ -18,7 +18,7 @@ fn main() raises:
     if err:
         raise err
     var bytes_sent: Int
-    bytes_sent, err = socket.write(message.as_bytes_slice())
+    bytes_sent, err = socket.write(message.as_bytes())
     print("Message sent:", message)
 
     var bytes = List[UInt8, True](capacity=16)

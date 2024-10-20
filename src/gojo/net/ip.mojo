@@ -1,5 +1,6 @@
 from collections import InlineArray
 from utils import Variant, StaticTuple
+from memory import UnsafePointer, Pointer
 from sys.info import os_is_linux, os_is_macos
 from ..syscall import (
     c_int,
@@ -41,8 +42,8 @@ fn get_addr_info(host: String) raises -> AddrInfo:
         var status = getaddrinfo(
             host.unsafe_ptr(),
             UnsafePointer[UInt8](),
-            Reference(hints),
-            Reference(servinfo),
+            Pointer.address_of(hints),
+            Pointer.address_of(servinfo),
         )
         if status != 0:
             print("getaddrinfo failed to execute with status:", status)
@@ -64,8 +65,8 @@ fn get_addr_info(host: String) raises -> AddrInfo:
         var status = getaddrinfo_unix(
             host.unsafe_ptr(),
             UnsafePointer[UInt8](),
-            Reference(hints),
-            Reference(servinfo),
+            Pointer.address_of(hints),
+            Pointer.address_of(servinfo),
         )
         if status != 0:
             print("getaddrinfo failed to execute with status:", status)

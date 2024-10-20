@@ -24,5 +24,5 @@ fn main() raises:
         message = message.upper()
 
         var bytes_sent: Int
-        bytes_sent, err = socket.send_to(message.as_bytes_slice(), remote.host, remote.port)
+        bytes_sent, err = socket.send_to(message.as_bytes(), remote.host, remote.port)
         print("Message sent:", message)

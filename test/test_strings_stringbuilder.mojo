@@ -30,7 +30,7 @@ def test_big_write():
 def test_write():
     # Create a string from the builder by writing bytes to it.
     var builder = StringBuilder()
-    _ = builder.write(String("Hello").as_bytes_slice())
+    _ = builder.write("Hello")
     testing.assert_equal(str(builder), "Hello")
 
 

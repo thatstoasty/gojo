@@ -14,7 +14,7 @@ fn main() raises:
     for _ in range(10):
         var bytes_sent: Int
         var err: Error
-        bytes_sent, err = udp.write_to(message.as_bytes_slice(), host, port)
+        bytes_sent, err = udp.write_to(message.as_bytes(), host, port)
         print("Message sent:", message, bytes_sent)
 
         var bytes = List[UInt8, True](capacity=16)

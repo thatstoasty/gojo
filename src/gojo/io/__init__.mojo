@@ -8,10 +8,9 @@ various implementations, unless otherwise informed clients should not
 assume they are safe for parallel execution.
 seek whence values.
 """
+from memory import UnsafePointer
 from utils import Span
 from .io import write_string, read_at_least, read_full, read_all, BUFFER_SIZE
-from .file import FileWrapper
-from .std import STDWriter
 
 
 alias Rune = Int32
@@ -23,16 +22,16 @@ alias SEEK_CURRENT = 1
 alias SEEK_END = 2
 """seek relative to the end."""
 
-alias ERR_SHORT_WRITE = Error("short write")
+alias ERR_SHORT_WRITE = "short write"
 """A write accepted fewer bytes than requested, but failed to return an explicit error."""
 
-alias ERR_INVALID_WRITE = Error("invalid write result")
+alias ERR_INVALID_WRITE = "invalid write result"
 """A write returned an impossible count."""
 
-alias ERR_SHORT_BUFFER = Error("short buffer")
+alias ERR_SHORT_BUFFER = "short buffer"
 """A read required a longer buffer than was provided."""
 
-alias EOF = Error("EOF")
+alias EOF = "EOF"
 """Returned by `read` when no more input is available.
 (`read` must return `EOF` itself, not an error wrapping EOF,
 because callers will test for EOF using `==`)
@@ -42,10 +41,10 @@ If the `EOF` occurs unexpectedly in a structured data stream,
 the appropriate error is either `ERR_UNEXPECTED_EOF` or some other error
 giving more detail."""
 
-alias ERR_UNEXPECTED_EOF = Error("unexpected EOF")
+alias ERR_UNEXPECTED_EOF = "unexpected EOF"
 """EOF was encountered in the middle of reading a fixed-size block or data structure."""
 
-alias ERR_NO_PROGRESS = Error("multiple read calls return no data or error")
+alias ERR_NO_PROGRESS = "multiple read calls return no data or error"
 """Returned by some clients of a `Reader` when
 many calls to read have failed to return any data or error,
 usually the sign of a broken `Reader` implementation."""
@@ -91,22 +90,6 @@ trait Reader(Movable):
         ...
 
 
-trait Writer(Movable):
-    """Wraps the basic `write` method.
-
-    `write` writes `len(dest)` bytes from `src` to the underlying data stream.
-    It returns the number of bytes written from `src` (0 <= n <= `len(dest)`)
-    and any error encountered that caused the `write` to stop early.
-    `write` must return an error if it returns `n < len(dest)`.
-    `write` must not modify the data `src`, even temporarily.
-
-    Implementations must not retain `src`.
-    """
-
-    fn write(inout self, src: Span[UInt8, _]) -> (Int, Error):
-        ...
-
-
 trait Closer(Movable):
     """Wraps the basic `close` method.
 
@@ -140,38 +123,6 @@ trait Seeker(Movable):
         ...
 
 
-trait ReadWriter(Reader, Writer):
-    ...
-
-
-trait ReadCloser(Reader, Closer):
-    ...
-
-
-trait WriteCloser(Writer, Closer):
-    ...
-
-
-trait ReadWriteCloser(Reader, Writer, Closer):
-    ...
-
-
-trait ReadSeeker(Reader, Seeker):
-    ...
-
-
-trait ReadSeekCloser(Reader, Seeker, Closer):
-    ...
-
-
-trait WriteSeeker(Writer, Seeker):
-    ...
-
-
-trait ReadWriteSeeker(Reader, Writer, Seeker):
-    ...
-
-
 trait ReaderFrom:
     """Wraps the `read_from` method.
 
@@ -182,26 +133,6 @@ trait ReaderFrom:
 
     fn read_from[R: Reader](inout self, inout reader: R) -> (Int, Error):
         ...
-
-
-trait WriterReadFrom(Writer, ReaderFrom):
-    ...
-
-
-trait WriterTo:
-    """Wraps the `write_to` method.
-
-    `write_to` writes data to `writer` until there's no more data to write or
-    when an error occurs. The return value n is the number of bytes
-    written. Any error encountered during the write is also returned.
-    """
-
-    fn write_to[W: Writer](inout self, inout writer: W) -> (Int, Error):
-        ...
-
-
-trait ReaderWriteTo(Reader, WriterTo):
-    ...
 
 
 trait ReaderAt:
@@ -291,39 +222,8 @@ trait ByteScanner(ByteReader):
         ...
 
 
-trait ByteWriter:
-    """Wraps the `write_byte` method."""
-
-    fn write_byte(inout self, byte: UInt8) -> (Int, Error):
-        ...
-
-
-trait RuneReader:
-    """Wraps the `read_rune` method.
-
-    `read_rune` reads a single encoded Unicode character
-    and returns the rune and its size in bytes. If no character is
-    available, err will be set."""
-
-    fn read_rune(inout self) -> (Rune, Int):
-        ...
-
-
-trait RuneScanner(RuneReader):
-    """Adds the `unread_rune` method to the basic `read_rune` method.
-
-    `unread_rune` causes the next call to `read_rune` to return the last rune read.
-    If the last operation was not a successful call to `read_rune`, `unread_rune` may
-    return an error, unread the last rune read (or the rune prior to the
-    last-unread rune), or (in implementations that support the `Seeker` trait)
-    seek to the start of the rune before the current offset."""
-
-    fn unread_rune(inout self) -> Rune:
-        ...
-
-
 trait StringWriter:
     """Wraps the `write_string` method."""
 
-    fn write_string(inout self, src: String) -> (Int, Error):
+    fn write_string(inout self, src: String) -> None:
         ...

@@ -1,6 +1,7 @@
 from utils import StringSlice, Span
 from os import abort
 from algorithm.memory import parallel_memcpy
+from memory import UnsafePointer
 import ..io
 
 
@@ -12,7 +13,6 @@ struct Reader(
     io.ByteReader,
     io.ByteScanner,
     io.Seeker,
-    io.WriterTo,
 ):
     """A Reader that implements the `io.Reader`, `io.ReaderAt`, `io.ByteReader`, `io.ByteScanner`, `io.Seeker`, and `io.WriterTo` traits
     by reading from a string. The zero value for Reader operates like a Reader of an empty string.
@@ -59,10 +59,10 @@ struct Reader(
             The number of bytes read into dest.
         """
         if self.read_pos >= len(self.string):
-            return 0, io.EOF
+            return 0, Error(io.EOF)
 
         self.prev_rune = -1
-        var bytes_to_read = self.string.as_bytes_slice()[self.read_pos :]
+        var bytes_to_read = self.string.as_bytes()[self.read_pos :]
         if len(bytes_to_read) > capacity:
             return 0, Error("strings.Reader._read: no space left in destination buffer.")
 
@@ -108,15 +108,15 @@ struct Reader(
             return 0, Error("strings.Reader.read_at: negative offset")
 
         if off >= len(self.string):
-            return 0, io.EOF
+            return 0, Error(io.EOF)
 
         var error = Error()
-        var bytes_to_read = self.string.as_bytes_slice()[off:]
+        var bytes_to_read = self.string.as_bytes()[off:]
         var count = min(len(bytes_to_read), capacity)
         parallel_memcpy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), count)
         dest._len += count
         if count < len(dest):
-            error = Error(str(io.EOF))
+            error = Error(io.EOF)
 
         return count, error
 
@@ -144,9 +144,9 @@ struct Reader(
         """Reads the next byte from the underlying string."""
         self.prev_rune = -1
         if self.read_pos >= len(self.string):
-            return UInt8(0), io.EOF
+            return UInt8(0), Error(io.EOF)
 
-        var b = self.string.as_bytes_slice()[self.read_pos]
+        var b = self.string.as_bytes()[self.read_pos]
         self.read_pos += 1
         return UInt8(b), Error()
 
@@ -229,11 +229,9 @@ struct Reader(
         if self.read_pos >= len(self.string):
             return Int(0), err
 
-        var chunk_to_write = self.string.as_bytes_slice()[self.read_pos :]
-        var bytes_written: Int
-        bytes_written, err = writer.write(chunk_to_write)
-        if bytes_written > len(chunk_to_write):
-            panic("strings.Reader.write_to: invalid write_string count")
+        var chunk_to_write = self.string.as_bytes()[self.read_pos :]
+        writer.write_bytes(chunk_to_write)
+        bytes_written = len(chunk_to_write)
 
         self.read_pos += bytes_written
         if bytes_written != len(chunk_to_write) and not err:
@@ -277,7 +275,7 @@ struct Reader(
         self.read_pos = 0
         self.prev_rune = -1
 
-    fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__lifetime_of(self)]:
+    fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__origin_of(self)]:
         """Reads from the underlying string until a delimiter is found.
         The delimiter is not included in the returned string slice.
 
@@ -285,13 +283,13 @@ struct Reader(
             The string slice containing the bytes read until the delimiter.
         """
         var start = self.read_pos
-        var bytes = self.string.as_bytes_slice()
+        var bytes = self.string.as_bytes()
         while self.read_pos < len(self.string):
             if bytes[self.read_pos] == ord(delimiter):
                 break
             self.read_pos += 1
 
         self.read_pos += 1
-        return StringSlice[__lifetime_of(self)](
+        return StringSlice[__origin_of(self)](
             unsafe_from_utf8_ptr=self.string.unsafe_ptr() + start, len=self.read_pos - start - 1
         )

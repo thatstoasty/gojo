@@ -56,13 +56,13 @@ def test_next():
 
 def test_write():
     var buf = Buffer(List[UInt8, True](capacity=16))
-    _ = buf.write("Hello World!".as_bytes_slice())
+    _ = buf.write("Hello World!")
     testing.assert_equal(str(buf), "Hello World!")
 
 
 def test_muliple_writes():
     var buf = Buffer(List[UInt8, True](capacity=1200))
-    var text = "Hello World!".as_bytes_slice()
+    var text = "Hello World!"
     for _ in range(100):
         _ = buf.write(text)
 

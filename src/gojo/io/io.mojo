@@ -2,7 +2,7 @@ alias BUFFER_SIZE = 4096
 """The default buffer size for reading and writing operations."""
 
 
-fn write_string[W: Writer, //](inout writer: W, string: String) -> (Int, Error):
+fn write_string[W: Writer, //](inout writer: W, string: String) -> None:
     """Writes the contents of the `string` to `writer`, which accepts a Span of bytes.
     If `writer` implements `StringWriter`, `StringWriter.write_string` is invoked directly.
     Otherwise, `Writer.write` is called exactly once.
@@ -10,14 +10,11 @@ fn write_string[W: Writer, //](inout writer: W, string: String) -> (Int, Error):
     Args:
         writer: The writer to write to.
         string: The string to write.
-
-    Returns:
-        The number of bytes written and an error, if any.
     """
-    return writer.write(string.as_bytes_slice())
+    return writer.write_bytes(string.as_bytes())
 
 
-fn write_string[W: StringWriter, //](inout writer: W, string: String) -> (Int, Error):
+fn write_string[W: StringWriter, //](inout writer: W, string: String) -> None:
     """Writes the contents of the `string` to `writer`, which accepts a Span of bytes.
     If `writer` implements `StringWriter`, `StringWriter.write_string` is invoked directly.
     Otherwise, `Writer.write` is called exactly once.
@@ -25,9 +22,6 @@ fn write_string[W: StringWriter, //](inout writer: W, string: String) -> (Int, E
     Args:
         writer: The writer to write to.
         string: The string to write.
-
-    Returns:
-        The number of bytes written and an error, if any.
     """
     return writer.write_string(string)
 
@@ -52,7 +46,7 @@ fn read_at_least[R: Reader, //](inout reader: R, inout dest: List[UInt8, True], 
     """
     var error = Error()
     if len(dest) < min:
-        return 0, io.ERR_SHORT_BUFFER
+        return 0, Error(io.ERR_SHORT_BUFFER)
 
     var total_bytes_read: Int = 0
     while total_bytes_read < min and not error:

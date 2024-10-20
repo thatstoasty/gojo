@@ -1,6 +1,6 @@
 from utils import StringSlice, Span
 from algorithm.memory import parallel_memcpy
-from os import abort
+from memory import UnsafePointer
 import ..io
 from ..bytes import index_byte
 
@@ -41,12 +41,11 @@ alias ERR_SHORT_WRITE = "short write"
 
 
 struct Buffer(
+    Writer,
     Stringable,
     Sized,
     io.Reader,
-    io.Writer,
     io.StringWriter,
-    io.ByteWriter,
     io.ByteReader,
 ):
     """A Buffer is a variable-sized buffer of bytes with Read and Write methods.
@@ -106,7 +105,7 @@ struct Buffer(
         Args:
             buf: The String to initialize the buffer with.
         """
-        var bytes = buf.as_bytes()
+        bytes = List[Byte, True](buf.as_bytes())
         self._capacity = bytes.capacity
         self._size = bytes.size
         self._data = bytes.steal_data()
@@ -153,22 +152,22 @@ struct Buffer(
 
     fn bytes(self) -> List[UInt8, True]:
         """Returns a list of bytes holding a copy of the unread portion of the buffer."""
-        var copy = UnsafePointer[UInt8]().alloc(self._size)
+        copy = UnsafePointer[UInt8]().alloc(self._size)
         parallel_memcpy(copy, self._data.offset(self.offset), self._size)
         return List[UInt8, True](unsafe_pointer=copy, size=self._size - self.offset, capacity=self._size - self.offset)
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes(ref [_]self) -> Span[UInt8, __origin_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
+        return Span[UInt8, __origin_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__origin_of(self)]:
         """
         Return a StringSlice view of the data owned by the builder.
 
         Returns:
           The string representation of the bytes buffer. Returns an empty string if the bytes buffer is empty.
         """
-        return StringSlice[__lifetime_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
+        return StringSlice[__origin_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
 
     fn _resize(inout self, capacity: Int) -> None:
         """
@@ -177,7 +176,7 @@ struct Buffer(
         Args:
           capacity: The new capacity of the string builder buffer.
         """
-        var new_data = UnsafePointer[UInt8]().alloc(capacity)
+        new_data = UnsafePointer[UInt8]().alloc(capacity)
         parallel_memcpy(new_data, self._data, self._size)
         self._data.free()
         self._data = new_data
@@ -193,7 +192,7 @@ struct Buffer(
         """
         # TODO: Handle the case where new_capacity is greater than MAX_INT. It should panic.
         if bytes_to_add > self._capacity - self._size:
-            var new_capacity = int(self._capacity * 2)
+            new_capacity = int(self._capacity * 2)
             if new_capacity < self._capacity + bytes_to_add:
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
@@ -215,41 +214,45 @@ struct Buffer(
         Returns:
           The string representation of the buffer. Returns an empty string if the buffer is empty.
         """
-        var bytes = List[UInt8, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
+        bytes = List[UInt8, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
         bytes.append(0)
-        var result = String(bytes^)
+        result = String(bytes^)
         self._data = UnsafePointer[UInt8]()
         self._size = 0
         return result
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    @always_inline
+    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
         """
-        Appends a byte Span to the buffer.
-
+        Write a `Span[Byte]` to this `Writer`.
         Args:
-            src: The byte array to append.
-
-        Returns:
-            The number of bytes written to the buffer.
+            bytes: The string slice to write to this Writer. Must NOT be
+              null-terminated.
         """
-        self._resize_if_needed(len(src))
+        if len(bytes) == 0:
+            return
 
-        parallel_memcpy(self._data.offset(self._size), src._data, len(src))
-        self._size += len(src)
+        self._resize_if_needed(len(bytes))
+        parallel_memcpy(self._data.offset(self._size), bytes._data, len(bytes))
+        self._size += len(bytes)
 
-        return len(src), Error()
+    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
+        """Write data to the StringBuilder."""
 
-    fn write_string(inout self, src: String) -> (Int, Error):
+        @parameter
+        fn write_arg[T: Writable](arg: T):
+            arg.write_to(self)
+
+        args.each[write_arg]()
+
+    fn write_string(inout self, src: String) -> None:
         """
         Appends a string to the buffer.
 
         Args:
             src: The string to append.
-
-        Returns:
-            The number of bytes written to the buffer.
         """
-        return self.write(src.as_bytes_slice())
+        return self.write_bytes(src.as_bytes())
 
     fn write_byte(inout self, byte: UInt8) -> (Int, Error):
         """Appends a byte to the buffer, growing the buffer as needed.
@@ -303,11 +306,11 @@ struct Buffer(
             self.reset()
             if capacity == 0:
                 return 0, Error()
-            return 0, io.EOF
+            return 0, Error(io.EOF)
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
-        var bytes_to_read = self.as_bytes_slice()[self.offset :]
-        var count = min(capacity, len(bytes_to_read))
+        bytes_to_read = self.as_bytes()[self.offset :]
+        count = min(capacity, len(bytes_to_read))
         parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
         self.offset += count
 
@@ -329,7 +332,7 @@ struct Buffer(
         Returns:
             The number of bytes read from the buffer.
         """
-        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
+        dest_ptr = dest.unsafe_ptr().offset(dest.size)
         var bytes_read: Int
         var err: Error
         bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
@@ -346,9 +349,9 @@ struct Buffer(
         if self.empty():
             # Buffer is empty, reset to recover space.
             self.reset()
-            return UInt8(0), io.EOF
+            return UInt8(0), Error(io.EOF)
 
-        var byte = self._data[self.offset]
+        byte = self._data[self.offset]
         self.offset += 1
         self.last_read = OP_READ
 
@@ -385,17 +388,17 @@ struct Buffer(
         Returns:
             A list containing the data up to and including the delimiter.
         """
-        var slice: Span[UInt8, __lifetime_of(self)]
+        var slice: Span[UInt8, __origin_of(self)]
         var err: Error
         slice, err = self.read_slice(delim)
 
-        var bytes = List[UInt8, True](capacity=len(slice) + 1)
+        bytes = List[UInt8, True](capacity=len(slice) + 1)
         for byte in slice:
             bytes.append(byte[])
 
         return bytes, err
 
-    fn read_slice(inout self, delim: UInt8) -> (Span[UInt8, __lifetime_of(self)], Error):
+    fn read_slice(inout self, delim: UInt8) -> (Span[UInt8, __origin_of(self)], Error):
         """Like `read_bytes` but returns a reference to internal buffer data.
 
         Args:
@@ -404,15 +407,15 @@ struct Buffer(
         Returns:
             A span containing the data up to and including the delimiter.
         """
-        var i = index_byte(bytes=self.as_bytes_slice(), delim=delim)
-        var end = self.offset + i + 1
+        i = index_byte(bytes=self.as_bytes(), delim=delim)
+        end = self.offset + i + 1
 
-        var err = Error()
+        err = Error()
         if i < 0:
             end = self._size
             err = Error(str(io.EOF))
 
-        var line = self.as_bytes_slice()[self.offset : end]
+        line = self.as_bytes()[self.offset : end]
         self.offset = end
         self.last_read = OP_READ
 
@@ -440,7 +443,7 @@ struct Buffer(
 
         return String(bytes^), err
 
-    fn next(inout self, number_of_bytes: Int) -> Span[UInt8, __lifetime_of(self)]:
+    fn next(inout self, number_of_bytes: Int) -> Span[UInt8, __origin_of(self)]:
         """Returns a Span containing the next n bytes from the buffer,
         advancing the buffer as if the bytes had been returned by `Buffer.read`.
 
@@ -453,12 +456,12 @@ struct Buffer(
             A slice containing the next n bytes from the buffer.
         """
         self.last_read = OP_INVALID
-        var bytes_remaining = len(self)
-        var bytes_to_read = number_of_bytes
+        bytes_remaining = len(self)
+        bytes_to_read = number_of_bytes
         if bytes_to_read > bytes_remaining:
             bytes_to_read = bytes_remaining
 
-        var data = self.as_bytes_slice()[self.offset : self.offset + bytes_to_read]
+        data = self.as_bytes()[self.offset : self.offset + bytes_to_read]
 
         self.offset += bytes_to_read
         if bytes_to_read > 0:
@@ -466,7 +469,7 @@ struct Buffer(
 
         return data
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+    fn write_to[W: Writer](inout self, inout writer: W) -> (Int, Error):
         """Writes data to `writer` until the buffer is drained or an error occurs.
         The return value `total_bytes_written` is the number of bytes written; Any error
         encountered during the write is also returned.
@@ -478,23 +481,21 @@ struct Buffer(
             The number of bytes written to the writer.
         """
         self.last_read = OP_INVALID
-        var bytes_to_write = len(self)
-        var total_bytes_written: Int = 0
+        byte_count = len(self)
+        total_bytes_written = 0
 
-        if bytes_to_write > 0:
-            var bytes_written: Int
-            var err: Error
-            bytes_written, err = writer.write(self.as_bytes_slice()[self.offset :])
-            if bytes_written > bytes_to_write:
+        if byte_count > 0:
+            bytes_to_write = self.as_bytes()[self.offset :]
+            writer.write_bytes(bytes_to_write)
+            bytes_written = len(bytes_to_write)
+            if bytes_written > byte_count:
                 panic("bytes.Buffer.write_to: invalid write count")
 
             self.offset += bytes_written
             total_bytes_written = bytes_written
-            if err:
-                return total_bytes_written, err
 
             # all bytes should have been written, by definition of write method in io.Writer
-            if bytes_written != bytes_to_write:
+            if bytes_written != byte_count:
                 return total_bytes_written, Error(ERR_SHORT_WRITE)
 
         # Buffer is now empty; reset.

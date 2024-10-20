@@ -88,7 +88,3 @@ def test_discard():
     # Peek doesn't advance the reader, so we should see the same content twice.
     var second_result = reader.peek(5)
     testing.assert_equal(to_string(second_result[0]), "56789")
-
-
-def main():
-    test_read_slice()

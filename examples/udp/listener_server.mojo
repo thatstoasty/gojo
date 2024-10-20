@@ -19,5 +19,5 @@ fn main() raises:
         print("Message received:", message)
         message = message.upper()
         var bytes_sent: Int
-        bytes_sent, err = listener.write_to(message.as_bytes_slice(), UDPAddr(remote.host, remote.port))
+        bytes_sent, err = listener.write_to(message.as_bytes(), UDPAddr(remote.host, remote.port))
         print("Message sent:", message)

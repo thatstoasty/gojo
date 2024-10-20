@@ -1,7 +1,7 @@
 import gojo.bytes
 import gojo.bufio
 import gojo.io
-from gojo.builtins.bytes import to_string
+from gojo.bytes import to_string
 from gojo.strings import StringBuilder
 import testing
 
@@ -11,12 +11,11 @@ def test_write():
     var writer = bufio.Writer(bytes.Buffer())
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the Buffer Writer.
-    var src = String("0123456789").as_bytes_slice()
-    var result = writer.write(src)
+    var src = "0123456789"
+    writer.write(src)
     _ = writer.flush()
 
-    testing.assert_equal(result[0], 10)
-    testing.assert_equal(str(writer.writer), "0123456789")
+    testing.assert_equal(str(writer.writer), src)
 
 
 def test_several_writes():
@@ -62,7 +61,7 @@ def test_big_write():
 
     # When writing, it should bypass the Bufio struct's buffer and write directly to the underlying bytes buffer writer. So, no need to flush.
     var text = str(builder)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text)
     testing.assert_equal(len(writer.writer), 5000)
     testing.assert_equal(text[0], "0")
     testing.assert_equal(text[4999], "9")
@@ -85,10 +84,9 @@ def test_write_string():
     var writer = bufio.Writer(bytes.Buffer("Hello"))
 
     # Write a string to the writer's internal buffer and flush it to the Buffer Writer.
-    var result = writer.write_string(" World!")
+    writer.write_string(" World!")
     _ = writer.flush()
 
-    testing.assert_equal(result[0], 7)
     testing.assert_equal(str(writer.writer), "Hello World!")
 
 

@@ -1,7 +1,6 @@
 import testing
 import pathlib
 from gojo.bytes import buffer
-from gojo.io import FileWrapper
 from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, scan_runes
 
 
@@ -89,20 +88,6 @@ def test_scan_bytes():
             j += 1
 
         testing.assert_equal(j, len(test_case[]))
-
-
-def test_file_wrapper_scanner():
-    var test_file = str(pathlib._dir_of_current_file()) + "/data/test_multiple_lines.txt"
-    var file = FileWrapper(test_file, "r")
-
-    # Create a scanner from the reader
-    var scanner = Scanner(file^)
-    var expected_results = List[String]("11111", "22222", "33333", "44444", "55555")
-    var i = 0
-    while scanner.scan():
-        testing.assert_equal(scanner.current_token(), expected_results[i])
-        i += 1
-    testing.assert_equal(i, len(expected_results))
 
 
 def test_scan_runes():

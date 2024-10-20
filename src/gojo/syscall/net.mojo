@@ -2,6 +2,8 @@ from collections import InlineArray
 from utils.static_tuple import StaticTuple
 from sys import external_call
 from .file import O_CLOEXEC, O_NONBLOCK
+from memory import UnsafePointer, Pointer
+
 
 alias IPPROTO_IPV6 = 41
 alias IPV6_V6ONLY = 26
@@ -596,7 +598,7 @@ fn getsockopt(
     level: c_int,
     option_name: c_int,
     option_value: UnsafePointer[UInt8],
-    option_len: Reference[socklen_t],
+    option_len: Pointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockopt` function
     Reference: https://man7.org/linux/man-pages/man3/getsockopt.3p.html
@@ -617,8 +619,8 @@ fn getsockopt(
 
 fn getsockname(
     socket: c_int,
-    address: Reference[sockaddr],
-    address_len: Reference[socklen_t],
+    address: Pointer[sockaddr],
+    address_len: Pointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockname` function
     Reference: https://man7.org/linux/man-pages/man3/getsockname.3p.html
@@ -637,8 +639,8 @@ fn getsockname(
 
 fn getpeername(
     sockfd: c_int,
-    addr: Reference[sockaddr],
-    address_len: Reference[socklen_t],
+    addr: Pointer[sockaddr],
+    address_len: Pointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `getpeername` function
     Reference: https://man7.org/linux/man-pages/man2/getpeername.2.html
@@ -655,7 +657,7 @@ fn getpeername(
     return external_call["getpeername", c_int](sockfd, addr, address_len)
 
 
-fn bind(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) -> c_int:
+fn bind(socket: c_int, address: Pointer[sockaddr], address_len: socklen_t) -> c_int:
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -663,7 +665,7 @@ fn bind(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) -> 
     return external_call["bind", c_int](socket, address, address_len)
 
 
-fn bind(socket: c_int, address: Reference[sockaddr_in], address_len: socklen_t) -> c_int:
+fn bind(socket: c_int, address: Pointer[sockaddr_in], address_len: socklen_t) -> c_int:
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -688,8 +690,8 @@ fn listen(socket: c_int, backlog: c_int) -> c_int:
 
 fn accept(
     socket: c_int,
-    address: Reference[sockaddr],
-    address_len: Reference[socklen_t],
+    address: Pointer[sockaddr],
+    address_len: Pointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `accept` function
     Reference: https://man7.org/linux/man-pages/man3/accept.3p.html
@@ -706,7 +708,7 @@ fn accept(
     return external_call["accept", c_int](socket, address, address_len)
 
 
-fn connect(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) -> c_int:
+fn connect(socket: c_int, address: Pointer[sockaddr], address_len: socklen_t) -> c_int:
     """Libc POSIX `connect` function
     Reference: https://man7.org/linux/man-pages/man3/connect.3p.html
     Fn signature: `int connect(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -722,7 +724,7 @@ fn connect(socket: c_int, address: Reference[sockaddr], address_len: socklen_t) 
     return external_call["connect", c_int](socket, address, address_len)
 
 
-fn connect(socket: c_int, address: Reference[sockaddr_in], address_len: socklen_t) -> c_int:
+fn connect(socket: c_int, address: Pointer[sockaddr_in], address_len: socklen_t) -> c_int:
     """Libc POSIX `connect` function
     Reference: https://man7.org/linux/man-pages/man3/connect.3p.html
     Fn signature: `int connect(int socket, const struct sockaddr *address, socklen_t address_len)`.
@@ -777,8 +779,8 @@ fn recvfrom(
     buffer: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
-    address: Reference[sockaddr],
-    address_len: Reference[socklen_t],
+    address: Pointer[sockaddr],
+    address_len: Pointer[socklen_t],
 ) -> c_ssize_t:
     """Libc POSIX `recvfrom` function
     Reference: https://man7.org/linux/man-pages/man3/recvfrom.3p.html
@@ -839,7 +841,7 @@ fn sendto(
     message: UnsafePointer[UInt8],
     length: c_size_t,
     flags: c_int,
-    dest_addr: Reference[sockaddr],
+    dest_addr: Pointer[sockaddr],
     dest_len: socklen_t,
 ) -> c_ssize_t:
     """Libc POSIX `sendto` function
@@ -885,8 +887,8 @@ fn shutdown(socket: c_int, how: c_int) -> c_int:
 fn getaddrinfo(
     nodename: UnsafePointer[UInt8],
     servname: UnsafePointer[UInt8],
-    hints: Reference[addrinfo],
-    res: Reference[UnsafePointer[addrinfo]],
+    hints: Pointer[addrinfo],
+    res: Pointer[UnsafePointer[addrinfo]],
 ) -> c_int:
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html
@@ -901,8 +903,8 @@ fn getaddrinfo(
 fn getaddrinfo_unix(
     nodename: UnsafePointer[UInt8],
     servname: UnsafePointer[UInt8],
-    hints: Reference[addrinfo_unix],
-    res: Reference[UnsafePointer[addrinfo_unix]],
+    hints: Pointer[addrinfo_unix],
+    res: Pointer[UnsafePointer[addrinfo_unix]],
 ) -> c_int:
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html

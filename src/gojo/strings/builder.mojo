@@ -1,15 +1,14 @@
 from collections import InlineArray
 from utils import StringSlice, Span
-from memory import memcpy
+from memory import memcpy, UnsafePointer
 import ..io
 
 
 struct StringBuilder[growth_factor: Float32 = 2](
+    Writer,
     Stringable,
     Sized,
-    io.Writer,
     io.StringWriter,
-    io.ByteWriter,
 ):
     """
     A string builder class that allows for efficient string management and concatenation.
@@ -69,17 +68,17 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """Returns the length of the string builder."""
         return self._size
 
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
+    fn as_bytes(ref [_]self) -> Span[UInt8, __origin_of(self)]:
         """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __lifetime_of(self)](unsafe_ptr=self._data, len=self._size)
+        return Span[UInt8, __origin_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__origin_of(self)]:
         """Return a StringSlice view of the data owned by the builder.
 
         Returns:
             The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
-        return StringSlice[__lifetime_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
+        return StringSlice[__origin_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
 
     fn __str__(self) -> String:
         """Converts the string builder to a string.
@@ -131,39 +130,44 @@ struct StringBuilder[growth_factor: Float32 = 2](
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
-        """Appends a byte Span to the builder buffer.
-
-        Args:
-            src: The byte array to append.
+    @always_inline
+    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
         """
-        self._resize_if_needed(len(src))
-        memcpy(self._data.offset(self._size), src._data, len(src))
-        self._size += len(src)
+        Write a `Span[Byte]` to this `Writer`.
+        Args:
+            bytes: The string slice to write to this Writer. Must NOT be
+              null-terminated.
+        """
+        if len(bytes) == 0:
+            return
 
-        return len(src), Error()
+        self._resize_if_needed(len(bytes))
+        memcpy(self._data.offset(self._size), bytes._data, len(bytes))
+        self._size += len(bytes)
 
-    fn write_string(inout self, src: String) -> (Int, Error):
+    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
+        """Write data to the StringBuilder."""
+
+        @parameter
+        fn write_arg[T: Writable](arg: T):
+            arg.write_to(self)
+
+        args.each[write_arg]()
+
+    fn write_string(inout self, src: String) -> None:
         """Appends a string to the builder buffer.
 
         Args:
             src: The string to append.
-
-        Returns:
-            The number of bytes written to the builder buffer.
         """
-        return self.write(src.as_bytes_slice())
+        self.write_bytes(src.as_bytes())
 
-    fn write_byte(inout self, byte: UInt8) -> (Int, Error):
+    fn write_byte(inout self, byte: UInt8) -> None:
         """Appends a byte to the builder buffer.
 
         Args:
             byte: The byte to append.
-
-        Returns:
-            The number of bytes written to the builder buffer.
         """
         self._resize_if_needed(1)
         self._data[self._size] = byte
         self._size += 1
-        return 1, Error()

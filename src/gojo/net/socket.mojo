@@ -49,11 +49,13 @@ from .ip import (
 from .fd import FileDescriptor
 from .address import Addr, BaseAddr, HostPort
 from sys import sizeof, external_call
+from memory import Pointer, UnsafePointer
 
-alias SocketClosedError = Error("Socket: Socket is already closed")
+
+alias SocketClosedError = "Socket: Socket is already closed"
 
 
-struct Socket(io.ReadWriteCloser):
+struct Socket(Writer, io.Reader, io.Closer):
     """Represents a network file descriptor. Wraps around a file descriptor and provides network functions.
 
     Args:
@@ -182,8 +184,8 @@ struct Socket(io.ReadWriteCloser):
         var remote_address = sockaddr()
         var new_fd = accept(
             self.fd.fd,
-            Reference(remote_address),
-            Reference(socklen_t(sizeof[socklen_t]())),
+            Pointer.address_of(remote_address),
+            Pointer.address_of(socklen_t(sizeof[socklen_t]())),
         )
         if new_fd == -1:
             _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("accept").unsafe_ptr())
@@ -234,7 +236,7 @@ struct Socket(io.ReadWriteCloser):
             port: The port number to bind the socket to.
         """
         var local_address = build_sockaddr_in(address, port, self.address_family)
-        if bind(self.fd.fd, Reference(local_address), sizeof[sockaddr_in]()) == -1:
+        if bind(self.fd.fd, Pointer.address_of(local_address), sizeof[sockaddr_in]()) == -1:
             _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("bind").unsafe_ptr())
             _ = shutdown(self.fd.fd, SHUT_RDWR)
             raise Error("Binding socket failed. Wait a few seconds and try again?")
@@ -257,8 +259,8 @@ struct Socket(io.ReadWriteCloser):
         var local_address_size = socklen_t(sizeof[sockaddr]())
         var status = getsockname(
             self.fd.fd,
-            Reference(local_address),
-            Reference(local_address_size),
+            Pointer.address_of(local_address),
+            Pointer.address_of(local_address_size),
         )
         if status == -1:
             _ = external_call["perror", c_void, UnsafePointer[UInt8]]("getsockname".unsafe_ptr())
@@ -272,15 +274,15 @@ struct Socket(io.ReadWriteCloser):
     fn get_peer_name(self) -> (HostPort, Error):
         """Return the address of the peer connected to the socket."""
         if self._closed:
-            return HostPort(), SocketClosedError
+            return HostPort(), Error(SocketClosedError)
 
         # TODO: Add check to see if the socket is bound and error if not.
         var remote_address = sockaddr()
         var remote_address_size = socklen_t(sizeof[sockaddr]())
         var status = getpeername(
             self.fd.fd,
-            Reference(remote_address),
-            Reference(remote_address_size),
+            Pointer.address_of(remote_address),
+            Pointer.address_of(remote_address_size),
         )
         if status == -1:
             return HostPort(), Error("Socket.get_peer_name: Failed to get address of remote socket.")
@@ -305,7 +307,7 @@ struct Socket(io.ReadWriteCloser):
             SOL_SOCKET,
             option_name,
             option_value_pointer,
-            Reference(option_len),
+            Pointer.address_of(option_len),
         )
         if status == -1:
             raise Error("Socket.get_sock_opt failed with status: " + str(status))
@@ -339,7 +341,7 @@ struct Socket(io.ReadWriteCloser):
             port: The port number to connect to.
         """
         var sa_in = build_sockaddr_in(address, port, self.address_family)
-        if connect(self.fd.fd, Reference(sa_in), sizeof[sockaddr_in]()) == -1:
+        if connect(self.fd.fd, Pointer.address_of(sa_in), sizeof[sockaddr_in]()) == -1:
             _ = external_call["perror", c_void, UnsafePointer[UInt8]](String("connect").unsafe_ptr())
             self.shutdown()
             return Error("Socket.connect: Failed to connect to the remote socket at: " + address + ":" + str(port))
@@ -354,16 +356,24 @@ struct Socket(io.ReadWriteCloser):
         self.remote_address = BaseAddr(remote.host, remote.port)
         return Error()
 
-    fn write(inout self: Self, src: Span[UInt8]) -> (Int, Error):
-        """Send data to the socket. The socket must be connected to a remote socket.
-
-        Args:
-            src: The data to send.
-
-        Returns:
-            The number of bytes sent.
+    @always_inline
+    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
         """
-        return self.fd.write(src)
+        Write a `Span[Byte]` to this `Writer`.
+        Args:
+            bytes: The string slice to write to this Writer. Must NOT be
+              null-terminated.
+        """
+        self.fd.write_bytes(bytes)
+
+    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
+        """Write data to the File Descriptor."""
+
+        @parameter
+        fn write_arg[T: Writable](arg: T):
+            arg.write_to(self)
+
+        args.each[write_arg]()
 
     fn send_all(self, src: Span[UInt8], max_attempts: Int = 3) -> Error:
         """Send data to the socket. The socket must be connected to a remote socket.
@@ -409,7 +419,7 @@ struct Socket(io.ReadWriteCloser):
             src.unsafe_ptr(),
             len(src),
             0,
-            Reference(sa),
+            Pointer.address_of(sa),
             sizeof[sockaddr_in](),
         )
 
@@ -439,7 +449,7 @@ struct Socket(io.ReadWriteCloser):
 
         var bytes = List[UInt8, True](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
-            return bytes, io.EOF
+            return bytes, Error(io.EOF)
 
         return bytes, Error()
 
@@ -495,8 +505,8 @@ struct Socket(io.ReadWriteCloser):
             buffer,
             size,
             0,
-            Reference(remote_address),
-            Reference(remote_address_ptr_size),
+            Pointer.address_of(remote_address),
+            Pointer.address_of(remote_address_ptr_size),
         )
 
         if bytes_received == -1:
@@ -510,7 +520,7 @@ struct Socket(io.ReadWriteCloser):
 
         var bytes = List[UInt8, True](unsafe_pointer=buffer, size=bytes_received, capacity=size)
         if bytes_received < bytes.capacity:
-            return bytes, remote, io.EOF
+            return bytes, remote, Error(io.EOF)
 
         return bytes, remote, Error()
 
@@ -524,8 +534,8 @@ struct Socket(io.ReadWriteCloser):
             dest.unsafe_ptr() + dest.size,
             dest.capacity - dest.size,
             0,
-            Reference(remote_address),
-            Reference(remote_address_ptr_size),
+            Pointer.address_of(remote_address),
+            Pointer.address_of(remote_address_ptr_size),
         )
         dest.size += bytes_read
 
@@ -539,7 +549,7 @@ struct Socket(io.ReadWriteCloser):
             return 0, HostPort(), err
 
         if bytes_read < dest.capacity:
-            return bytes_read, remote, io.EOF
+            return bytes_read, remote, Error(io.EOF)
 
         return bytes_read, remote, Error()
 

@@ -3,6 +3,7 @@ from collections import InlineList
 from ..syscall import SocketOptions
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr, HostPort
 from .socket import Socket
+from memory import UnsafePointer
 
 
 @value
@@ -92,16 +93,24 @@ struct TCPConnection(Movable):
 
         return bytes_read, err
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
-        """Writes data to the underlying file descriptor.
-
-        Args:
-            src: The buffer to read data into.
-
-        Returns:
-            The number of bytes written, or an error if one occurred.
+    @always_inline
+    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
         """
-        return self.socket.write(src)
+        Write a `Span[Byte]` to this `Writer`.
+        Args:
+            bytes: The string slice to write to this Writer. Must NOT be
+              null-terminated.
+        """
+        self.socket.write_bytes(bytes)
+
+    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
+        """Write data to the File Descriptor."""
+
+        @parameter
+        fn write_arg[T: Writable](arg: T):
+            arg.write_to(self)
+
+        args.each[write_arg]()
 
     fn close(inout self) -> Error:
         """Closes the underlying file descriptor.

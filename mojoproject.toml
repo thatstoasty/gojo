@@ -4,7 +4,7 @@ channels = ["conda-forge", "https://conda.modular.com/max"]
 description = "Experiments in porting over Golang stdlib into Mojo."
 name = "gojo"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.13"
+version = "2024.1.0"
 license = "MIT"
 license-file = "LICENSE"
 homepage = "https://github.com/thatstoasty/gojo"
@@ -26,7 +26,7 @@ max = ">=24.5.0,<25"
 channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 
 [feature.nightly.dependencies]
-max = ">=24.6.0.dev2024092405"
+max = ">=24.6.0.dev2024101817"
 
 [environments]
 nightly = ["nightly"]
