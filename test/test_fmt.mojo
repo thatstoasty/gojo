@@ -3,7 +3,7 @@ import testing
 
 
 def test_sprintf():
-    var s = sprintf(
+    s = sprintf(
         "Hello, %s. I am %d years old. More precisely, I am %f years old. It is %t that I like Mojo!",
         String("world"),
         29,
@@ -15,7 +15,7 @@ def test_sprintf():
         "Hello, world. I am 29 years old. More precisely, I am 29.5 years old. It is True that I like Mojo!",
     )
 
-    s = sprintf("Hello %s", String("world").as_bytes())
+    s = sprintf("Hello %s", List[UInt8, True]("world".as_bytes()))
     testing.assert_equal(s, "Hello world")
 
 

@@ -25,6 +25,11 @@ struct TCPAddr(Addr):
         self.port = port
         self.zone = zone
 
+    fn __init__(inout self, host_port: HostPort, zone: String = ""):
+        self.ip = host_port.host
+        self.port = host_port.port
+        self.zone = zone
+
     fn __init__(inout self, addr: BaseAddr):
         self.ip = addr.ip
         self.port = addr.port
@@ -54,7 +59,7 @@ struct TCPConnection(Movable):
     fn __moveinit__(inout self, owned existing: Self):
         self.socket = existing.socket^
 
-    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -64,16 +69,9 @@ struct TCPConnection(Movable):
         Returns:
             The number of bytes read, or an error if one occurred.
         """
-        var bytes_read: Int
-        var err = Error()
-        bytes_read, err = self.socket._read(dest, capacity)
-        if err:
-            if str(err) != str(io.EOF):
-                return bytes_read, err
+        return self.socket._read(dest, capacity)
 
-        return bytes_read, err
-
-    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -83,15 +81,12 @@ struct TCPConnection(Movable):
             The number of bytes read, or an error if one occurred.
         """
         if dest.size == dest.capacity:
-            return 0, Error("net.tcp.TCPConnection.read: no space left in destination buffer.")
+            raise Error("TCPConnection.read: no space left in destination buffer.")
 
-        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
+        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
         dest.size += bytes_read
 
-        return bytes_read, err
+        return bytes_read
 
     @always_inline
     fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
@@ -112,12 +107,8 @@ struct TCPConnection(Movable):
 
         args.each[write_arg]()
 
-    fn close(inout self) -> Error:
-        """Closes the underlying file descriptor.
-
-        Returns:
-            An error if one occurred, or None if the file descriptor was closed successfully.
-        """
+    fn close(inout self) raises -> None:
+        """Closes the underlying file descriptor."""
         return self.socket.close()
 
     fn local_address(self) -> TCPAddr:
@@ -146,7 +137,7 @@ fn listen_tcp(network: String, local_address: TCPAddr) raises -> TCPListener:
         network: The network type.
         local_address: The local address to listen on.
     """
-    var socket = Socket()
+    socket = Socket()
     socket.bind(local_address.ip, local_address.port)
     socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
     socket.listen()
@@ -161,12 +152,7 @@ fn listen_tcp(network: String, local_address: String) raises -> TCPListener:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    var tcp_addr: TCPAddr
-    var err: Error
-    tcp_addr, err = resolve_internet_addr(network, local_address)
-    if err:
-        raise err
-    return listen_tcp(network, tcp_addr)
+    return listen_tcp(network, resolve_internet_addr(network, local_address))
 
 
 fn listen_tcp(network: String, host: String, port: Int) raises -> TCPListener:
@@ -203,7 +189,7 @@ struct TCPListener:
     fn accept(self) raises -> TCPConnection:
         return TCPConnection(self.socket.accept())
 
-    fn close(inout self) -> Error:
+    fn close(inout self) raises -> None:
         return self.socket.close()
 
 
@@ -225,10 +211,8 @@ fn dial_tcp(network: String, remote_address: TCPAddr) raises -> TCPConnection:
     if network not in TCP_NETWORK_TYPES:
         raise Error("unsupported network type: " + network)
 
-    var socket = Socket()
-    var err = socket.connect(remote_address.ip, remote_address.port)
-    if err:
-        raise err
+    socket = Socket()
+    socket.connect(remote_address.ip, remote_address.port)
     return TCPConnection(socket^)
 
 
@@ -243,12 +227,7 @@ fn dial_tcp(network: String, remote_address: String) raises -> TCPConnection:
     Returns:
         The TCP connection.
     """
-    var remote: HostPort
-    var err: Error
-    remote, err = split_host_port(remote_address)
-    if err:
-        raise err
-    return dial_tcp(network, TCPAddr(remote.host, remote.port))
+    return dial_tcp(network, TCPAddr(split_host_port(remote_address)))
 
 
 fn dial_tcp(network: String, host: String, port: Int) raises -> TCPConnection:

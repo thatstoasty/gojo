@@ -48,10 +48,10 @@ from .file import (
 
 # Adapted from https://github.com/crisadamo/mojo-Libc . Huge thanks to Cristian!
 # C types
-alias c_void = UInt8
-alias c_char = UInt8
+alias c_void = Byte
+alias c_char = Byte
 alias c_schar = Int8
-alias c_uchar = UInt8
+alias c_uchar = Byte
 alias c_short = Int16
 alias c_ushort = UInt16
 alias c_int = Int32

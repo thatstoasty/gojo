@@ -7,28 +7,21 @@ import ..io
 
 @value
 struct Reader(
+    Writable,
     Sized,
     io.Reader,
-    io.ReaderAt,
     io.ByteReader,
     io.ByteScanner,
     io.Seeker,
 ):
-    """A Reader that implements the `io.Reader`, `io.ReaderAt`, `io.ByteReader`, `io.ByteScanner`, `io.Seeker`, and `io.WriterTo` traits
-    by reading from a string. The zero value for Reader operates like a Reader of an empty string.
-    """
-
     var string: String
     """Internal string to read from."""
     var read_pos: Int
     """Current reading index."""
-    var prev_rune: Int
-    """Index of previous rune; or < 0."""
 
     fn __init__(inout self, string: String = ""):
         self.string = string
         self.read_pos = 0
-        self.prev_rune = -1
 
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the string."""
@@ -48,7 +41,10 @@ struct Reader(
         """
         return len(self.string)
 
-    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+    fn write_to[W: Writer](self, inout writer: W):
+        writer.write_bytes(self.string.as_bytes()[self.read_pos :])
+
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
         """Reads from the underlying string into the provided `dest` buffer.
 
         Args:
@@ -59,19 +55,15 @@ struct Reader(
             The number of bytes read into dest.
         """
         if self.read_pos >= len(self.string):
-            return 0, Error(io.EOF)
+            raise io.EOF
 
-        self.prev_rune = -1
-        var bytes_to_read = self.string.as_bytes()[self.read_pos :]
-        if len(bytes_to_read) > capacity:
-            return 0, Error("strings.Reader._read: no space left in destination buffer.")
-
-        var count = min(len(bytes_to_read), capacity)
+        bytes_to_read = self.string.as_bytes()[self.read_pos :]
+        count = min(len(bytes_to_read), capacity)
         parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
         self.read_pos += count
-        return count, Error()
+        return count
 
-    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         """Reads from the underlying string into the provided `dest` buffer.
 
         Args:
@@ -81,113 +73,30 @@ struct Reader(
             The number of bytes read into dest.
         """
         if dest.size == dest.capacity:
-            return 0, Error("strings.Reader.read: no space left in destination buffer.")
+            raise Error("strings.Reader.read: no space left in destination buffer.")
 
-        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
-
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
+        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
         dest.size += bytes_read
 
-        return bytes_read, err
+        return bytes_read
 
-    fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
-        """Reads from the Reader into the `dest` buffer starting at the offset `off`.
-
-        Args:
-            dest: The destination buffer to read into.
-            off: The byte offset to start reading from.
-            capacity: The capacity of the destination buffer.
-
-        Returns:
-            It returns the number of bytes read into `dest` and an error if any.
-        """
-        # cannot modify state - see io.ReaderAt
-        if off < 0:
-            return 0, Error("strings.Reader.read_at: negative offset")
-
-        if off >= len(self.string):
-            return 0, Error(io.EOF)
-
-        var error = Error()
-        var bytes_to_read = self.string.as_bytes()[off:]
-        var count = min(len(bytes_to_read), capacity)
-        parallel_memcpy(dest.unsafe_ptr(), bytes_to_read.unsafe_ptr(), count)
-        dest._len += count
-        if count < len(dest):
-            error = Error(io.EOF)
-
-        return count, error
-
-    fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
-        """Reads from the Reader into the `dest` buffer starting at the offset off.
-        It returns the number of bytes read into dest and an error if any.
-
-        Args:
-            dest: The destination buffer to read into.
-            off: The byte offset to start reading from.
-
-        Returns:
-            The number of bytes read into dest.
-        """
-        var span = Span(dest)
-
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read_at(span, off, dest.capacity)
-        dest.size += bytes_read
-
-        return bytes_read, err
-
-    fn read_byte(inout self) -> (UInt8, Error):
+    fn read_byte(inout self) raises -> Byte:
         """Reads the next byte from the underlying string."""
-        self.prev_rune = -1
         if self.read_pos >= len(self.string):
-            return UInt8(0), Error(io.EOF)
+            raise io.EOF
 
-        var b = self.string.as_bytes()[self.read_pos]
+        b = self.string.as_bytes()[self.read_pos]
         self.read_pos += 1
-        return UInt8(b), Error()
+        return b
 
-    fn unread_byte(inout self) -> Error:
+    fn unread_byte(inout self) raises -> None:
         """Unreads the last byte read. Only the most recent byte read can be unread."""
         if self.read_pos <= 0:
-            return Error("strings.Reader.unread_byte: at beginning of string")
+            raise Error("strings.Reader.unread_byte: at beginning of string")
 
-        self.prev_rune = -1
         self.read_pos -= 1
 
-        return Error()
-
-    # # read_rune implements the [io.RuneReader] trait.
-    # fn read_rune() (ch rune, size int, err error):
-    #     if self.read_pos >= Int(len(self.string)):
-    #         self.prev_rune = -1
-    #         return 0, 0, io.EOF
-
-    #     self.prev_rune = int(self.read_pos)
-    #     if c = self.string[self.read_pos]; c < utf8.RuneSelf:
-    #         self.read_pos += 1
-    #         return rune(c), 1, nil
-
-    #     ch, size = utf8.DecodeRuneInString(self.string[self.read_pos:])
-    #     self.read_pos += Int(size)
-    #     return
-
-    # # unread_rune implements the [io.RuneScanner] trait.
-    # fn unread_rune() error:
-    #     if self.read_pos <= 0:
-    #         return errors.New("strings.Reader.unread_rune: at beginning of string")
-
-    #     if self.prev_rune < 0:
-    #         return errors.New("strings.Reader.unread_rune: previous operation was not read_rune")
-
-    #     self.read_pos = Int(self.prev_rune)
-    #     self.prev_rune = -1
-    #     return nil
-
-    fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
+    fn seek(inout self, offset: Int, whence: Int) raises -> Int:
         """Seeks to a new position in the underlying string. The next read will start from that position.
 
         Args:
@@ -197,8 +106,7 @@ struct Reader(
         Returns:
             The new position in the string.
         """
-        self.prev_rune = -1
-        var position: Int = 0
+        position = 0
 
         if whence == io.SEEK_START:
             position = offset
@@ -207,15 +115,15 @@ struct Reader(
         elif whence == io.SEEK_END:
             position = Int(len(self.string)) + offset
         else:
-            return Int(0), Error("strings.Reader.seek: invalid whence")
+            raise Error("strings.Reader.seek: invalid whence")
 
         if position < 0:
-            return Int(0), Error("strings.Reader.seek: negative position")
+            raise Error("strings.Reader.seek: negative position")
 
         self.read_pos = position
-        return position, Error()
+        return position
 
-    fn write_to[W: io.Writer, //](inout self, inout writer: W) -> (Int, Error):
+    fn write_to[W: io.Writer, //](inout self, inout writer: W) raises -> Int:
         """Writes the remaining portion of the underlying string to the provided writer.
 
         Args:
@@ -224,46 +132,15 @@ struct Reader(
         Returns:
             The number of bytes written to the writer.
         """
-        self.prev_rune = -1
-        var err = Error()
         if self.read_pos >= len(self.string):
-            return Int(0), err
+            raise io.EOF
 
-        var chunk_to_write = self.string.as_bytes()[self.read_pos :]
+        chunk_to_write = self.string.as_bytes()[self.read_pos :]
         writer.write_bytes(chunk_to_write)
         bytes_written = len(chunk_to_write)
 
         self.read_pos += bytes_written
-        if bytes_written != len(chunk_to_write) and not err:
-            err = str(io.ERR_SHORT_WRITE)
-
-        return bytes_written, err
-
-    # # TODO: How can I differentiate between the two write_to methods when the writer implements both traits?
-    # fn write_to[W: io.StringWriter](inout self, inout writer: W) raises -> Int:
-    #     """Writes the remaining portion of the underlying string to the provided writer.
-    #     Implements the [io.WriterTo] trait.
-
-    #     Args:
-    #         writer: The writer to write the remaining portion of the string to.
-
-    #     Returns:
-    #         The number of bytes written to the writer.
-    #     """
-    #     self.prev_rune = -1
-    #     if self.read_pos >= Int(len(self.string)):
-    #         return 0
-
-    #     var chunk_to_write = self.string[self.read_pos:]
-    #     var bytes_written = io.write_string(writer, chunk_to_write)
-    #     if bytes_written > len(chunk_to_write):
-    #         raise Error("strings.Reader.write_to: invalid write_string count")
-
-    #     self.read_pos += Int(bytes_written)
-    #     if bytes_written != len(chunk_to_write):
-    #         raise Error(io.ERR_SHORT_WRITE)
-
-    #     return Int(bytes_written)
+        return bytes_written
 
     fn reset(inout self, string: String):
         """Resets the [Reader] to be reading from the beginning of the provided string.
@@ -273,7 +150,6 @@ struct Reader(
         """
         self.string = string
         self.read_pos = 0
-        self.prev_rune = -1
 
     fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__origin_of(self)]:
         """Reads from the underlying string until a delimiter is found.
@@ -282,8 +158,8 @@ struct Reader(
         Returns:
             The string slice containing the bytes read until the delimiter.
         """
-        var start = self.read_pos
-        var bytes = self.string.as_bytes()
+        start = self.read_pos
+        bytes = self.string.as_bytes()
         while self.read_pos < len(self.string):
             if bytes[self.read_pos] == ord(delimiter):
                 break

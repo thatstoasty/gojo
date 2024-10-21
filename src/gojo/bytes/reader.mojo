@@ -6,14 +6,14 @@ import ..io
 
 
 struct Reader(
+    Writable,
     Sized,
     io.Reader,
-    io.ReaderAt,
     io.Seeker,
     io.ByteReader,
     io.ByteScanner,
 ):
-    """A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
+    """A Reader implements the io.Reader, io.WriterTo, io.Seeker,
     io.ByteScanner, and io.RuneScanner Interfaces by reading from
     a bytes pointer. Unlike a `Buffer`, a `Reader` is read-only and supports seeking.
 
@@ -22,7 +22,7 @@ struct Reader(
     from gojo.bytes import reader
 
     var reader = reader.Reader(buffer=String("Hello, World!").as_bytes())
-    var dest = List[UInt8, True](capacity=16)
+    var dest = List[Byte, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     print(String(dest))  # Output: Hello, World!
@@ -30,7 +30,7 @@ struct Reader(
     .
     """
 
-    var _data: UnsafePointer[UInt8]
+    var _data: UnsafePointer[Byte]
     """The contents of the bytes buffer. Active contents are from buf[off : len(buf)]."""
     var _size: Int
     """The number of bytes stored in the buffer."""
@@ -38,10 +38,8 @@ struct Reader(
     """The maximum capacity of the buffer, eg the allocation of self._data."""
     var index: Int
     """Current reading index."""
-    var prev_rune: Int
-    """Index of previous rune; or < 0."""
 
-    fn __init__(inout self, owned buffer: List[UInt8, True]):
+    fn __init__(inout self, owned buffer: List[Byte, True]):
         """Initializes a new `Reader` with the given List buffer.
 
         Args:
@@ -51,7 +49,6 @@ struct Reader(
         self._size = buffer.size
         self._data = buffer.steal_data()
         self.index = 0
-        self.prev_rune = -1
 
     fn __init__(inout self, text: String):
         """Initializes a new `Reader` with the given String.
@@ -64,20 +61,17 @@ struct Reader(
         self._size = bytes.size
         self._data = bytes.steal_data()
         self.index = 0
-        self.prev_rune = -1
 
     fn __moveinit__(inout self, owned other: Reader):
         self._capacity = other._capacity
         self._size = other._size
         self._data = other._data
         self.index = other.index
-        self.prev_rune = other.prev_rune
 
-        other._data = UnsafePointer[UInt8]()
+        other._data = UnsafePointer[Byte]()
         other._size = 0
         other._capacity = 0
         other.index = 0
-        other.prev_rune = -1
 
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the slice."""
@@ -88,11 +82,14 @@ struct Reader(
         if self._data:
             self._data.free()
 
-    fn as_bytes(ref [_]self) -> Span[UInt8, __origin_of(self)]:
-        """Returns the internal data as a Span[UInt8]."""
-        return Span[UInt8, __origin_of(self)](unsafe_ptr=self._data, len=self._size)
+    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self)]:
+        """Returns the internal data as a Span[Byte]."""
+        return Span[Byte, __origin_of(self)](unsafe_ptr=self._data, len=self._size)
 
-    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+    fn write_to[W: Writer](self, inout writer: W):
+        writer.write_bytes(self.as_bytes()[self.index :])
+
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
         """Reads from the internal buffer into the destination buffer.
 
         Args:
@@ -103,19 +100,18 @@ struct Reader(
             Int: The number of bytes read into dest.
         """
         if self.index >= self._size:
-            return 0, Error(io.EOF)
+            raise io.EOF
 
         # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
-        self.prev_rune = -1
         var bytes_to_write = self.as_bytes()[self.index : self._size]
         var count = min(len(bytes_to_write), capacity)
         parallel_memcpy(dest, bytes_to_write.unsafe_ptr(), count)
         # var bytes_written = copy(dest, bytes_to_write.unsafe_ptr(), len(bytes_to_write))
         self.index += count
 
-        return count, Error()
+        return count
 
-    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         """Reads from the internal buffer into the destination buffer.
 
         Args:
@@ -125,14 +121,12 @@ struct Reader(
             Int: The number of bytes read into dest.
         """
         var dest_ptr = dest.unsafe_ptr().offset(dest.size)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
+        bytes_read = self._read(dest_ptr, dest.capacity - dest.size)
         dest.size += bytes_read
 
-        return bytes_read, err
+        return bytes_read
 
-    fn _read_at(self, inout dest: Span[UInt8], off: Int, capacity: Int) -> (Int, Error):
+    fn _read_at(self, inout dest: Span[Byte], off: Int, capacity: Int) raises -> Int:
         """Reads `len(dest)` bytes into `dest` beginning at byte offset `off`.
 
         Args:
@@ -145,21 +139,21 @@ struct Reader(
         """
         # cannot modify state - see io.ReaderAt
         if off < 0:
-            return 0, Error("bytes.Reader.read_at: negative offset")
+            raise Error("bytes.Reader.read_at: negative offset")
 
         if off >= Int(self._size):
-            return 0, Error(io.EOF)
+            raise io.EOF
 
         var unread_bytes = self.as_bytes()[off : self._size]
         var count = min(len(unread_bytes), capacity)
         parallel_memcpy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), count)
         # var bytes_written = copy(dest.unsafe_ptr(), unread_bytes.unsafe_ptr(), len(unread_bytes))
         if count < len(dest):
-            return 0, Error(io.EOF)
+            raise io.EOF
 
-        return count, Error()
+        return count
 
-    fn read_at(self, inout dest: List[UInt8, True], off: Int) -> (Int, Error):
+    fn read_at(self, inout dest: List[Byte, True], off: Int) raises -> Int:
         """Reads `len(dest)` bytes into `dest` beginning at byte offset `off`.
 
         Args:
@@ -170,64 +164,27 @@ struct Reader(
             The number of bytes read into dest.
         """
         var span = Span(dest)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read_at(span, off, dest.capacity)
+        bytes_read = self._read_at(span, off, dest.capacity)
         dest.size += bytes_read
 
-        return bytes_read, err
+        return bytes_read
 
-    fn read_byte(inout self) -> (UInt8, Error):
+    fn read_byte(inout self) raises -> Byte:
         """Reads and returns a single byte from the internal buffer."""
-        self.prev_rune = -1
         if self.index >= self._size:
-            return UInt8(0), Error(io.EOF)
+            raise io.EOF
 
         var byte = self._data[self.index]
         self.index += 1
-        return byte, Error()
+        return byte
 
-    fn unread_byte(inout self) -> Error:
-        """Unreads the last byte read by moving the read position back by one.
-
-        Returns:
-            An error if the read position is at the beginning of the buffer.
-        """
+    fn unread_byte(inout self) raises -> None:
+        """Unreads the last byte read by moving the read position back by one."""
         if self.index <= 0:
-            return Error("bytes.Reader.unread_byte: at beginning of buffer.")
-        self.prev_rune = -1
+            raise Error("bytes.Reader.unread_byte: at beginning of buffer.")
         self.index -= 1
 
-        return Error()
-
-    # # read_rune implements the [io.RuneReader] Interface.
-    # fn read_rune(self) (ch rune, size Int, err error):
-    #     if self.index >= Int(self._size):
-    #         self.prev_rune = -1
-    #         return 0, 0, io.EOF
-
-    #     self.prev_rune = Int(self.index)
-    #     if c := self.buffer[self.index]; c < utf8.RuneSelf:
-    #         self.index+= 1
-    #         return rune(c), 1, nil
-
-    #     ch, size = utf8.DecodeRune(self.buffer[self.index:])
-    #     self.index += Int(size)
-    #     return
-
-    # # unread_rune complements [Reader.read_rune] in implementing the [io.RuneScanner] Interface.
-    # fn unread_rune(self) error:
-    #     if self.index <= 0:
-    #         return errors.New("bytes.Reader.unread_rune: at beginning of slice")
-
-    #     if self.prev_rune < 0:
-    #         return errors.New("bytes.Reader.unread_rune: previous operation was not read_rune")
-
-    #     self.index = Int(self.prev_rune)
-    #     self.prev_rune = -1
-    #     return nil
-
-    fn seek(inout self, offset: Int, whence: Int) -> (Int, Error):
+    fn seek(inout self, offset: Int, whence: Int) raises -> Int:
         """Moves the read position to the specified `offset` from the specified `whence`.
 
         Args:
@@ -237,7 +194,6 @@ struct Reader(
         Returns:
             The new position in which the next read will start from.
         """
-        self.prev_rune = -1
         var position: Int = 0
 
         if whence == io.SEEK_START:
@@ -247,15 +203,15 @@ struct Reader(
         elif whence == io.SEEK_END:
             position = self._size + offset
         else:
-            return Int(0), Error("bytes.Reader.seek: invalid whence")
+            raise Error("bytes.Reader.seek: invalid whence")
 
         if position < 0:
-            return Int(0), Error("bytes.Reader.seek: negative position")
+            raise Error("bytes.Reader.seek: negative position")
 
         self.index = position
-        return position, Error()
+        return position
 
-    fn write_to[W: io.Writer](inout self, inout writer: W) -> (Int, Error):
+    fn write_to[W: io.Writer](inout self, inout writer: W) raises -> Int:
         """Writes data to `writer` until the buffer is drained or an error occurs.
 
         Args:
@@ -264,9 +220,8 @@ struct Reader(
         Returns:
             The number of bytes written and an error if one occurred.
         """
-        self.prev_rune = -1
         if self.index >= self._size:
-            return 0, Error()
+            return 0
 
         var bytes = self.as_bytes()[self.index : self._size]
         writer.write_bytes(bytes)
@@ -274,11 +229,11 @@ struct Reader(
 
         self.index += write_count
         if write_count != len(bytes):
-            return write_count, Error(io.ERR_SHORT_WRITE)
+            raise Error(io.ERR_SHORT_WRITE)
 
-        return write_count, Error()
+        return write_count
 
-    fn reset(inout self, owned buffer: List[UInt8, True]) -> None:
+    fn reset(inout self, owned buffer: List[Byte, True]) -> None:
         """Resets the `Reader` to be reading from `buffer`.
 
         Args:
@@ -288,4 +243,3 @@ struct Reader(
         self._size = buffer.size
         self._data = buffer.steal_data()
         self.index = 0
-        self.prev_rune = -1

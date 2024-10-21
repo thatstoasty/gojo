@@ -4,9 +4,9 @@
 
 # def test_dial():
 #     # Connect to example.com on port 80 and send a GET request
-#     var connection = dial_tcp("tcp", TCPAddr(get_ip_address("www.example.com"), 80))
-#     var bytes_written: Int = 0
-#     var err = Error()
+#     connection = dial_tcp("tcp", TCPAddr(get_ip_address("www.example.com"), 80))
+#     bytes_written: Int = 0
+#     err = Error()
 #     bytes_written, err = connection.write(
 #         String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
 #     )
@@ -18,8 +18,8 @@
 #         return
 
 #     # Read the response from the connection
-#     var response = List[UInt8, True](capacity=4096)
-#     var bytes_read: Int = 0
+#     response = List[UInt8, True](capacity=4096)
+#     bytes_read: Int = 0
 #     bytes_read, err = connection.read(response)
 #     if err:
 #         raise err
@@ -37,11 +37,11 @@
 
 
 # def test_listener():
-#     var listener = listen_tcp("tcp", TCPAddr("0.0.0.0", 8081))
+#     listener = listen_tcp("tcp", TCPAddr("0.0.0.0", 8081))
 #     while True:
-#         var conn = listener.accept()
+#         conn = listener.accept()
 #         print("Accepted connection from", str(conn.remote_address()))
-#         var err = conn.close()
+#         err = conn.close()
 #         if err:
 #             raise err
 
@@ -51,31 +51,31 @@
 #     # with Socket() as socket:
 #     #     socket.bind("0.0.0.0", 8080)
 
-#     var socket = Socket(protocol=ProtocolFamily.PF_UNIX)
+#     socket = Socket(protocol=ProtocolFamily.PF_UNIX)
 #     socket.bind("0.0.0.0", 8080)
 #     _ = socket.connect(get_ip_address("www.example.com"), 80)
 #     print("File number", socket.file_no())
-#     var local = socket.get_sock_name()
-#     var remote = socket.get_peer_name()
+#     local = socket.get_sock_name()
+#     remote = socket.get_peer_name()
 #     print("Local address", str(local), str(socket.local_address))
 #     print("Remote address", str(remote[0]), str(socket.remote_address))
 #     socket.set_socket_option(SocketOptions.SO_REUSEADDR, 1)
 #     print("REUSE_ADDR value", socket.get_socket_option(SocketOptions.SO_REUSEADDR))
-#     # var timeout = 30
+#     # timeout = 30
 #     # socket.set_timeout(timeout)
 #     # print(socket.get_timeout())
 #     socket.shutdown()
 #     print("closing")
-#     var err = socket.close()
+#     err = socket.close()
 #     print("closed")
 #     if err:
 #         print("err returned")
 #         raise err
-#     # var option_value = socket.get_sock_opt(SocketOptions.SO_REUSEADDR)
+#     # option_value = socket.get_sock_opt(SocketOptions.SO_REUSEADDR)
 #     # print(option_value)
 #     # socket.connect(self.ip, self.port)
 #     # socket.send(message)
-#     # var response = socket.receive() # TODO: call receive until all data is fetched, receive should also just return bytes
+#     # response = socket.receive() # TODO: call receive until all data is fetched, receive should also just return bytes
 #     # socket.shutdown()
 #     # socket.close()
 

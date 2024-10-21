@@ -3,7 +3,7 @@ import testing
 
 
 def test_string_width_east_asian():
-    var s: String = "𡨸漢𡨸漢"
+    s = "𡨸漢𡨸漢"
 
     testing.assert_equal(string_width(s), 8, msg="The length of 𡨸漢𡨸漢 should be 8.")
     for r in s:
@@ -12,7 +12,7 @@ def test_string_width_east_asian():
 
 
 def test_string_width_ascii():
-    var ascii: String = "Hello, World!"
+    ascii = "Hello, World!"
 
     testing.assert_equal(string_width(ascii), 13)
     for r in ascii:
@@ -21,7 +21,7 @@ def test_string_width_ascii():
 
 
 def test_string_width_emoji():
-    var s: String = "🔥🔥🔥🔥"
+    s = "🔥🔥🔥🔥"
 
     testing.assert_equal(string_width(s), 8)
     for r in s:

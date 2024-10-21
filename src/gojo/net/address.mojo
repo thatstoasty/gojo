@@ -56,7 +56,7 @@ struct BaseAddr:
         return join_host_port(self.ip, str(self.port))
 
 
-fn resolve_internet_addr(network: String, address: String) -> (TCPAddr, Error):
+fn resolve_internet_addr(network: String, address: String) raises -> TCPAddr:
     """Resolve an address to a TCPAddr.
 
     Args:
@@ -69,7 +69,6 @@ fn resolve_internet_addr(network: String, address: String) -> (TCPAddr, Error):
     var host: String = ""
     var port: String = ""
     var portnum: Int = 0
-    var err = Error()
     if (
         network == NetworkType.tcp.value
         or network == NetworkType.tcp4.value
@@ -80,24 +79,22 @@ fn resolve_internet_addr(network: String, address: String) -> (TCPAddr, Error):
     ):
         if address != "":
             var result = split_host_port(address)
-            if result[1]:
-                return TCPAddr(), result[1]
 
-            host = result[0].host
-            port = str(result[0].port)
-            portnum = result[0].port
+            host = result.host
+            port = str(result.port)
+            portnum = result.port
     elif network == NetworkType.ip.value or network == NetworkType.ip4.value or network == NetworkType.ip6.value:
         if address != "":
             host = address
     elif network == NetworkType.unix.value:
-        return TCPAddr(), Error("Unix addresses not supported yet")
+        raise Error("Unix addresses not supported yet")
     else:
-        return TCPAddr(), Error("unsupported network type: " + network)
-    return TCPAddr(host, portnum), err
+        raise Error("unsupported network type: " + network)
+    return TCPAddr(host, portnum)
 
 
-alias MISSING_PORT_ERROR = Error("missing port in address")
-alias TOO_MANY_COLONS_ERROR = Error("too many colons in address")
+alias MISSING_PORT_ERROR = "missing port in address"
+alias TOO_MANY_COLONS_ERROR = "too many colons in address"
 
 
 @value
@@ -119,7 +116,7 @@ fn join_host_port(host: String, port: String) -> String:
     return host + ":" + port
 
 
-fn split_host_port(hostport: String) -> (HostPort, Error):
+fn split_host_port(hostport: String) raises -> HostPort:
     var host: String = ""
     var port: String = ""
     var colon_index = hostport.rfind(":")
@@ -127,38 +124,38 @@ fn split_host_port(hostport: String) -> (HostPort, Error):
     var k: Int = 0
 
     if colon_index == -1:
-        return HostPort(), MISSING_PORT_ERROR
+        raise MISSING_PORT_ERROR
     if hostport[0] == "[":
         var end_bracket_index = hostport.find("]")
         if end_bracket_index == -1:
-            return HostPort(), Error("missing ']' in address")
+            raise Error("missing ']' in address")
         if end_bracket_index + 1 == len(hostport):
-            return HostPort(), MISSING_PORT_ERROR
+            raise MISSING_PORT_ERROR
         elif end_bracket_index + 1 == colon_index:
             host = hostport[1:end_bracket_index]
             j = 1
             k = end_bracket_index + 1
         else:
             if hostport[end_bracket_index + 1] == ":":
-                return HostPort(), TOO_MANY_COLONS_ERROR
+                raise TOO_MANY_COLONS_ERROR
             else:
-                return HostPort(), MISSING_PORT_ERROR
+                raise MISSING_PORT_ERROR
     else:
         host = hostport[:colon_index]
         if host.find(":") != -1:
-            return HostPort(), TOO_MANY_COLONS_ERROR
+            raise TOO_MANY_COLONS_ERROR
     if hostport[j:].find("[") != -1:
-        return HostPort(), Error("unexpected '[' in address")
+        raise Error("unexpected '[' in address")
     if hostport[k:].find("]") != -1:
-        return HostPort(), Error("unexpected ']' in address")
+        raise Error("unexpected ']' in address")
     port = hostport[colon_index + 1 :]
 
     if port == "":
-        return HostPort(), MISSING_PORT_ERROR
+        raise MISSING_PORT_ERROR
     if host == "":
-        return HostPort(), Error("missing host")
+        raise Error("missing host")
 
     try:
-        return HostPort(host, atol(port)), Error()
+        return HostPort(host, atol(port))
     except e:
-        return HostPort(), e
+        raise e

@@ -2,7 +2,7 @@ from utils import Span
 from memory import UnsafePointer
 
 
-fn equals(left: List[UInt8, True], right: List[UInt8, True]) -> Bool:
+fn equals(left: List[Byte, True], right: List[Byte, True]) -> Bool:
     """Reports if `left` and `right` are equal.
 
     Args:
@@ -17,7 +17,7 @@ fn equals(left: List[UInt8, True], right: List[UInt8, True]) -> Bool:
     return True
 
 
-fn has_prefix(bytes: List[UInt8, True], prefix: List[UInt8, True]) -> Bool:
+fn has_prefix(bytes: List[Byte, True], prefix: List[Byte, True]) -> Bool:
     """Reports if the list begins with prefix.
 
     Args:
@@ -29,7 +29,7 @@ fn has_prefix(bytes: List[UInt8, True], prefix: List[UInt8, True]) -> Bool:
     return len_comparison and prefix_comparison
 
 
-fn has_suffix(bytes: List[UInt8, True], suffix: List[UInt8, True]) -> Bool:
+fn has_suffix(bytes: List[Byte, True], suffix: List[Byte, True]) -> Bool:
     """Reports if the list ends with suffix.
 
     Args:
@@ -41,7 +41,7 @@ fn has_suffix(bytes: List[UInt8, True], suffix: List[UInt8, True]) -> Bool:
     return len_comparison and suffix_comparison
 
 
-fn index_byte(bytes: List[UInt8, True], delim: UInt8) -> Int:
+fn index_byte(bytes: List[Byte, True], delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte `delim`.
 
     Args:
@@ -58,7 +58,7 @@ fn index_byte(bytes: List[UInt8, True], delim: UInt8) -> Int:
     return -1
 
 
-fn index_byte(bytes: UnsafePointer[Scalar[DType.uint8]], size: Int, delim: UInt8) -> Int:
+fn index_byte(bytes: UnsafePointer[Scalar[DType.uint8]], size: Int, delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte `delim`.
 
     Args:
@@ -70,13 +70,13 @@ fn index_byte(bytes: UnsafePointer[Scalar[DType.uint8]], size: Int, delim: UInt8
         The index of the first occurrence of the byte `delim`.
     """
     for i in range(size):
-        if UInt8(bytes[i]) == delim:
+        if Byte(bytes[i]) == delim:
             return i
 
     return -1
 
 
-fn index_byte(bytes: Span[UInt8], delim: UInt8) -> Int:
+fn index_byte(bytes: Span[Byte], delim: Byte) -> Int:
     """Return the index of the first occurrence of the byte `delim`.
 
     Args:
@@ -93,7 +93,7 @@ fn index_byte(bytes: Span[UInt8], delim: UInt8) -> Int:
     return -1
 
 
-fn to_string(bytes: List[UInt8, True]) -> String:
+fn to_string(bytes: List[Byte, True]) -> String:
     """Makes a deep copy of the list supplied and converts it to a string.
     If it's not null terminated, it will append a null byte.
 
@@ -103,7 +103,7 @@ fn to_string(bytes: List[UInt8, True]) -> String:
     Returns:
         A String built from the list of bytes.
     """
-    var copy = List[UInt8](bytes)
+    var copy = List[Byte](bytes)
     if copy[-1] != 0:
         copy.append(0)
     return String(copy^)

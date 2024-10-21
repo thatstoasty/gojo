@@ -41,7 +41,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
 
         var status = getaddrinfo(
             host.unsafe_ptr(),
-            UnsafePointer[UInt8](),
+            UnsafePointer[Byte](),
             Pointer.address_of(hints),
             Pointer.address_of(servinfo),
         )
@@ -64,7 +64,7 @@ fn get_addr_info(host: String) raises -> AddrInfo:
 
         var status = getaddrinfo_unix(
             host.unsafe_ptr(),
-            UnsafePointer[UInt8](),
+            UnsafePointer[Byte](),
             Pointer.address_of(hints),
             Pointer.address_of(servinfo),
         )
@@ -117,7 +117,7 @@ fn convert_binary_port_to_int(port: UInt16) -> Int:
 
 
 fn convert_ip_to_binary(ip_address: String, address_family: Int) -> UInt32:
-    var ip = List[UInt8, True](0, 0, 0, 0)
+    var ip = List[Byte, True](0, 0, 0, 0)
     var status = inet_pton(address_family, ip_address.unsafe_ptr(), ip.unsafe_ptr())
     if status == -1:
         print("Failed to convert IP address to binary")
@@ -138,8 +138,8 @@ fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, 
     """
     # It seems like the len of the buffer depends on the length of the string IP.
     # Allocating 10 works for localhost (127.0.0.1) which I suspect is 9 bytes + 1 null terminator byte. So max should be 16 (15 + 1).
-    var ip = String(List[UInt8, True](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-    _ = inet_ntop(address_family, UnsafePointer.address_of(ip_address).bitcast[UInt8](), ip.unsafe_ptr(), 16)
+    var ip = String(List[Byte, True](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    _ = inet_ntop(address_family, UnsafePointer.address_of(ip_address).bitcast[Byte](), ip.unsafe_ptr(), 16)
 
     var index = 0
     while True:
@@ -175,7 +175,7 @@ fn build_sockaddr_in(ip_address: String, port: Int, address_family: Int) -> sock
     return sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
 
 
-fn convert_sockaddr_to_host_port(owned sockaddr: sockaddr) -> (HostPort, Error):
+fn convert_sockaddr_to_host_port(owned sockaddr: sockaddr) raises -> HostPort:
     """Casts a sockaddr pointer to a sockaddr_in pointer and converts the binary IP and port to a string and int respectively.
 
     Args:
@@ -185,15 +185,12 @@ fn convert_sockaddr_to_host_port(owned sockaddr: sockaddr) -> (HostPort, Error):
         A tuple containing the HostPort and an Error if any occurred,.
     """
     if not UnsafePointer.address_of(sockaddr):
-        return HostPort(), Error("sockaddr is null, nothing to convert.")
+        raise Error("sockaddr is null, nothing to convert.")
 
     # Cast sockaddr struct to sockaddr_in to convert binary IP to string.
     var addr_in = UnsafePointer.address_of(sockaddr).bitcast[sockaddr_in]().take_pointee()
 
-    return (
-        HostPort(
-            host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
-            port=convert_binary_port_to_int(addr_in.sin_port),
-        ),
-        Error(),
+    return HostPort(
+        host=convert_binary_ip_to_string(addr_in.sin_addr.s_addr, AddressFamily.AF_INET, 16),
+        port=convert_binary_port_to_int(addr_in.sin_port),
     )

@@ -1,12 +1,14 @@
 from utils import Span
+from os import abort
+from sys import external_call
+from memory import UnsafePointer
 import ..io
 from ..syscall import (
     recv,
     send,
     close,
 )
-from sys import external_call
-from memory import UnsafePointer
+
 
 alias O_RDWR = 0o2
 
@@ -25,20 +27,19 @@ struct FileDescriptor(Writer, io.Reader, io.Closer):
 
     fn __del__(owned self):
         if not self.is_closed:
-            var err = self.close()
-            if err:
-                print(str(err))
+            try:
+                self.close()
+            except e:
+                print(e)
 
-    fn close(inout self) -> Error:
+    fn close(inout self) raises -> None:
         """Mark the file descriptor as closed."""
-        var close_status = close(self.fd)
-        if close_status == -1:
-            return Error("FileDescriptor.close: Failed to close socket")
+        if close(self.fd) == -1:
+            raise Error("FileDescriptor.close: Failed to close socket.")
 
         self.is_closed = True
-        return Error()
 
-    fn _read(inout self, inout dest: UnsafePointer[UInt8], capacity: Int) -> (Int, Error):
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
         """Receive data from the file descriptor and write it to the buffer provided.
 
         Args:
@@ -50,14 +51,13 @@ struct FileDescriptor(Writer, io.Reader, io.Closer):
         """
         var bytes_received = recv(self.fd, dest, capacity, 0)
         if bytes_received == 0:
-            return bytes_received, Error(io.EOF)
+            raise Error(io.EOF)
+        elif bytes_received == -1:
+            raise Error("Failed to receive message from socket.")
 
-        if bytes_received == -1:
-            return 0, Error("Failed to receive message from socket.")
+        return bytes_received
 
-        return bytes_received, Error()
-
-    fn read(inout self, inout dest: List[UInt8, True]) -> (Int, Error):
+    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         """Receive data from the file descriptor and write it to the buffer provided.
 
         Args:
@@ -67,15 +67,11 @@ struct FileDescriptor(Writer, io.Reader, io.Closer):
             The number of bytes read, or an error if one occurred.
         """
         if dest.size == dest.capacity:
-            return 0, Error("net.FileDescriptor.read: no space left in destination buffer.")
+            raise Error("FileDescriptor.read: no space left in destination buffer.")
 
-        var dest_ptr = dest.unsafe_ptr().offset(dest.size)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = self._read(dest_ptr, dest.capacity - dest.size)
+        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
         dest.size += bytes_read
-
-        return bytes_read, err
+        return bytes_read
 
     @always_inline
     fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
@@ -90,7 +86,7 @@ struct FileDescriptor(Writer, io.Reader, io.Closer):
 
         var bytes_sent = send(self.fd, bytes.unsafe_ptr(), len(bytes), 0)
         if bytes_sent == -1:
-            panic("Failed to send message")
+            abort("Failed to send message")
 
     fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
         """Write data to the File Descriptor."""

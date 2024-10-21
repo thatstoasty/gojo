@@ -17,7 +17,7 @@ struct FD:
 
 
 alias SUCCESS = 0
-alias GRND_NONBLOCK: UInt8 = 1
+alias GRND_NONBLOCK: Byte = 1
 
 
 # --- ( error.h Constants )-----------------------------------------------------
@@ -353,7 +353,7 @@ struct addrinfo:
     var ai_socktype: c_int
     var ai_protocol: c_int
     var ai_addrlen: socklen_t
-    var ai_canonname: UnsafePointer[UInt8]
+    var ai_canonname: UnsafePointer[Byte]
     var ai_addr: UnsafePointer[sockaddr]
     var ai_next: UnsafePointer[addrinfo]
 
@@ -364,7 +364,7 @@ struct addrinfo:
         ai_socktype: c_int = 0,
         ai_protocol: c_int = 0,
         ai_addrlen: socklen_t = 0,
-        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
+        ai_canonname: UnsafePointer[Byte] = UnsafePointer[Byte](),
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
@@ -391,7 +391,7 @@ struct addrinfo_unix:
     var ai_protocol: c_int
     var ai_addrlen: socklen_t
     var ai_addr: UnsafePointer[sockaddr]
-    var ai_canonname: UnsafePointer[UInt8]
+    var ai_canonname: UnsafePointer[Byte]
     var ai_next: UnsafePointer[addrinfo]
 
     fn __init__(
@@ -401,7 +401,7 @@ struct addrinfo_unix:
         ai_socktype: c_int = 0,
         ai_protocol: c_int = 0,
         ai_addrlen: socklen_t = 0,
-        ai_canonname: UnsafePointer[UInt8] = UnsafePointer[UInt8](),
+        ai_canonname: UnsafePointer[Byte] = UnsafePointer[Byte](),
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
@@ -476,10 +476,10 @@ fn ntohs(netshort: c_ushort) -> c_ushort:
 
 fn inet_ntop(
     af: c_int,
-    src: UnsafePointer[UInt8],
-    dst: UnsafePointer[UInt8],
+    src: UnsafePointer[Byte],
+    dst: UnsafePointer[Byte],
     size: socklen_t,
-) -> UnsafePointer[UInt8]:
+) -> UnsafePointer[Byte]:
     """Libc POSIX `inet_ntop` function
     Reference: https://man7.org/linux/man-pages/man3/inet_ntop.3p.html.
     Fn signature: `const char *inet_ntop(int af, const void *restrict src, char *restrict dst, socklen_t size)`.
@@ -493,10 +493,10 @@ fn inet_ntop(
     Returns:
         A pointer to the buffer containing the result.
     """
-    return external_call["inet_ntop", UnsafePointer[UInt8]](af, src, dst, size)
+    return external_call["inet_ntop", UnsafePointer[Byte]](af, src, dst, size)
 
 
-fn inet_pton(af: c_int, src: UnsafePointer[UInt8], dst: UnsafePointer[UInt8]) -> c_int:
+fn inet_pton(af: c_int, src: UnsafePointer[Byte], dst: UnsafePointer[Byte]) -> c_int:
     """Libc POSIX `inet_pton` function
     Reference: https://man7.org/linux/man-pages/man3/inet_ntop.3p.html
     Fn signature: `int inet_pton(int af, const char *restrict src, void *restrict dst)`.
@@ -512,12 +512,12 @@ fn inet_pton(af: c_int, src: UnsafePointer[UInt8], dst: UnsafePointer[UInt8]) ->
         "inet_pton",
         c_int,
         c_int,
-        UnsafePointer[UInt8],
-        UnsafePointer[UInt8],
+        UnsafePointer[Byte],
+        UnsafePointer[Byte],
     ](af, src, dst)
 
 
-fn inet_addr(cp: UnsafePointer[UInt8]) -> in_addr_t:
+fn inet_addr(cp: UnsafePointer[Byte]) -> in_addr_t:
     """Libc POSIX `inet_addr` function
     Reference: https://man7.org/linux/man-pages/man3/inet_addr.3p.html
     Fn signature: `in_addr_t inet_addr(const char *cp)`.
@@ -528,10 +528,10 @@ fn inet_addr(cp: UnsafePointer[UInt8]) -> in_addr_t:
     Returns:
         The address in network byte order.
     """
-    return external_call["inet_addr", in_addr_t, UnsafePointer[UInt8]](cp)
+    return external_call["inet_addr", in_addr_t, UnsafePointer[Byte]](cp)
 
 
-fn inet_ntoa(addr: in_addr) -> UnsafePointer[UInt8]:
+fn inet_ntoa(addr: in_addr) -> UnsafePointer[Byte]:
     """Libc POSIX `inet_ntoa` function
     Reference: https://man7.org/linux/man-pages/man3/inet_addr.3p.html
     Fn signature: `char *inet_ntoa(struct in_addr in)`.
@@ -542,7 +542,7 @@ fn inet_ntoa(addr: in_addr) -> UnsafePointer[UInt8]:
     Returns:
         The address in network byte order.
     """
-    return external_call["inet_ntoa", UnsafePointer[UInt8], in_addr](addr)
+    return external_call["inet_ntoa", UnsafePointer[Byte], in_addr](addr)
 
 
 fn socket(domain: c_int, type: c_int, protocol: c_int) -> c_int:
@@ -565,7 +565,7 @@ fn setsockopt(
     socket: c_int,
     level: c_int,
     option_name: c_int,
-    option_value: UnsafePointer[UInt8],
+    option_value: UnsafePointer[Byte],
     option_len: socklen_t,
 ) -> c_int:
     """Libc POSIX `setsockopt` function
@@ -588,7 +588,7 @@ fn setsockopt(
         c_int,
         c_int,
         c_int,
-        UnsafePointer[UInt8],
+        UnsafePointer[Byte],
         socklen_t,
     ](socket, level, option_name, option_value, option_len)
 
@@ -597,7 +597,7 @@ fn getsockopt(
     socket: c_int,
     level: c_int,
     option_name: c_int,
-    option_value: UnsafePointer[UInt8],
+    option_value: UnsafePointer[Byte],
     option_len: Pointer[socklen_t],
 ) -> c_int:
     """Libc POSIX `getsockopt` function
@@ -742,7 +742,7 @@ fn connect(socket: c_int, address: Pointer[sockaddr_in], address_len: socklen_t)
 
 fn recv(
     socket: c_int,
-    buffer: UnsafePointer[UInt8],
+    buffer: UnsafePointer[Byte],
     length: c_size_t,
     flags: c_int,
 ) -> c_ssize_t:
@@ -768,7 +768,7 @@ fn recv(
         "recv",
         c_ssize_t,
         c_int,
-        UnsafePointer[UInt8],
+        UnsafePointer[Byte],
         c_size_t,
         c_int,
     ](socket, buffer, length, flags)
@@ -776,7 +776,7 @@ fn recv(
 
 fn recvfrom(
     socket: c_int,
-    buffer: UnsafePointer[UInt8],
+    buffer: UnsafePointer[Byte],
     length: c_size_t,
     flags: c_int,
     address: Pointer[sockaddr],
@@ -809,7 +809,7 @@ fn recvfrom(
 
 fn send(
     socket: c_int,
-    buffer: UnsafePointer[UInt8],
+    buffer: UnsafePointer[Byte],
     length: c_size_t,
     flags: c_int,
 ) -> c_ssize_t:
@@ -830,7 +830,7 @@ fn send(
         "send",
         c_ssize_t,
         c_int,
-        UnsafePointer[UInt8],
+        UnsafePointer[Byte],
         c_size_t,
         c_int,
     ](socket, buffer, length, flags)
@@ -838,7 +838,7 @@ fn send(
 
 fn sendto(
     socket: c_int,
-    message: UnsafePointer[UInt8],
+    message: UnsafePointer[Byte],
     length: c_size_t,
     flags: c_int,
     dest_addr: Pointer[sockaddr],
@@ -885,8 +885,8 @@ fn shutdown(socket: c_int, how: c_int) -> c_int:
 
 
 fn getaddrinfo(
-    nodename: UnsafePointer[UInt8],
-    servname: UnsafePointer[UInt8],
+    nodename: UnsafePointer[Byte],
+    servname: UnsafePointer[Byte],
     hints: Pointer[addrinfo],
     res: Pointer[UnsafePointer[addrinfo]],
 ) -> c_int:
@@ -901,8 +901,8 @@ fn getaddrinfo(
 
 
 fn getaddrinfo_unix(
-    nodename: UnsafePointer[UInt8],
-    servname: UnsafePointer[UInt8],
+    nodename: UnsafePointer[Byte],
+    servname: UnsafePointer[Byte],
     hints: Pointer[addrinfo_unix],
     res: Pointer[UnsafePointer[addrinfo_unix]],
 ) -> c_int:
@@ -916,7 +916,7 @@ fn getaddrinfo_unix(
     ](nodename, servname, hints, res)
 
 
-fn gai_strerror(ecode: c_int) -> UnsafePointer[UInt8]:
+fn gai_strerror(ecode: c_int) -> UnsafePointer[Byte]:
     """Libc POSIX `gai_strerror` function
     Reference: https://man7.org/linux/man-pages/man3/gai_strerror.3p.html
     Fn signature: const char *gai_strerror(int ecode).
@@ -927,4 +927,4 @@ fn gai_strerror(ecode: c_int) -> UnsafePointer[UInt8]:
     Returns:
         A pointer to a string describing the error.
     """
-    return external_call["gai_strerror", UnsafePointer[UInt8], c_int](ecode)
+    return external_call["gai_strerror", UnsafePointer[Byte], c_int](ecode)

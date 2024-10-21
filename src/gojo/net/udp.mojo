@@ -25,6 +25,11 @@ struct UDPAddr(Addr):
         self.port = port
         self.zone = zone
 
+    fn __init__(inout self, host_port: HostPort, zone: String = ""):
+        self.ip = host_port.host
+        self.port = host_port.port
+        self.zone = zone
+
     fn __init__(inout self, addr: BaseAddr):
         self.ip = addr.ip
         self.port = addr.port
@@ -50,7 +55,7 @@ struct UDPConnection(Movable):
     fn __moveinit__(inout self, owned existing: Self):
         self.socket = existing.socket^
 
-    fn read_from(inout self, inout dest: List[UInt8, True]) -> (Int, HostPort, Error):
+    fn read_from(inout self, inout dest: List[Byte, True]) raises -> (Int, HostPort):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -59,17 +64,9 @@ struct UDPConnection(Movable):
         Returns:
             The number of bytes read, or an error if one occurred.
         """
-        var bytes_read: Int
-        var remote: HostPort
-        var err = Error()
-        bytes_read, remote, err = self.socket.receive_from_into(dest)
-        if err:
-            if str(err) != str(io.EOF):
-                return bytes_read, remote, err
+        return self.socket.receive_from_into(dest)
 
-        return bytes_read, remote, err
-
-    fn write_to(inout self, src: Span[UInt8], address: UDPAddr) -> (Int, Error):
+    fn write_to(inout self, src: Span[Byte], address: UDPAddr) raises -> Int:
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -81,7 +78,7 @@ struct UDPConnection(Movable):
         """
         return self.socket.send_to(src, address.ip, address.port)
 
-    fn write_to(inout self, src: Span[UInt8], host: String, port: Int) -> (Int, Error):
+    fn write_to(inout self, src: Span[Byte], host: String, port: Int) raises -> Int:
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -94,12 +91,8 @@ struct UDPConnection(Movable):
         """
         return self.socket.send_to(src, host, port)
 
-    fn close(inout self) -> Error:
-        """Closes the underlying file descriptor.
-
-        Returns:
-            An error if one occurred, or None if the file descriptor was closed successfully.
-        """
+    fn close(inout self) raises -> None:
+        """Closes the underlying file descriptor."""
         return self.socket.close()
 
     fn local_address(self) -> UDPAddr:
@@ -128,7 +121,7 @@ fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
         network: The network type.
         local_address: The local address to listen on.
     """
-    var socket = Socket(socket_type=SocketType.SOCK_DGRAM)
+    socket = Socket(socket_type=SocketType.SOCK_DGRAM)
     socket.bind(local_address.ip, local_address.port)
     # print(str("Listening on ") + str(socket.local_address_as_udp()))
     return UDPConnection(socket^)
@@ -141,8 +134,7 @@ fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
     """
-    var result = split_host_port(local_address)
-    return listen_udp(network, UDPAddr(result[0].host, result[0].port))
+    return listen_udp(network, UDPAddr(split_host_port(local_address)))
 
 
 fn listen_udp(network: String, host: String, port: Int) raises -> UDPConnection:
@@ -174,7 +166,7 @@ fn dial_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
     if network not in UDP_NETWORK_TYPES:
         raise Error("unsupported network type: " + network)
 
-    var socket = Socket(local_address=BaseAddr(local_address), socket_type=SocketType.SOCK_DGRAM)
+    socket = Socket(local_address=BaseAddr(local_address), socket_type=SocketType.SOCK_DGRAM)
     return UDPConnection(socket^)
 
 
@@ -189,11 +181,7 @@ fn dial_udp(network: String, local_address: String) raises -> UDPConnection:
     Returns:
         The TCP connection.
     """
-    var result = split_host_port(local_address)
-    if result[1]:
-        raise result[1]
-
-    return dial_udp(network, UDPAddr(result[0].host, result[0].port))
+    return dial_udp(network, UDPAddr(split_host_port(local_address)))
 
 
 fn dial_udp(network: String, host: String, port: Int) raises -> UDPConnection:

@@ -26,7 +26,7 @@ TODO:
 
 from utils.variant import Variant
 
-alias Args = Variant[String, Int, Float64, Bool, List[UInt8, True]]
+alias Args = Variant[String, Int, Float64, Bool, List[Byte, True]]
 
 
 fn replace_first(s: String, old: String, new: String) -> String:
@@ -91,7 +91,7 @@ fn format_string(format: String, arg: String) -> String:
     return replace_first(format, String("%s"), arg)
 
 
-fn format_bytes(format: String, arg: List[UInt8, True]) -> String:
+fn format_bytes(format: String, arg: List[Byte, True]) -> String:
     """Format a byte list argument.
 
     Args:
@@ -181,8 +181,8 @@ fn sprintf(formatting: String, *args: Args) -> String:
         var argument = args[i]
         if argument.isa[String]():
             text = format_string(text, argument[String])
-        elif argument.isa[List[UInt8, True]]():
-            text = format_bytes(text, argument[List[UInt8, True]])
+        elif argument.isa[List[Byte, True]]():
+            text = format_bytes(text, argument[List[Byte, True]])
         elif argument.isa[Int]():
             text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
@@ -238,8 +238,8 @@ fn printf(formatting: String, *args: Args) raises:
         var argument = args[i]
         if argument.isa[String]():
             text = format_string(text, argument[String])
-        elif argument.isa[List[UInt8, True]]():
-            text = format_bytes(text, argument[List[UInt8, True]])
+        elif argument.isa[List[Byte, True]]():
+            text = format_bytes(text, argument[List[Byte, True]])
         elif argument.isa[Int]():
             text = format_integer(text, argument[Int])
         elif argument.isa[Float64]():
