@@ -9,7 +9,7 @@ alias SAMPLE_TEXT = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
 fn benchmark_bytes_buffer[batches: Int]():
     var buffer = bytes.Buffer(capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        _ = buffer.write_string(SAMPLE_TEXT)
+        _ = buffer.write(SAMPLE_TEXT)
     _ = str(buffer)
 
 
@@ -19,7 +19,7 @@ fn benchmark_consume_and_str() raises:
     with open(path, "r") as file:
         var data = file.read()
         for _ in range(10):
-            _ = buffer.write_string(data)
+            _ = buffer.write(data)
 
         var start = time.perf_counter_ns()
         var result = str(buffer)
@@ -31,7 +31,7 @@ fn benchmark_consume_and_str() raises:
         _ = result
 
 
-fn main() raises:
+def main():
     print("Running benchmark_bytes_buffer - 100 batches")
     report = benchmark.run[benchmark_bytes_buffer[100]](max_iters=20)
     report.print(benchmark.Unit.ms)

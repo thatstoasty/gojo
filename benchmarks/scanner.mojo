@@ -14,7 +14,7 @@ alias SPACE = " "
 fn benchmark_scan_runes[batches: Int]() -> None:
     var builder = strings.StringBuilder(capacity=batches * 4)
     for _ in range(batches):
-        _ = builder.write_string(FIRE)
+        _ = builder.write(FIRE)
 
     var scanner = bufio.Scanner[bufio.scan_runes](bytes.Buffer(buf=str(builder).as_bytes()), capacity=batches)
     while scanner.scan():
@@ -24,8 +24,8 @@ fn benchmark_scan_runes[batches: Int]() -> None:
 fn benchmark_scan_words[batches: Int]() -> None:
     var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
-        _ = builder.write_string(FIRE)
-        _ = builder.write_string(SPACE)
+        _ = builder.write(FIRE)
+        _ = builder.write(SPACE)
 
     var scanner = bufio.Scanner[bufio.scan_words](bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
@@ -35,8 +35,8 @@ fn benchmark_scan_words[batches: Int]() -> None:
 fn benchmark_scan_lines[batches: Int]() -> None:
     var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
-        _ = builder.write_string(FIRE)
-        _ = builder.write_string(NEWLINE)
+        _ = builder.write(FIRE)
+        _ = builder.write(NEWLINE)
 
     var scanner = bufio.Scanner(bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
@@ -46,7 +46,7 @@ fn benchmark_scan_lines[batches: Int]() -> None:
 fn benchmark_scan_bytes[batches: Int]() -> None:
     var builder = strings.StringBuilder(capacity=batches)
     for _ in range(batches):
-        _ = builder.write_string(SPACE)
+        _ = builder.write(SPACE)
 
     var scanner = bufio.Scanner[bufio.scan_bytes](bytes.Buffer(str(builder)), capacity=batches)
     while scanner.scan():
@@ -56,8 +56,8 @@ fn benchmark_scan_bytes[batches: Int]() -> None:
 fn benchmark_newline_split[batches: Int]() -> None:
     var builder = strings.StringBuilder(capacity=batches * 5)
     for _ in range(batches):
-        _ = builder.write_string(FIRE)
-        _ = builder.write_string(NEWLINE)
+        _ = builder.write(FIRE)
+        _ = builder.write(NEWLINE)
 
     try:
         var lines = str(builder).split(NEWLINE)
@@ -67,7 +67,7 @@ fn benchmark_newline_split[batches: Int]() -> None:
         pass
 
 
-fn main():
+def main():
     # There's a time penalty for building the input text, for now.
     print("Running benchmark_scan_runes - 100")
     var report = benchmark.run[benchmark_scan_runes[100]](max_iters=20)

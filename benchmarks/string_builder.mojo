@@ -20,8 +20,8 @@ fn benchmark_concat[batches: Int]():
 fn benchmark_string_builder[batches: Int]():
     var new_builder = StringBuilder(capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        _ = new_builder.write_string(SAMPLE_TEXT)
-    _ = str(new_builder)
+        _ = new_builder.write(SAMPLE_TEXT)
+    _ = new_builder.consume()
 
 
 fn benchmark_consume_and_str() raises:
@@ -30,7 +30,7 @@ fn benchmark_consume_and_str() raises:
     with open(path, "r") as file:
         var data = file.read()
         for _ in range(10):
-            _ = builder.write_string(data)
+            _ = builder.write(data)
 
         var start = time.perf_counter_ns()
         var result = str(builder)
@@ -42,7 +42,7 @@ fn benchmark_consume_and_str() raises:
         _ = result
 
 
-fn main() raises:
+def main():
     # There's a performance penalty for benchmark concat bc it also includes
     # the building of the list of strings it concatenates. Trying to build it at comptime takes a loooong time.
     print("Running benchmark_concat - 100 batches")
@@ -68,6 +68,10 @@ fn main() raises:
     print("Running benchmark_string_builder - 10000 batches")
     report = benchmark.run[benchmark_string_builder[10000]](max_iters=20)
     report.print(benchmark.Unit.ms)
+
+    print("Running benchmark_copy")
+    report = benchmark.run[benchmark_copy](max_iters=20)
+    report.print(benchmark.Unit.ns)
 
     print("Running benchmark_consume_and_str")
     benchmark_consume_and_str()

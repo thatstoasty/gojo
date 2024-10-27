@@ -1,4 +1,4 @@
-from utils import Span
+from utils import Span, StringSlice
 from memory import UnsafePointer
 
 
@@ -94,16 +94,8 @@ fn index_byte(bytes: Span[Byte], delim: Byte) -> Int:
 
 
 fn to_string(bytes: List[Byte, True]) -> String:
-    """Makes a deep copy of the list supplied and converts it to a string.
-    If it's not null terminated, it will append a null byte.
+    return StringSlice(unsafe_from_utf8=Span(bytes))
 
-    Args:
-        bytes: The list to convert.
 
-    Returns:
-        A String built from the list of bytes.
-    """
-    var copy = List[Byte](bytes)
-    if copy[-1] != 0:
-        copy.append(0)
-    return String(copy^)
+fn to_string(bytes: Span[Byte, _]) -> String:
+    return StringSlice(unsafe_from_utf8=bytes)

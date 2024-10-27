@@ -10,61 +10,38 @@ struct Reader(
     Writable,
     Sized,
     io.Reader,
-    io.ByteReader,
     io.ByteScanner,
     io.Seeker,
 ):
-    var string: String
-    """Internal string to read from."""
-    var read_pos: Int
+    var _data: String
+    """String to read from."""
+    var _index: Int
     """Current reading index."""
 
-    fn __init__(inout self, string: String = ""):
-        self.string = string
-        self.read_pos = 0
+    fn __init__(inout self, data: String = ""):
+        self._data = data
+        self._index = 0
 
     fn __len__(self) -> Int:
         """Returns the number of bytes of the unread portion of the string."""
-        if self.read_pos >= len(self.string):
+        if self._index >= len(self._data):
             return 0
 
-        return len(self.string) - self.read_pos
+        return len(self._data) - self._index
+
+    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self._data)]:
+        """Returns a reference to the unread data of the `Reader`."""
+        return self._data.as_bytes()[self._index :]
 
     fn size(self) -> Int:
-        """Returns the original length of the underlying string.
-        `size` is the number of bytes available for reading via `Reader.read_at`.
-        The returned value is always the same and is not affected by calls
-        to any other method.
-
-        Returns:
-            The original length of the underlying string.
-        """
-        return len(self.string)
+        """Returns the original length of the underlying string."""
+        return len(self._data)
 
     fn write_to[W: Writer](self, inout writer: W):
-        writer.write_bytes(self.string.as_bytes()[self.read_pos :])
-
-    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
-        """Reads from the underlying string into the provided `dest` buffer.
-
-        Args:
-            dest: The destination buffer to read into.
-            capacity: The capacity of the destination buffer.
-
-        Returns:
-            The number of bytes read into dest.
-        """
-        if self.read_pos >= len(self.string):
-            raise io.EOF
-
-        bytes_to_read = self.string.as_bytes()[self.read_pos :]
-        count = min(len(bytes_to_read), capacity)
-        parallel_memcpy(dest, bytes_to_read.unsafe_ptr(), count)
-        self.read_pos += count
-        return count
+        writer.write_bytes(self._data.as_bytes())
 
     fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
-        """Reads from the underlying string into the provided `dest` buffer.
+        """Reads from the underlying _data into the provided `dest` buffer.
 
         Args:
             dest: The destination buffer to read into.
@@ -74,98 +51,97 @@ struct Reader(
         """
         if dest.size == dest.capacity:
             raise Error("strings.Reader.read: no space left in destination buffer.")
-
-        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
-        dest.size += bytes_read
-
-        return bytes_read
-
-    fn read_byte(inout self) raises -> Byte:
-        """Reads the next byte from the underlying string."""
-        if self.read_pos >= len(self.string):
+        if self._index >= len(self._data):
             raise io.EOF
 
-        b = self.string.as_bytes()[self.read_pos]
-        self.read_pos += 1
-        return b
+        count = min(len(self), dest.capacity - dest.size)
+        parallel_memcpy(dest.unsafe_ptr().offset(dest.size), self._data.as_bytes().unsafe_ptr(), count)
+        dest.size += count
+        self._index += count
+        return count
+
+    fn read_byte(inout self) raises -> Byte:
+        """Reads the next byte from the underlying _data."""
+        if self._index >= len(self._data):
+            raise io.EOF
+
+        self._index += 1
+        return self._data.as_bytes()[self._index]
 
     fn unread_byte(inout self) raises -> None:
         """Unreads the last byte read. Only the most recent byte read can be unread."""
-        if self.read_pos <= 0:
-            raise Error("strings.Reader.unread_byte: at beginning of string")
+        if self._index <= 0:
+            raise Error("strings.Reader.unread_byte: at beginning of _data")
 
-        self.read_pos -= 1
+        self._index -= 1
 
     fn seek(inout self, offset: Int, whence: Int) raises -> Int:
-        """Seeks to a new position in the underlying string. The next read will start from that position.
+        """Seeks to a new position in the underlying _data. The next read will start from that position.
 
         Args:
             offset: The offset to seek to.
             whence: The seek mode. It can be one of `io.SEEK_START`, `io.SEEK_CURRENT`, or `io.SEEK_END`.
 
         Returns:
-            The new position in the string.
+            The new position in the _data.
         """
         position = 0
 
         if whence == io.SEEK_START:
             position = offset
         elif whence == io.SEEK_CURRENT:
-            position = self.read_pos + offset
+            position = self._index + offset
         elif whence == io.SEEK_END:
-            position = Int(len(self.string)) + offset
+            position = len(self._data) + offset
         else:
             raise Error("strings.Reader.seek: invalid whence")
 
         if position < 0:
             raise Error("strings.Reader.seek: negative position")
 
-        self.read_pos = position
+        self._index = position
         return position
 
     fn write_to[W: io.Writer, //](inout self, inout writer: W) raises -> Int:
-        """Writes the remaining portion of the underlying string to the provided writer.
+        """Writes the remaining portion of the underlying _data to the provided writer.
 
         Args:
-            writer: The writer to write the remaining portion of the string to.
+            writer: The writer to write the remaining portion of the _data to.
 
         Returns:
             The number of bytes written to the writer.
         """
-        if self.read_pos >= len(self.string):
+        if self._index >= len(self._data):
             raise io.EOF
 
-        chunk_to_write = self.string.as_bytes()[self.read_pos :]
-        writer.write_bytes(chunk_to_write)
-        bytes_written = len(chunk_to_write)
+        writer.write_bytes(self._data.as_bytes())
+        self._index += len(self)
+        return len(self)
 
-        self.read_pos += bytes_written
-        return bytes_written
-
-    fn reset(inout self, string: String):
-        """Resets the [Reader] to be reading from the beginning of the provided string.
+    fn reset(inout self, data: String):
+        """Resets the `Reader` to be reading from the beginning of the provided `data`.
 
         Args:
-            string: The string to read from.
+            data: The data to read from.
         """
-        self.string = string
-        self.read_pos = 0
+        self._data = data
+        self._index = 0
 
     fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__origin_of(self)]:
-        """Reads from the underlying string until a delimiter is found.
-        The delimiter is not included in the returned string slice.
+        """Reads from the underlying `data` until a delimiter is found.
+        The delimiter is not included in the returned `data` slice.
 
         Returns:
-            The string slice containing the bytes read until the delimiter.
+            The `data` slice containing the bytes read until the delimiter.
         """
-        start = self.read_pos
-        bytes = self.string.as_bytes()
-        while self.read_pos < len(self.string):
-            if bytes[self.read_pos] == ord(delimiter):
+        start = self._index
+        bytes = self._data.as_bytes()
+        while self._index < len(self._data):
+            if bytes[self._index] == ord(delimiter):
                 break
-            self.read_pos += 1
+            self._index += 1
 
-        self.read_pos += 1
+        self._index += 1
         return StringSlice[__origin_of(self)](
-            unsafe_from_utf8_ptr=self.string.unsafe_ptr() + start, len=self.read_pos - start - 1
+            unsafe_from_utf8_ptr=self._data.unsafe_ptr() + start, len=self._index - start - 1
         )

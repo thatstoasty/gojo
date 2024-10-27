@@ -1,6 +1,6 @@
-from collections import InlineArray
 from utils import StringSlice, Span
-from memory import memcpy, UnsafePointer
+from memory import UnsafePointer
+from algorithm.memory import parallel_memcpy
 
 
 struct StringBuilder[growth_factor: Float32 = 2](
@@ -28,19 +28,17 @@ struct StringBuilder[growth_factor: Float32 = 2](
     from gojo.strings import StringBuilder
 
     var sb = StringBuilder()
-    sb.write("Hello ")
-    sb.write("World!")
-
-    print(str(sb)) # Hello World!
+    sb.write("Hello ", "World!")
+    print(sb) # Hello World!
     ```
     """
 
     var _data: UnsafePointer[Byte]
     """The internal buffer that holds the string data."""
-    var _size: Int
-    """The current size of the string builder."""
+    var _length: Int
+    """The current length."""
     var _capacity: Int
-    """The current maximum capacity of the string builder."""
+    """The maximum capacity of the buffer."""
 
     fn __init__(inout self, *, capacity: Int = 4096):
         """Creates a new string builder with the given capacity.
@@ -50,15 +48,15 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """
         constrained[growth_factor >= 1.25]()
         self._data = UnsafePointer[Byte]().alloc(capacity)
-        self._size = 0
+        self._length = 0
         self._capacity = capacity
 
     fn __moveinit__(inout self, owned other: Self):
         self._data = other._data
-        self._size = other._size
+        self._length = other._length
         self._capacity = other._capacity
         other._data = UnsafePointer[Byte]()
-        other._size = 0
+        other._length = 0
         other._capacity = 0
 
     fn __del__(owned self):
@@ -67,11 +65,11 @@ struct StringBuilder[growth_factor: Float32 = 2](
 
     fn __len__(self) -> Int:
         """Returns the length of the string builder."""
-        return self._size
+        return self._length
 
     fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self)]:
         """Returns the internal data as a Span[Byte]."""
-        return Span[Byte, __origin_of(self)](unsafe_ptr=self._data, len=self._size)
+        return Span[Byte, __origin_of(self)](unsafe_ptr=self._data, len=self._length)
 
     fn as_string_slice(ref [_]self) -> StringSlice[__origin_of(self)]:
         """Return a StringSlice view of the data owned by the builder.
@@ -79,7 +77,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Returns:
             The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
-        return StringSlice[__origin_of(self)](unsafe_from_utf8_ptr=self._data, len=self._size)
+        return StringSlice[__origin_of(self)](unsafe_from_utf8_ptr=self._data, len=self._length)
 
     fn __str__(self) -> String:
         """Converts the string builder to a string.
@@ -98,9 +96,9 @@ struct StringBuilder[growth_factor: Float32 = 2](
             reuse: If `True`, a new buffer will be allocated with the same capacity as the previous buffer.
 
         Returns:
-          The string representation of the string builder. Returns an empty string if the buffer is empty.
+            The string representation of the string builder. Returns an empty string if the buffer is empty.
         """
-        var bytes = List[Byte, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
+        var bytes = List[Byte, True](unsafe_pointer=self._data, size=self._length, capacity=self._capacity)
         bytes.append(0)
         var result = String(bytes^)
 
@@ -108,7 +106,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
             self._data = UnsafePointer[Byte].alloc(self._capacity)
         else:
             self._data = UnsafePointer[Byte]()
-        self._size = 0
+        self._length = 0
         return result
 
     fn _resize(inout self, capacity: Int) -> None:
@@ -118,7 +116,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
             capacity: The new capacity of the string builder buffer.
         """
         var new_data = UnsafePointer[Byte]().alloc(capacity)
-        memcpy(new_data, self._data, self._size)
+        parallel_memcpy(new_data, self._data, self._length)
         self._data.free()
         self._data = new_data
         self._capacity = capacity
@@ -130,7 +128,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
             byte_count: The number of bytes to add to the buffer.
         """
         # TODO: Handle the case where new_capacity is greater than MAX_INT. It should panic.
-        if byte_count > self._capacity - self._size:
+        if byte_count > self._capacity - self._length:
             var new_capacity = self._capacity * 2
             if new_capacity < self._capacity + byte_count:
                 new_capacity = self._capacity + byte_count
@@ -146,8 +144,8 @@ struct StringBuilder[growth_factor: Float32 = 2](
             byte: The byte to append.
         """
         self._resize_if_needed(1)
-        self._data[self._size] = byte
-        self._size += 1
+        self._data[self._length] = byte
+        self._length += 1
 
     @always_inline
     fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
@@ -161,8 +159,8 @@ struct StringBuilder[growth_factor: Float32 = 2](
             return
 
         self._resize_if_needed(len(bytes))
-        memcpy(self._data.offset(self._size), bytes._data, len(bytes))
-        self._size += len(bytes)
+        parallel_memcpy(self._data.offset(self._length), bytes._data, len(bytes))
+        self._length += len(bytes)
 
     fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
         """Write data to the `StringBuilder`."""

@@ -199,7 +199,7 @@ struct Buffer(
         return String.write(self)
 
     fn write_to[W: Writer](self, inout writer: W):
-        writer.write(self.as_string_slice())
+        writer.write_bytes(self.as_bytes())
 
     fn consume(inout self, reuse: Bool = False) -> String:
         """
@@ -347,7 +347,7 @@ struct Buffer(
             self.offset -= 1
 
     fn read_span(inout self, delim: Byte) raises -> Span[Byte, __origin_of(self)]:
-        """Like `read_bytes` but returns a reference to internal buffer data.
+        """Returns a reference to internal buffer data.
 
         Args:
             delim: The delimiter to read until.
@@ -415,35 +415,37 @@ struct Buffer(
 
         return data
 
-    fn write_to[W: Writer](inout self, inout writer: W) raises -> Int:
-        """Writes data to `writer` until the buffer is drained or an error occurs.
-        The return value `total_bytes_written` is the number of bytes written; Any error
-        encountered during the write is also returned.
+    # TODO: Rename the write_to methods since they overlap closely with the Writable trait.
+    # But Writable doesn't allow raising or mutation of self.
+    # fn write_to[W: Writer](inout self, inout writer: W) -> Int:
+    #     """Writes data to `writer` until the buffer is drained or an error occurs.
+    #     The return value `total_bytes_written` is the number of bytes written; Any error
+    #     encountered during the write is also returned.
 
-        Args:
-            writer: The writer to write to.
+    #     Args:
+    #         writer: The writer to write to.
 
-        Returns:
-            The number of bytes written to the writer.
-        """
-        self.last_read = OP_INVALID
-        byte_count = len(self)
-        total_bytes_written = 0
+    #     Returns:
+    #         The number of bytes written to the writer.
+    #     """
+    #     self.last_read = OP_INVALID
+    #     byte_count = len(self)
+    #     total_bytes_written = 0
 
-        if byte_count > 0:
-            bytes_to_write = self.as_bytes()[self.offset :]
-            writer.write_bytes(bytes_to_write)
-            bytes_written = len(bytes_to_write)
-            if bytes_written > byte_count:
-                abort("bytes.Buffer.write_to: invalid write count")
+    #     if byte_count > 0:
+    #         bytes_to_write = self.as_bytes()[self.offset :]
+    #         writer.write_bytes(bytes_to_write)
+    #         bytes_written = len(bytes_to_write)
+    #         if bytes_written > byte_count:
+    #             abort("bytes.Buffer.write_to: invalid write count")
 
-            self.offset += bytes_written
-            total_bytes_written = bytes_written
+    #         self.offset += bytes_written
+    #         total_bytes_written = bytes_written
 
-            # all bytes should have been written, by definition of write method
-            if bytes_written != byte_count:
-                raise ERR_SHORT_WRITE
+    #         # all bytes should have been written, by definition of write method
+    #         if bytes_written != byte_count:
+    #             abort(ERR_SHORT_WRITE)
 
-        # Buffer is now empty; reset.
-        self.reset()
-        return total_bytes_written
+    #     # Buffer is now empty; reset.
+    #     self.reset()
+    #     return total_bytes_written
