@@ -7,21 +7,19 @@ import ..io
 
 struct Reader(
     Writable,
+    AsBytes,
     Sized,
     io.Reader,
     io.Seeker,
-    io.ByteReader,
     io.ByteScanner,
 ):
-    """A Reader implements the io.Reader, io.WriterTo, io.Seeker,
-    io.ByteScanner, and io.RuneScanner Interfaces by reading from
-    a bytes pointer. Unlike a `Buffer`, a `Reader` is read-only and supports seeking.
+    """A Reader reading from a bytes pointer. Unlike a `Buffer`, a `Reader` is read-only and supports seeking.
 
     Examples:
     ```mojo
     from gojo.bytes import reader
 
-    reader = reader.Reader(buffer=String("Hello, World!").as_bytes())
+    reader = reader.Reader("Hello, World!")
     dest = List[Byte, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
@@ -31,7 +29,7 @@ struct Reader(
     """
 
     var _data: UnsafePointer[Byte]
-    """The contents of the bytes buffer. Active contents are from buf[off : len(buf)]."""
+    """The contents of the bytes buffer. Active contents are from self._data[self._index : self._size]."""
     var _size: Int
     """The number of bytes stored in the buffer."""
     var _capacity: Int
@@ -40,7 +38,7 @@ struct Reader(
     """Current reading index."""
 
     fn __init__(inout self, owned buffer: List[Byte, True]):
-        """Initializes a new `Reader` with the given List buffer.
+        """Initializes a new `Reader` with the given `List` buffer.
 
         Args:
             buffer: The buffer to read from.
@@ -51,12 +49,12 @@ struct Reader(
         self._index = 0
 
     fn __init__[T: AsBytes](inout self, buffer: T):
-        """Initializes a new `Reader` with the given String.
+        """Initializes a new `Reader` with the given `String`.
 
         Args:
             buffer: The buffer to initialize the `Reader` with.
         """
-        var bytes = List[Byte, True](buffer.as_bytes())
+        bytes = List[Byte, True](buffer.as_bytes())
         self._capacity = bytes.capacity
         self._size = bytes.size
         self._data = bytes.steal_data()
@@ -89,6 +87,26 @@ struct Reader(
     fn write_to[W: Writer](self, inout writer: W):
         writer.write_bytes(self.as_bytes())
 
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+        """Reads from the internal buffer into the destination buffer.
+
+        Args:
+            dest: The destination buffer to read into.
+            capacity: The capacity of the destination buffer.
+
+        Returns:
+            Int: The number of bytes read into dest.
+        """
+        if self._index >= self._size:
+            raise io.EOF
+
+        # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
+        var bytes_to_write = self.as_bytes()
+        var count = min(len(bytes_to_write), capacity)
+        parallel_memcpy(dest, bytes_to_write.unsafe_ptr(), count)
+        self._index += count
+        return count
+
     fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         """Reads from the internal buffer into the destination buffer.
 
@@ -98,23 +116,16 @@ struct Reader(
         Returns:
             Int: The number of bytes read into dest.
         """
-        if self._index >= self._size:
-            raise io.EOF
-
-        bytes = self.as_bytes()[self._index : self._size]
-        count = min(len(bytes), dest.capacity - dest.size)
-        parallel_memcpy(dest.unsafe_ptr().offset(dest.size), bytes.unsafe_ptr(), count)
-        dest.size += count
-        self._index += count
-
-        return count
+        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
+        dest.size += bytes_read
+        return bytes_read
 
     fn read_byte(inout self) raises -> Byte:
         """Reads and returns a single byte from the internal buffer."""
         if self._index >= self._size:
             raise io.EOF
 
-        var byte = self._data[self._index]
+        byte = self._data[self._index]
         self._index += 1
         return byte
 

@@ -150,10 +150,10 @@ struct StringBuilder[growth_factor: Float32 = 2](
     @always_inline
     fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
         """
-        Write a `Span[Byte]` to this `Writer`.
+        Write a `Span[Byte]` to this `StringBuilder`.
+
         Args:
-            bytes: The string slice to write to this Writer. Must NOT be
-              null-terminated.
+            bytes: The string slice to write to this Writer. Must NOT be null-terminated.
         """
         if len(bytes) == 0:
             return

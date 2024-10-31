@@ -69,9 +69,5 @@ def main():
     report = benchmark.run[benchmark_string_builder[10000]](max_iters=20)
     report.print(benchmark.Unit.ms)
 
-    print("Running benchmark_copy")
-    report = benchmark.run[benchmark_copy](max_iters=20)
-    report.print(benchmark.Unit.ns)
-
     print("Running benchmark_consume_and_str")
     benchmark_consume_and_str()

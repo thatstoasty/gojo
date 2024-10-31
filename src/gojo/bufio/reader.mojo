@@ -40,11 +40,11 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
     ```mojo
     import gojo.bytes
     import gojo.bufio
-    var buf = bytes.Buffer(capacity=16)
+    buf = bytes.Buffer(capacity=16)
     _ = buf.write("Hello, World!")
-    var reader = bufio.Reader(buf^)
+    reader = bufio.Reader(buf^)
 
-    var dest = List[Byte, True](capacity=16)
+    dest = List[Byte, True](capacity=16)
     _ = reader.read(dest)
     dest.append(0)
     print(String(dest))  # Output: Hello, World!
@@ -128,9 +128,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
         i = MAX_CONSECUTIVE_EMPTY_READS
         while i > 0:
             try:
-                bytes_read = self.reader._read(
-                    self.buf.unsafe_ptr().offset(self.buf.size), self.buf.capacity - self.buf.size
-                )
+                bytes_read = self.reader.read(self.buf)
                 if bytes_read < 0:
                     abort(ERR_NEGATIVE_READ)
                 if bytes_read > 0:
@@ -181,7 +179,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             raise Error(ERR_BUFFER_FULL)
 
         # 0 <= n <= self.buf.size
-        var available_space = self.write_pos - self.read_pos
+        available_space = self.write_pos - self.read_pos
         if available_space < number_of_bytes:
             # not enough data in buffer
             err = self.read_error()
@@ -210,9 +208,9 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             return 0
 
         self.last_byte = -1
-        var remain = number_of_bytes
+        remain = number_of_bytes
         while True:
-            var skip = self.buffered()
+            skip = self.buffered()
             if skip == 0:
                 self.fill()
                 skip = self.buffered()
@@ -249,7 +247,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             if err:
                 raise err
 
-        var bytes_read = 0
+        bytes_read = 0
         if self.read_pos == self.write_pos:
             if capacity >= len(self.buf):
                 # Large read, empty buffer.
@@ -276,7 +274,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             # Do not use self.fill, which will loop.
             self.read_pos = 0
             self.write_pos = 0
-            var buf = self.buf.unsafe_ptr().offset(self.buf.size)
+            buf = self.buf.unsafe_ptr().offset(self.buf.size)
             try:
                 bytes_read = self.reader._read(buf, self.buf.capacity - self.buf.size)
             except e:
@@ -294,8 +292,8 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             self.write_pos += bytes_read
 
         # copy as much as we can
-        var source = self.as_bytes()[self.read_pos : self.write_pos]
-        var bytes_to_write = min(capacity, len(source))
+        source = self.as_bytes()[self.read_pos : self.write_pos]
+        bytes_to_write = min(capacity, len(source))
         parallel_memcpy(dest, source.unsafe_ptr(), bytes_to_write)
         self.read_pos += bytes_to_write
         self.last_byte = int(self.buf[self.read_pos - 1])
@@ -333,7 +331,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
                 raise self.read_error()
             self.fill()  # buffer is empty
 
-        var c = self.as_bytes()[self.read_pos]
+        c = self.as_bytes()[self.read_pos]
         self.read_pos += 1
         self.last_byte = c
         return c
@@ -362,10 +360,10 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
         return self.write_pos - self.read_pos
 
     fn _search_buffer(inout self, delim: Byte) -> Span[Byte, __origin_of(self.buf)]:
-        var start = 0  # search start index
+        start = 0  # search start index
         while True:
             # Search buffer.
-            var i = index_byte(self.as_bytes()[self.read_pos + start : self.write_pos], delim)
+            i = index_byte(self.as_bytes()[self.read_pos + start : self.write_pos], delim)
             if i >= 0:
                 i += start
                 line = self.as_bytes()[self.read_pos : self.read_pos + i + 1]
@@ -404,7 +402,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
         buffer = self._search_buffer(delim)
 
         # Handle last byte, if any.
-        var i = len(buffer) - 1
+        i = len(buffer) - 1
         if i >= 0:
             self.last_byte = int(buffer[i])
 
@@ -427,7 +425,7 @@ struct Reader[R: io.Reader, //](Sized, io.Reader, io.ByteReader, io.ByteScanner)
             return line
 
         if line[len(line) - 1] == ord("\n"):
-            var drop = 1
+            drop = 1
             if len(line) > 1 and line[len(line) - 2] == ord("\r"):
                 drop = 2
 

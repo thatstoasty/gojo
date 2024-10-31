@@ -14,7 +14,7 @@ def test_read():
     alias NEGATIVE_POSITION_ERROR = "bytes.Reader.seek: negative position"
 
     try:
-        position = reader.seek(-1, io.SEEK_START)
+        _ = reader.seek(-1, io.SEEK_START)
         raise Error("Expected error not raised while testing negative seek.")
     except e:
         testing.assert_equal(str(e), NEGATIVE_POSITION_ERROR)
@@ -30,18 +30,6 @@ def test_read_after_big_seek():
         raise Error("Expected error not raised while testing big seek.")
     except e:
         testing.assert_equal(str(e), io.EOF)
-
-
-def test_read_at():
-    reader = bytes.Reader("0123456789")
-
-    dest = List[UInt8, True](capacity=16)
-    pos = reader.read_at(dest, 0)
-    testing.assert_equal(to_string(dest), "0123456789")
-
-    dest = List[UInt8, True](capacity=16)
-    pos = reader.read_at(dest, 1)
-    testing.assert_equal(to_string(dest), "123456789")
 
 
 def test_seek():
@@ -85,11 +73,11 @@ def test_read_and_unread_byte():
     # Read the first byte from the reader.
     byte = reader.read_byte()
     testing.assert_equal(int(byte), 48)
-    post_read_position = reader.index
+    post_read_position = reader._index
 
     # Unread the first byte from the reader. Read position should be moved back by 1
     reader.unread_byte()
-    testing.assert_equal(int(reader.index), int(post_read_position - 1))
+    testing.assert_equal(int(reader._index), int(post_read_position - 1))
 
 
 def test_unread_byte_at_beginning():

@@ -73,6 +73,9 @@ trait Reader(Movable):
     fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
         ...
 
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+        ...
+
 
 trait Closer(Movable):
     """Wraps the basic `close` method.

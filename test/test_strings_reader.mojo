@@ -44,7 +44,7 @@ def test_read_and_unread_byte():
 
     # Read the first byte from the reader.
     byte = reader.read_byte()
-    testing.assert_equal(int(byte[0]), 72)
+    testing.assert_equal(byte, 72)
 
     # Unread the first byte from the reader. Remaining bytes to be read should be the same as the length of the example string.
     _ = reader.unread_byte()
@@ -67,3 +67,7 @@ def test_read_until_delimiter():
     # Test reading from the reader.
     result = reader.read_until_delimiter(",")
     testing.assert_equal(result, "Hello")
+
+
+def main():
+    test_read_and_unread_byte()

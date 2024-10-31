@@ -34,13 +34,6 @@ def test_write_string():
     testing.assert_equal(str(builder), "Hello")
 
 
-def test_write_owned():
-    # Create a string from the builder by writing bytes to it.
-    builder = StringBuilder()
-    _ = builder.write_owned("Hello")
-    testing.assert_equal(str(builder), "Hello")
-
-
 def test_write_byte():
     # Create a string from the builder by writing bytes to it.
     builder = StringBuilder()

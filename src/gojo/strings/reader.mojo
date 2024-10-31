@@ -40,33 +40,52 @@ struct Reader(
     fn write_to[W: Writer](self, inout writer: W):
         writer.write_bytes(self._data.as_bytes())
 
+    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+        """Reads from the internal buffer into the destination buffer.
+
+        Args:
+            dest: The destination buffer to read into.
+            capacity: The capacity of the destination buffer.
+
+        Returns:
+            Int: The number of bytes read into dest.
+        """
+        if self._index >= len(self._data):
+            raise io.EOF
+
+        # Copy the data of the internal buffer from offset to len(buf) into the destination buffer at the given index.
+        var bytes_to_write = self.as_bytes()
+        var count = min(len(bytes_to_write), capacity)
+        parallel_memcpy(dest, bytes_to_write.unsafe_ptr(), count)
+        self._index += count
+        return count
+
     fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
-        """Reads from the underlying _data into the provided `dest` buffer.
+        """Reads from the internal buffer into the destination buffer.
 
         Args:
             dest: The destination buffer to read into.
 
         Returns:
-            The number of bytes read into dest.
+            Int: The number of bytes read into dest.
         """
-        if dest.size == dest.capacity:
-            raise Error("strings.Reader.read: no space left in destination buffer.")
         if self._index >= len(self._data):
             raise io.EOF
+        if dest.size == dest.capacity:
+            raise Error("strings.Reader.read: no space left in destination buffer.")
 
-        count = min(len(self), dest.capacity - dest.size)
-        parallel_memcpy(dest.unsafe_ptr().offset(dest.size), self._data.as_bytes().unsafe_ptr(), count)
-        dest.size += count
-        self._index += count
-        return count
+        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
+        dest.size += bytes_read
+        return bytes_read
 
     fn read_byte(inout self) raises -> Byte:
         """Reads the next byte from the underlying _data."""
         if self._index >= len(self._data):
             raise io.EOF
 
+        result = self._data.as_bytes()[self._index]
         self._index += 1
-        return self._data.as_bytes()[self._index]
+        return result
 
     fn unread_byte(inout self) raises -> None:
         """Unreads the last byte read. Only the most recent byte read can be unread."""
