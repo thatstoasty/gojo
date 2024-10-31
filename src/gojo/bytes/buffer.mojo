@@ -54,10 +54,10 @@ struct Buffer(
     Examples:
     ```mojo
     import gojo.bytes
-    var buf = bytes.Buffer(capacity=16)
+    buf = bytes.Buffer(capacity=16)
     _ = buf.write("Hello, World!")
 
-    var dest = List[Byte, True](capacity=16)
+    dest = List[Byte, True](capacity=16)
     _ = buf.read(dest)
     dest.append(0)
     print(String(dest))  # Output: Hello, World!
@@ -211,9 +211,9 @@ struct Buffer(
         Returns:
           The String representation of the `Buffer`. Returns an empty string if the internal buffer is empty.
         """
-        var bytes = List[Byte, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
+        bytes = List[Byte, True](unsafe_pointer=self._data, size=self._size, capacity=self._capacity)
         bytes.append(0)
-        var result = String(bytes^)
+        result = String(bytes^)
 
         if reuse:
             self._data = UnsafePointer[Byte].alloc(self._capacity)

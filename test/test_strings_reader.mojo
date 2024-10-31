@@ -67,7 +67,3 @@ def test_read_until_delimiter():
     # Test reading from the reader.
     result = reader.read_until_delimiter(",")
     testing.assert_equal(result, "Hello")
-
-
-def main():
-    test_read_and_unread_byte()

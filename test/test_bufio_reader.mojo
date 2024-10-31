@@ -39,12 +39,11 @@ def test_read_all():
 def test_read_and_unread_byte():
     # Read the first byte from the reader.
     reader = bufio.Reader(bytes.Buffer("Hello, World!"))
-    result = reader.read_byte()
-    testing.assert_equal(int(result[0]), int(72))
+    testing.assert_equal(reader.read_byte(), 72)
     post_read_position = reader.read_pos
 
     # Unread the first byte from the reader. Read position should be moved back by 1
-    _ = reader.unread_byte()
+    reader.unread_byte()
     testing.assert_equal(reader.read_pos, post_read_position - 1)
 
 

@@ -103,14 +103,3 @@ def test_scan_runes():
         testing.assert_equal(scanner.current_token(), expected_results[i])
         i += 1
     testing.assert_equal(i, len(expected_results))
-
-
-def main():
-    test_scan_words()
-    test_scan_lines()
-    test_scan_lines_no_newline()
-    test_scan_lines_cr_no_newline()
-    test_scan_lines_empty_final_line()
-    test_scan_lines_cr_empty_final_line()
-    test_scan_bytes()
-    test_scan_runes()
