@@ -1,7 +1,7 @@
 import testing
 import pathlib
 from gojo.bytes import buffer
-from gojo.bufio import Reader, Scanner, scan_words, scan_bytes, scan_runes
+from gojo.bufio import Reader, Scanner, scan_words, scan_bytes
 
 
 def test_scan_words():

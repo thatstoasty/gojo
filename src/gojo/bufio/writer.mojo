@@ -22,7 +22,7 @@ struct Writer[W: MovableWriter, //](Sized):
     ```mojo
     import gojo.bytes
     import gojo.bufio
-    var writer = Writer(bytes.Buffer())
+    var writer = bufio.Writer(bytes.Buffer())
     _ = writer.write("Hello, World!")
     ```
     """
