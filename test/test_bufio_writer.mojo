@@ -8,7 +8,7 @@ import testing
 
 def test_write():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer())
+    writer = bufWriter(bytes.Buffer())
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the Buffer Writer.
     writer.write("0123456789")
@@ -19,7 +19,7 @@ def test_write():
 
 def test_several_writes():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer(capacity=1100))
+    writer = bufWriter(bytes.Buffer(capacity=1100))
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the Buffer Writer.
     for _ in range(100):
@@ -34,7 +34,7 @@ def test_several_writes():
 
 def test_several_writes_small_buffer():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer(capacity=1000), capacity=16)
+    writer = bufWriter(bytes.Buffer(capacity=1000), capacity=16)
 
     # Write the content from src to the buffered writer's internal buffer and flush it to the Buffer Writer.
     for _ in range(100):
@@ -49,7 +49,7 @@ def test_several_writes_small_buffer():
 
 def test_big_write():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer())
+    writer = bufWriter(bytes.Buffer())
 
     # Build a string larger than the size of the Bufio struct's internal buffer.
     builder = StringBuilder(capacity=5000)
@@ -66,7 +66,7 @@ def test_big_write():
 
 def test_write_byte():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer("Hello"))
+    writer = bufWriter(bytes.Buffer("Hello"))
 
     # Write a byte with the value of 32 to the writer's internal buffer and flush it to the Buffer Writer.
     bytes_written = writer.write_byte(32)
@@ -77,7 +77,7 @@ def test_write_byte():
 
 def test_read_from():
     # Create a new Buffer Writer and use it to create the buffered Writer
-    writer = bufio.Writer(bytes.Buffer("Hello"))
+    writer = bufWriter(bytes.Buffer("Hello"))
 
     # Read from a ReaderFrom struct into the Buffered Writer's internal buffer and flush it to the Buffer Writer.
     reader_from = bytes.Buffer(" World!")

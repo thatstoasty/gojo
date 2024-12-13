@@ -1,6 +1,14 @@
 from utils import StringSlice
 from collections import InlineArray
-from .table import Interval, narrow, combining, doublewidth, ambiguous, emoji, nonprint
+from .table import (
+    Interval,
+    narrow,
+    combining,
+    doublewidth,
+    ambiguous,
+    emoji,
+    nonprint,
+)
 
 
 @value
@@ -8,7 +16,9 @@ struct Condition:
     """Condition have the flag `EastAsianWidth` enabled if the current locale is `CJK` or not."""
 
     var east_asian_width: Bool
+    """Whether to use the East Asian Width algorithm to calculate the width of runes."""
     var strict_emoji_neutral: Bool
+    """Whether to treat emoji as double-width characters."""
 
     fn rune_width(self, r: UInt32) -> Int:
         """Returns the number of cells in r.
@@ -93,14 +103,35 @@ struct Condition:
 
 
 fn in_tables(r: UInt32, *ts: InlineArray[Interval]) -> Bool:
+    """Check if the rune is in any of the tables.
+
+    Args:
+        r: The rune to check.
+        ts: The tables to check.
+
+    Returns:
+        True if the rune is in any of the tables, False otherwise.
+    """
     for t in ts:
         if in_table(r, t[]):
             return True
     return False
 
 
-fn in_table[size: Int](r: UInt32, t: InlineArray[Interval, size]) -> Bool:
-    if r < t[0].first:
+fn in_table[size: Int, //](r: UInt32, t: InlineArray[Interval, size]) -> Bool:
+    """Check if the rune is in the table.
+
+    Parameters:
+        size: The size of the table.
+
+    Args:
+        r: The rune to check.
+        t: The table to check.
+
+    Returns:
+        True if the rune is in the table, False otherwise.
+    """
+    if r < t[0][0]:
         return False
 
     var bot = 0
@@ -108,9 +139,9 @@ fn in_table[size: Int](r: UInt32, t: InlineArray[Interval, size]) -> Bool:
     while top >= bot:
         var mid = (bot + top) >> 1
 
-        if t[mid].last < r:
+        if t[mid][1] < r:
             bot = mid + 1
-        elif t[mid].first > r:
+        elif t[mid][0] > r:
             top = mid - 1
         else:
             return True

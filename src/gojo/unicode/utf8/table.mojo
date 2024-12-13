@@ -1,18 +1,7 @@
 from collections import InlineArray
 
 
-@register_passable("trivial")
-struct Interval:
-    var first: UInt32
-    var last: UInt32
-
-    fn __init__(inout self, first: UInt32, last: UInt32):
-        self.first = first
-        self.last = last
-
-    fn __init__(inout self, other: Interval):
-        self.first = other.first
-        self.last = other.last
+alias Interval = Tuple[UInt32, UInt32]
 
 
 alias combining = InlineArray[Interval, 43](

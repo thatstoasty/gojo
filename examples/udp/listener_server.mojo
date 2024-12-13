@@ -7,17 +7,11 @@ fn main() raises:
 
     while True:
         var dest = List[UInt8, True](capacity=16)
-        var bytes_read: Int
-        var remote: HostPort
-        var err: Error
-        bytes_read, remote, err = listener.read_from(dest)
-        if err:
-            raise err
-
+        _, remote = listener.read_from(dest)
         dest.append(0)
         var message = String(dest^)
         print("Message received:", message)
+
         message = message.upper()
-        var bytes_sent: Int
-        bytes_sent, err = listener.write_to(message.as_bytes(), UDPAddr(remote.host, remote.port))
+        _ = listener.write_to(message.as_bytes(), UDPAddr(remote.host, remote.port))
         print("Message sent:", message)

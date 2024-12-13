@@ -11,24 +11,15 @@ fn main() raises:
 
     for _ in range(10):
         var connection = dial_tcp("tcp", host, port)
-        var bytes_written: Int
-        var err: Error
-        bytes_written, err = connection.write(
-            String("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n").as_bytes()
-        )
-        if err:
-            raise err
-
-        if bytes_written == 0:
-            print("No bytes sent to peer.")
-            return
+        connection.write("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n")
 
         # Read the response from the connection
         var response = List[UInt8, True](capacity=4096)
-        var bytes_read: Int = 0
-        bytes_read, err = connection.read(response)
-        if err and str(err) != str(io.EOF):
-            raise err
+        try:
+            bytes_read = connection.read(response)
+        except e:
+            if str(e) != str(io.EOF):
+                raise e
 
         if bytes_read == 0:
             print("No bytes received from peer.")
@@ -38,6 +29,4 @@ fn main() raises:
         print("Message received:", String(response^))
 
         # Cleanup the connection
-        err = connection.close()
-        if err:
-            raise err
+        connection.close()

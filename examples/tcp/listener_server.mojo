@@ -10,11 +10,11 @@ fn main() raises:
 
         # Read the contents of the message from the client.
         var bytes = List[UInt8, True](capacity=4096)
-        var bytes_read: Int
-        var err: Error
-        bytes_read, err = connection.read(bytes)
-        if str(err) != str(io.EOF):
-            raise err
+        try:
+            _ = connection.read(bytes)
+        except e:
+            if str(e) != str(io.EOF):
+                raise e
 
         bytes.append(0)
         var message = String(bytes^)
@@ -22,6 +22,5 @@ fn main() raises:
         message = message.upper()
 
         # Send a response back to the client.
-        var bytes_sent: Int
-        bytes_sent, err = connection.write(message.as_bytes())
-        print("Message sent:", message, bytes_sent)
+        connection.write(message)
+        print("Message sent:", message)

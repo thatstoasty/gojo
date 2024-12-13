@@ -6,22 +6,31 @@ from memory import UnsafePointer, Pointer
 
 
 alias IPPROTO_IPV6 = 41
+"""IPv6 Protocol."""
 alias IPV6_V6ONLY = 26
+"""IPv6 only flag."""
 alias EPROTONOSUPPORT = 93
+"""Protocol not supported."""
 
 
 struct FD:
+    """File Descriptor."""
+
     alias STDIN = 0
     alias STDOUT = 1
     alias STDERR = 2
 
 
 alias SUCCESS = 0
+"""Success return code."""
 alias GRND_NONBLOCK: Byte = 1
+"""Flag to make `getrandom` non-blocking."""
 
 
 # --- ( error.h Constants )-----------------------------------------------------
 struct ErrnoConstants:
+    """Errno Constants."""
+
     alias EPERM = 1
     alias ENOENT = 2
     alias ESRCH = 3
@@ -60,19 +69,32 @@ struct ErrnoConstants:
 
 
 fn cftob(val: c_int) -> Bool:
-    """Convert C-like failure (-1) to Bool."""
+    """Convert C-like failure (-1) to Bool.
+
+    Args:
+        val: The value to convert.
+
+    Returns:
+        True if the value is -1, False otherwise.
+    """
     return rebind[Bool](val > 0)
 
 
 # --- ( Network Related Constants )---------------------------------------------
 alias sa_family_t = c_ushort
+"""Socket Address Family."""
 alias socklen_t = c_uint
+"""Length of socket address."""
 alias in_addr_t = c_uint
+"""IPv4 address."""
 alias in_port_t = c_ushort
+"""Port number."""
 
 
 # Address Family Constants
 struct AddressFamily:
+    """Address Family Constants."""
+
     alias AF_UNSPEC = 0
     alias AF_UNIX = 1
     alias AF_LOCAL = 1
@@ -121,6 +143,8 @@ struct AddressFamily:
 
 # Protocol family constants
 struct ProtocolFamily:
+    """Protocol Family Constants."""
+
     alias PF_UNSPEC = AddressFamily.AF_UNSPEC
     alias PF_UNIX = AddressFamily.AF_UNIX
     alias PF_LOCAL = AddressFamily.AF_LOCAL
@@ -169,6 +193,8 @@ struct ProtocolFamily:
 
 # Socket Type constants
 struct SocketType:
+    """Socket Type Constants."""
+
     alias SOCK_STREAM = 1
     alias SOCK_DGRAM = 2
     alias SOCK_RAW = 3
@@ -182,6 +208,8 @@ struct SocketType:
 
 # Address Information
 struct AddressInformation:
+    """Address Information Constants."""
+
     alias AI_PASSIVE = 1
     alias AI_CANONNAME = 2
     alias AI_NUMERICHOST = 4
@@ -192,17 +220,25 @@ struct AddressInformation:
 
 
 alias INET_ADDRSTRLEN = 16
+"""IPv4 address string length."""
 alias INET6_ADDRSTRLEN = 46
+"""IPv6 address string length."""
 
 alias SHUT_RD = 0
+"""Shut down read."""
 alias SHUT_WR = 1
+"""Shut down write."""
 alias SHUT_RDWR = 2
+"""Shut down read and write."""
 
 alias SOL_SOCKET = 65535
+"""Socket Level."""
 
 
 # Socket Options
 struct SocketOptions:
+    """Socket Options."""
+
     alias SO_DEBUG = 1
     alias SO_REUSEADDR = 4
     alias SO_TYPE = 4104
@@ -287,25 +323,46 @@ struct SocketOptions:
 @value
 @register_passable("trivial")
 struct in_addr:
-    var s_addr: in_addr_t
+    """IPv4 address."""
 
-    fn __init__(inout self, addr: in_addr_t = 0):
+    var s_addr: in_addr_t
+    """IPv4 address."""
+
+    fn __init__(out self, addr: in_addr_t = 0):
+        """Initializes a new in_addr instance.
+
+        Args:
+            addr: The IPv4 address to use.
+        """
         self.s_addr = addr
 
 
 @value
 @register_passable("trivial")
 struct in6_addr:
+    """IPv6 address."""
+
     var s6_addr: StaticTuple[c_char, 16]
+    """IPv6 address."""
 
 
 @value
 @register_passable("trivial")
 struct sockaddr:
-    var sa_family: sa_family_t
-    var sa_data: StaticTuple[c_char, 14]
+    """Socket address."""
 
-    fn __init__(inout self, family: sa_family_t = 0, data: StaticTuple[c_char, 14] = StaticTuple[c_char, 14]()):
+    var sa_family: sa_family_t
+    """Address family."""
+    var sa_data: StaticTuple[c_char, 14]
+    """Data."""
+
+    fn __init__(out self, family: sa_family_t = 0, data: StaticTuple[c_char, 14] = StaticTuple[c_char, 14]()):
+        """Initializes a new sockaddr instance.
+
+        Args:
+            family: The address family to use.
+            data: The data to use.
+        """
         self.sa_family = family
         self.sa_data = data
 
@@ -313,18 +370,32 @@ struct sockaddr:
 @value
 @register_passable("trivial")
 struct sockaddr_in:
+    """IPv4 socket address."""
+
     var sin_family: sa_family_t
+    """Address family."""
     var sin_port: in_port_t
+    """Port number."""
     var sin_addr: in_addr
+    """IPv4 address."""
     var sin_zero: StaticTuple[c_char, 8]
+    """Padding."""
 
     fn __init__(
-        inout self,
+        out self,
         family: sa_family_t = 0,
         port: in_port_t = 0,
         addr: in_addr = in_addr(),
         zero: StaticTuple[c_char, 8] = StaticTuple[c_char, 8](),
     ):
+        """Initializes a new sockaddr_in instance.
+
+        Args:
+            family: The address family to use.
+            port: The port number to use.
+            addr: The IPv4 address to use.
+            zero: Padding.
+        """
         self.sin_family = family
         self.sin_port = port
         self.sin_addr = addr
@@ -334,11 +405,18 @@ struct sockaddr_in:
 @value
 @register_passable("trivial")
 struct sockaddr_in6:
+    """IPv6 socket address."""
+
     var sin6_family: sa_family_t
+    """Address family."""
     var sin6_port: in_port_t
+    """Port number."""
     var sin6_flowinfo: c_uint
+    """IPv6 flow information."""
     var sin6_addr: in6_addr
+    """IPv6 address."""
     var sin6_scope_id: c_uint
+    """Scope ID."""
 
 
 @value
@@ -349,16 +427,24 @@ struct addrinfo:
     """
 
     var ai_flags: c_int
+    """Input flags."""
     var ai_family: c_int
+    """Address family."""
     var ai_socktype: c_int
+    """Socket type."""
     var ai_protocol: c_int
+    """Protocol."""
     var ai_addrlen: socklen_t
+    """Length of address."""
     var ai_canonname: UnsafePointer[Byte]
+    """Canonical name of the address."""
     var ai_addr: UnsafePointer[sockaddr]
+    """Address."""
     var ai_next: UnsafePointer[addrinfo]
+    """Next address."""
 
     fn __init__(
-        inout self,
+        out self,
         ai_flags: c_int = 0,
         ai_family: c_int = 0,
         ai_socktype: c_int = 0,
@@ -368,6 +454,18 @@ struct addrinfo:
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
+        """Initializes a new addrinfo_unix instance.
+
+        Args:
+            ai_flags: The flags to use.
+            ai_family: The address family to use.
+            ai_socktype: The socket type to use.
+            ai_protocol: The protocol to use.
+            ai_addrlen: The length of the address.
+            ai_canonname: The canonical name of the address.
+            ai_addr: The address.
+            ai_next: The next address.
+        """
         self.ai_flags = ai_flags
         self.ai_family = ai_family
         self.ai_socktype = ai_socktype
@@ -386,16 +484,24 @@ struct addrinfo_unix:
     """
 
     var ai_flags: c_int
+    """Input flags."""
     var ai_family: c_int
+    """Address family."""
     var ai_socktype: c_int
+    """Socket type."""
     var ai_protocol: c_int
+    """Protocol."""
     var ai_addrlen: socklen_t
+    """Length of address."""
     var ai_addr: UnsafePointer[sockaddr]
+    """Address."""
     var ai_canonname: UnsafePointer[Byte]
+    """Canonical name of the address."""
     var ai_next: UnsafePointer[addrinfo]
+    """Next address."""
 
     fn __init__(
-        inout self,
+        out self,
         ai_flags: c_int = 0,
         ai_family: c_int = 0,
         ai_socktype: c_int = 0,
@@ -405,6 +511,18 @@ struct addrinfo_unix:
         ai_addr: UnsafePointer[sockaddr] = UnsafePointer[sockaddr](),
         ai_next: UnsafePointer[addrinfo] = UnsafePointer[addrinfo](),
     ):
+        """Initializes a new addrinfo_unix instance.
+
+        Args:
+            ai_flags: The flags to use.
+            ai_family: The address family to use.
+            ai_socktype: The socket type to use.
+            ai_protocol: The protocol to use.
+            ai_addrlen: The length of the address.
+            ai_canonname: The canonical name of the address.
+            ai_addr: The address.
+            ai_next: The next address.
+        """
         self.ai_flags = ai_flags
         self.ai_family = ai_family
         self.ai_socktype = ai_socktype
@@ -505,6 +623,7 @@ fn inet_pton(af: c_int, src: UnsafePointer[Byte], dst: UnsafePointer[Byte]) -> c
         af: Address Family see AF_ aliases.
         src: A pointer to a string containing the address.
         dst: A pointer to a buffer to store the result.
+
     Returns:
         1 on success, 0 if the input is not a valid address, -1 on error.
     """
@@ -661,6 +780,14 @@ fn bind(socket: c_int, address: Pointer[sockaddr], address_len: socklen_t) -> c_
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
+
+    Args:
+        socket: A File Descriptor.
+        address: A pointer to the address to bind to.
+        address_len: The size of the address.
+
+    Returns:
+        0 on success, -1 on error.
     """
     return external_call["bind", c_int](socket, address, address_len)
 
@@ -669,6 +796,14 @@ fn bind(socket: c_int, address: Pointer[sockaddr_in], address_len: socklen_t) ->
     """Libc POSIX `bind` function
     Reference: https://man7.org/linux/man-pages/man3/bind.3p.html
     Fn signature: `int bind(int socket, const struct sockaddr *address, socklen_t address_len)`.
+
+    Args:
+        socket: A File Descriptor.
+        address: A pointer to the address to bind to.
+        address_len: The size of the address.
+
+    Returns:
+        0 on success, -1 on error.
     """
     return external_call["bind", c_int](socket, address, address_len)
 
@@ -893,6 +1028,15 @@ fn getaddrinfo(
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html
     Fn signature: `int getaddrinfo(const char *restrict nodename, const char *restrict servname, const struct addrinfo *restrict hints, struct addrinfo **restrict res)`.
+
+    Args:
+        nodename: The node name.
+        servname: The service name.
+        hints: A pointer to the addrinfo struct.
+        res: A pointer to a pointer to the result.
+
+    Returns:
+        0 on success, -1 on error.
     """
     return external_call[
         "getaddrinfo",
@@ -909,6 +1053,15 @@ fn getaddrinfo_unix(
     """Libc POSIX `getaddrinfo` function
     Reference: https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html
     Fn signature: `int getaddrinfo(const char *restrict nodename, const char *restrict servname, const struct addrinfo *restrict hints, struct addrinfo **restrict res)`.
+
+    Args:
+        nodename: The node name.
+        servname: The service name.
+        hints: A pointer to the addrinfo struct.
+        res: A pointer to a pointer to the result.
+
+    Returns:
+        0 on success, -1 on error.
     """
     return external_call[
         "getaddrinfo",

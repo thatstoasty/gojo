@@ -1,6 +1,6 @@
 from .reader import Reader
 from .writer import Writer
-from .scan import Scanner, scan_words, scan_bytes, scan_lines, scan_runes
+from .scan import Scanner, scan_words, scan_bytes, scan_lines
 
 
 alias MIN_READ_BUFFER_SIZE = 16

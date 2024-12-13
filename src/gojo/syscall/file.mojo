@@ -22,7 +22,7 @@ fn close(fildes: c_int) -> c_int:
     return external_call["close", c_int, c_int](fildes)
 
 
-fn open[*T: AnyType](path: UnsafePointer[c_char], oflag: c_int) -> c_int:
+fn open(path: UnsafePointer[c_char], oflag: c_int) -> c_int:
     """Libc POSIX `open` function
     Reference: https://man7.org/linux/man-pages/man3/open.3p.html
     Fn signature: int open(const char *path, int oflag, ...).
@@ -30,8 +30,9 @@ fn open[*T: AnyType](path: UnsafePointer[c_char], oflag: c_int) -> c_int:
     Args:
         path: A pointer to a C string containing the path to open.
         oflag: The flags to open the file with.
+
     Returns:
-        A File Descriptor or -1 in case of failure
+        A File Descriptor or -1 in case of failure.
     """
     return external_call["open", c_int, UnsafePointer[c_char], c_int](path, oflag)  # FnName, RetType  # Args
 
@@ -41,10 +42,13 @@ fn read(fildes: c_int, buf: UnsafePointer[c_void], nbyte: c_size_t) -> c_int:
     Reference: https://man7.org/linux/man-pages/man3/read.3p.html
     Fn signature: sssize_t read(int fildes, void *buf, size_t nbyte).
 
-    Args: fildes: A File Descriptor.
+    Args:
+        fildes: A File Descriptor.
         buf: A pointer to a buffer to store the read data.
         nbyte: The number of bytes to read.
-    Returns: The number of bytes read or -1 in case of failure.
+
+    Returns:
+        The number of bytes read or -1 in case of failure.
     """
     return external_call["read", c_ssize_t, c_int, UnsafePointer[c_void], c_size_t](fildes, buf, nbyte)
 
@@ -54,9 +58,12 @@ fn write(fildes: c_int, buf: UnsafePointer[c_void], nbyte: c_size_t) -> c_int:
     Reference: https://man7.org/linux/man-pages/man3/write.3p.html
     Fn signature: ssize_t write(int fildes, const void *buf, size_t nbyte).
 
-    Args: fildes: A File Descriptor.
+    Args:
+        fildes: A File Descriptor.
         buf: A pointer to a buffer to write.
         nbyte: The number of bytes to write.
-    Returns: The number of bytes written or -1 in case of failure.
+
+    Returns:
+        The number of bytes written or -1 in case of failure.
     """
     return external_call["write", c_ssize_t, c_int, UnsafePointer[c_void], c_size_t](fildes, buf, nbyte)

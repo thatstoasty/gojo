@@ -14,22 +14,20 @@ fn main() raises:
     socket.bind(host, port)
 
     # Send 10 test messages
-    var err = socket.connect(host, 8081)
-    if err:
-        raise err
-    var bytes_sent: Int
-    bytes_sent, err = socket.write(message.as_bytes())
+    socket.connect(host, 8081)
+    socket.write(message)
     print("Message sent:", message)
 
     var bytes = List[UInt8, True](capacity=16)
-    var bytes_read: Int
-    bytes_read, err = socket.read(bytes)
-    if str(err) != str(io.EOF):
-        raise err
+    try:
+        _ = socket.read(bytes)
+    except e:
+        if str(e) != str(io.EOF):
+            raise e
 
     bytes.append(0)
     var response = String(bytes^)
     print("Message received:", response)
 
-    _ = socket.shutdown()
-    _ = socket.close()
+    socket.shutdown()
+    socket.close()

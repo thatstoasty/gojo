@@ -20,7 +20,7 @@ fn benchmark_concat[batches: Int]():
 fn benchmark_string_builder[batches: Int]():
     var new_builder = StringBuilder(capacity=batches * len(SAMPLE_TEXT))
     for _ in range(batches):
-        _ = new_builder.write(SAMPLE_TEXT)
+        new_builder.write(SAMPLE_TEXT)
     _ = new_builder.consume()
 
 
@@ -30,7 +30,7 @@ fn benchmark_consume_and_str() raises:
     with open(path, "r") as file:
         var data = file.read()
         for _ in range(10):
-            _ = builder.write(data)
+            builder.write(data)
 
         var start = time.perf_counter_ns()
         var result = str(builder)

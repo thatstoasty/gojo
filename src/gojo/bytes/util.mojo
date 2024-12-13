@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from memory import Span
+from utils import StringSlice
 
 
 fn equals(left: Span[Byte], right: Span[Byte]) -> Bool:
@@ -7,6 +8,9 @@ fn equals(left: Span[Byte], right: Span[Byte]) -> Bool:
     Args:
         left: The first bytes to compare.
         right: The second bytes to compare.
+
+    Returns:
+        True if `left` and `right` are equal, False otherwise.
     """
     if len(left) != len(right):
         return False
@@ -23,6 +27,9 @@ fn has_prefix(bytes: Span[Byte], prefix: Span[Byte]) -> Bool:
     Args:
         bytes: The bytes to search.
         prefix: The prefix to search for.
+
+    Returns:
+        True if the list begins with prefix, False otherwise.
     """
     if len(bytes) < len(prefix):
         return False
@@ -38,6 +45,9 @@ fn has_suffix(bytes: Span[Byte], suffix: Span[Byte]) -> Bool:
     Args:
         bytes: The bytes to search.
         suffix: The suffix to search for.
+
+    Returns:
+        True if the list ends with suffix, False otherwise.
     """
     if len(bytes) < len(suffix):
         return False
@@ -65,8 +75,24 @@ fn index_byte(bytes: Span[Byte], delim: Byte) -> Int:
 
 
 fn to_string(bytes: List[Byte, True]) -> String:
+    """Converts a list of bytes to a string.
+
+    Args:
+        bytes: The bytes to convert.
+
+    Returns:
+        The string representation of the bytes.
+    """
     return StringSlice(unsafe_from_utf8=Span(bytes))
 
 
 fn to_string(bytes: Span[Byte]) -> String:
+    """Converts a span of bytes to a string.
+
+    Args:
+        bytes: The bytes to convert.
+
+    Returns:
+        The string representation of the bytes.
+    """
     return StringSlice(unsafe_from_utf8=bytes)

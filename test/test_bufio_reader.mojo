@@ -11,7 +11,7 @@ def test_read():
     reader = bufio.Reader(bytes.Buffer("Hello"))
 
     # Read the buffer into and then add more to it.
-    dest = List[UInt8, True](capacity=16)
+    var dest = List[UInt8, True](capacity=16)
     _ = reader.read(dest)
     dest.extend(String(" World!").as_bytes())
 

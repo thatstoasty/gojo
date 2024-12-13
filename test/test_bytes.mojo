@@ -1,4 +1,4 @@
-from utils import Span
+from memory import Span
 from gojo.bytes import index_byte
 import testing
 

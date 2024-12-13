@@ -1,5 +1,5 @@
-from utils import StringSlice, Span
-from memory import UnsafePointer
+from utils import StringSlice
+from memory import UnsafePointer, Span
 from algorithm.memory import parallel_memcpy
 
 
@@ -23,7 +23,10 @@ struct StringBuilder[growth_factor: Float32 = 2](
     a few strings like `a + b + c + d` because the overhead of creating the string
     builder and appending the strings is not worth the performance gain.
 
-    Example:
+    Parameters:
+        growth_factor: The growth factor of the buffer. The default is 2.
+
+    Examples:
     ```mojo
     from gojo.strings import StringBuilder
 
@@ -40,7 +43,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
     var _capacity: Int
     """The maximum capacity of the buffer."""
 
-    fn __init__(inout self, *, capacity: Int = 4096):
+    fn __init__(out self, *, capacity: Int = 4096):
         """Creates a new string builder with the given capacity.
 
         Args:
@@ -51,7 +54,12 @@ struct StringBuilder[growth_factor: Float32 = 2](
         self._length = 0
         self._capacity = capacity
 
-    fn __moveinit__(inout self, owned other: Self):
+    fn __moveinit__(out self, owned other: Self):
+        """Initializes a new string builder by moving the data from `other`.
+
+        Args:
+            other: The string builder to move the data from.
+        """
         self._data = other._data
         self._length = other._length
         self._capacity = other._capacity
@@ -60,24 +68,33 @@ struct StringBuilder[growth_factor: Float32 = 2](
         other._capacity = 0
 
     fn __del__(owned self):
+        """Frees the internal buffer."""
         if self._data:
             self._data.free()
 
     fn __len__(self) -> Int:
-        """Returns the length of the string builder."""
+        """Returns the length of the string builder.
+
+        Returns:
+            The length of the string builder.
+        """
         return self._length
 
-    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self)]:
-        """Returns the internal data as a Span[Byte]."""
-        return Span[Byte, __origin_of(self)](unsafe_ptr=self._data, len=self._length)
+    fn as_bytes(ref self) -> Span[Byte, __origin_of(self)]:
+        """Returns the internal data as a Span[Byte].
 
-    fn as_string_slice(ref [_]self) -> StringSlice[__origin_of(self)]:
+        Returns:
+            The internal data as a Span[Byte].
+        """
+        return Span[Byte, __origin_of(self)](ptr=self._data, length=self._length)
+
+    fn as_string_slice(ref self) -> StringSlice[__origin_of(self)]:
         """Return a StringSlice view of the data owned by the builder.
 
         Returns:
             The string representation of the string builder. Returns an empty string if the string builder is empty.
         """
-        return StringSlice[__origin_of(self)](unsafe_from_utf8_ptr=self._data, len=self._length)
+        return StringSlice[__origin_of(self)](ptr=self._data, length=self._length)
 
     fn __str__(self) -> String:
         """Converts the string builder to a string.
@@ -88,7 +105,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         """
         return String.write(self)
 
-    fn consume(inout self, reuse: Bool = False) -> String:
+    fn consume(mut self, reuse: Bool = False) -> String:
         """
         Transfers the string builder's data to a string and resets the string builder. Effectively consuming the string builder.
 
@@ -98,7 +115,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         Returns:
             The string representation of the string builder. Returns an empty string if the buffer is empty.
         """
-        var bytes = List[Byte, True](unsafe_pointer=self._data, size=self._length, capacity=self._capacity)
+        var bytes = List[Byte, True](ptr=self._data, length=self._length, capacity=self._capacity)
         bytes.append(0)
         var result = String(bytes^)
 
@@ -109,7 +126,7 @@ struct StringBuilder[growth_factor: Float32 = 2](
         self._length = 0
         return result
 
-    fn _resize(inout self, capacity: Int) -> None:
+    fn _resize(mut self, capacity: Int) -> None:
         """Resizes the string builder buffer.
 
         Args:
@@ -121,8 +138,8 @@ struct StringBuilder[growth_factor: Float32 = 2](
         self._data = new_data
         self._capacity = capacity
 
-    fn _resize_if_needed(inout self, byte_count: Int) -> None:
-        """Resizes the buffer if the bytes to add exceeds the current capacity.
+    fn _resize_if_needed(mut self, byte_count: Int) -> None:
+        """Resizes the internal buffer if the bytes to add exceeds the current capacity.
 
         Args:
             byte_count: The number of bytes to add to the buffer.
@@ -134,11 +151,19 @@ struct StringBuilder[growth_factor: Float32 = 2](
                 new_capacity = self._capacity + byte_count
             self._resize(new_capacity)
 
-    fn write_to[W: Writer](self, inout writer: W):
+    fn write_to[W: Writer, //](self, mut writer: W):
+        """Writes the string builder data to the provided writer.
+
+        Parameters:
+            W: The type of writer.
+
+        Args:
+            writer: The writer to write the data to.
+        """
         writer.write(self.as_string_slice())
 
-    fn write_byte(inout self, byte: Byte):
-        """Appends a byte to the builder buffer.
+    fn write_byte(mut self, byte: Byte) -> None:
+        """Appends a byte to the builder.
 
         Args:
             byte: The byte to append.
@@ -148,9 +173,8 @@ struct StringBuilder[growth_factor: Float32 = 2](
         self._length += 1
 
     @always_inline
-    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
-        """
-        Write a `Span[Byte]` to this `StringBuilder`.
+    fn write_bytes(mut self, bytes: Span[Byte]) -> None:
+        """Write `bytes` to the builder.
 
         Args:
             bytes: The string slice to write to this Writer. Must NOT be null-terminated.
@@ -162,8 +186,15 @@ struct StringBuilder[growth_factor: Float32 = 2](
         parallel_memcpy(self._data.offset(self._length), bytes._data, len(bytes))
         self._length += len(bytes)
 
-    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
-        """Write data to the `StringBuilder`."""
+    fn write[*Ts: Writable](mut self, *args: *Ts) -> None:
+        """Write data to the `StringBuilder`.
+
+        Parameters:
+            Ts: The types of data to write.
+
+        Args:
+            args: The data to write.
+        """
 
         @parameter
         fn write_arg[T: Writable](arg: T):

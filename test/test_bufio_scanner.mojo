@@ -88,18 +88,3 @@ def test_scan_bytes():
             j += 1
 
         testing.assert_equal(j, len(test_case[]))
-
-
-def test_scan_runes():
-    # Create a reader from a string buffer
-    buf = buffer.Buffer("🔪🔥🔪🔥")
-
-    # Create a scanner from the reader
-    scanner = Scanner[split=scan_runes](buf^)
-
-    expected_results = List[String]("🔪", "🔥", "🔪", "🔥")
-    i = 0
-    while scanner.scan():
-        testing.assert_equal(scanner.current_token(), expected_results[i])
-        i += 1
-    testing.assert_equal(i, len(expected_results))

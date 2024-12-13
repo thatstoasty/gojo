@@ -1,5 +1,5 @@
 from memory import UnsafePointer
-from utils import Span
+from memory import Span
 
 
 alias SEEK_START = 0
@@ -70,10 +70,27 @@ trait Reader(Movable):
 
     Implementations must not retain `dest`."""
 
-    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
+    fn read(mut self, mut dest: List[Byte, True]) raises -> Int:
+        """Reads up to `len(dest)` bytes into `dest`.
+
+        Args:
+            dest: The destination buffer to write the data to.
+
+        Returns:
+            The number of bytes read.
+        """
         ...
 
-    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+    fn _read(mut self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+        """Reads up to `capacity` bytes into `dest`.
+
+        Args:
+            dest: The destination buffer to write the data to.
+            capacity: The capacity of the destination buffer.
+
+        Returns:
+            The number of bytes read.
+        """
         ...
 
 
@@ -84,7 +101,12 @@ trait Closer(Movable):
     Specific implementations may document their own behavior.
     """
 
-    fn close(inout self) raises -> None:
+    fn close(mut self) raises -> None:
+        """Closes the underlying object.
+
+        Raises:
+            Error: If the underlying object could not be closed.
+        """
         ...
 
 
@@ -106,7 +128,16 @@ trait Seeker(Movable):
     is implementation dependent.
     """
 
-    fn seek(inout self, offset: Int, whence: Int) raises -> Int:
+    fn seek(mut self, offset: Int, whence: Int) raises -> Int:
+        """Sets the offset for the next read or write to `offset`.
+
+        Args:
+            offset: The offset to set.
+            whence: The interpretation of the offset.
+
+        Returns:
+            The new offset relative to the start of the file.
+        """
         ...
 
 
@@ -118,7 +149,18 @@ trait ReaderFrom:
     Any error except `EOF` encountered during the read is also returned.
     """
 
-    fn read_from[R: Reader](inout self, inout reader: R) raises -> Int:
+    fn read_from[R: Reader, //](mut self, mut reader: R) raises -> Int:
+        """Reads data from `reader` until `EOF` or error.
+
+        Parameters:
+            R: The type of the reader to read data from.
+
+        Args:
+            reader: The reader to read data from.
+
+        Returns:
+            The number of bytes read.
+        """
         ...
 
 
@@ -133,7 +175,12 @@ trait ByteReader:
     processing. A `Reader` that does not implement `ByteReader`
     can be wrapped using `bufio.Reader` to add this method."""
 
-    fn read_byte(inout self) raises -> Byte:
+    fn read_byte(mut self) raises -> Byte:
+        """Reads and returns the next byte from the input or any error encountered.
+
+        Returns:
+            The next byte from the input.
+        """
         ...
 
 
@@ -146,5 +193,10 @@ trait ByteScanner(ByteReader):
     last-unread byte), or (in implementations that support the `Seeker` trait)
     seek to one byte before the current offset."""
 
-    fn unread_byte(inout self) raises -> None:
+    fn unread_byte(mut self) raises -> None:
+        """Causes the next call to `read_byte` to return the last byte read.
+
+        Raises:
+            Error: If the last operation was not a successful call to `read_byte`.
+        """
         ...

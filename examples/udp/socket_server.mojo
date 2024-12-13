@@ -11,18 +11,18 @@ fn main() raises:
     socket.bind(host, port)
     print("Listening on", str(socket.local_address_as_udp()))
     while True:
-        var bytes: List[UInt8, True]
+        var message: String
         var remote: HostPort
-        var err: Error
-        bytes, remote, err = socket.receive_from(1024)
-        if str(err) != str(io.EOF):
-            raise err
+        try:
+            bytes, remote = socket.receive_from(1024)
+            bytes.append(0)
+            message = String(bytes^)
+        except e:
+            if str(e) != str(io.EOF):
+                raise e
 
-        bytes.append(0)
-        var message = String(bytes^)
         print("Message Received:", message)
         message = message.upper()
 
-        var bytes_sent: Int
-        bytes_sent, err = socket.send_to(message.as_bytes(), remote.host, remote.port)
+        _ = socket.send_to(message.as_bytes(), remote.host, remote.port)
         print("Message sent:", message)

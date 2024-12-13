@@ -1,4 +1,4 @@
-from utils import Span
+from memory import Span
 from utils.write import MovableWriter
 from os import abort
 import ..io
@@ -7,19 +7,22 @@ from algorithm.memory import parallel_memcpy
 
 # buffered output
 struct Writer[W: MovableWriter, //](Sized):
-    """Implements buffering for an `io.Writer` object.
+    """Implements buffering for an `Writer` object.
     If an error occurs writing to a `Writer`, no more data will be
     accepted and all subsequent writes, and `Writer.flush`, will return the error.
 
     After all data has been written, the client should call the
     `Writer.flush` method to guarantee all data has been forwarded to
-    the underlying `io.Writer`.
+    the underlying `Writer`.
+
+    Parameters:
+        W: The type of writer to buffer.
 
     Examples:
     ```mojo
     import gojo.bytes
     import gojo.bufio
-    var writer = bufio.Writer(bytes.Buffer())
+    var writer = Writer(bytes.Buffer())
     _ = writer.write("Hello, World!")
     ```
     """
@@ -34,7 +37,7 @@ struct Writer[W: MovableWriter, //](Sized):
     """Error encountered during writing."""
 
     fn __init__(
-        inout self,
+        out self,
         owned writer: W,
         *,
         capacity: Int = io.BUFFER_SIZE,
@@ -50,21 +53,34 @@ struct Writer[W: MovableWriter, //](Sized):
         self.writer = writer^
         self.err = Error()
 
-    fn __moveinit__(inout self, owned existing: Self):
+    fn __moveinit__(out self, owned existing: Self):
+        """Initializes a new buffered writer by moving the internal buffer and writer from an existing buffered writer.
+
+        Args:
+            existing: The existing buffered writer to move from.
+        """
         self.buf = existing.buf^
         self.bytes_written = existing.bytes_written
         self.writer = existing.writer^
         self.err = existing.err^
 
     fn __len__(self) -> Int:
-        """Returns the size of the underlying buffer in bytes."""
+        """Returns the size of the underlying buffer in bytes.
+
+        Returns:
+            The size of the underlying buffer in bytes.
+        """
         return len(self.buf)
 
-    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self.buf)]:
-        """Returns the internal data as a Span[Byte]."""
-        return Span[Byte, __origin_of(self.buf)](unsafe_ptr=self.buf.unsafe_ptr(), len=self.buf.size)
+    fn as_bytes(ref self) -> Span[Byte, __origin_of(self.buf)]:
+        """Returns the internal data as a Span[Byte].
 
-    fn reset(inout self, owned writer: W) -> None:
+        Returns:
+            The internal data as a Span[Byte].
+        """
+        return Span[Byte, __origin_of(self.buf)](ptr=self.buf.unsafe_ptr(), length=self.buf.size)
+
+    fn reset(mut self, owned writer: W) -> None:
         """Discards any unflushed buffered data, clears any error, and
         resets the internal buffer to write its output to `writer`.
         Calling `reset` initializes the internal buffer to the default size.
@@ -76,8 +92,12 @@ struct Writer[W: MovableWriter, //](Sized):
         self.bytes_written = 0
         self.writer = writer^
 
-    fn flush(inout self) raises -> None:
-        """Writes any buffered data to the underlying `Writer`."""
+    fn flush(mut self) raises -> None:
+        """Writes any buffered data to the underlying `Writer`.
+
+        Raises:
+            Error: If an error occurs while writing to the underlying `Writer`.
+        """
         # Prior to attempting to flush, check if there's a pre-existing error or if there's nothing to flush.
         if self.err:
             raise self.err
@@ -108,7 +128,11 @@ struct Writer[W: MovableWriter, //](Sized):
         self.bytes_written = 0
 
     fn available(self) -> Int:
-        """Returns how many bytes are unused in the buffer."""
+        """Returns how many bytes are unused in the buffer.
+
+        Returns:
+            The number of bytes that are unused in the buffer.
+        """
         return self.buf.capacity - len(self.buf)
 
     fn buffered(self) -> Int:
@@ -119,7 +143,7 @@ struct Writer[W: MovableWriter, //](Sized):
         """
         return self.bytes_written
 
-    fn write_byte(inout self, byte: Byte) raises -> Int:
+    fn write_byte(mut self, byte: Byte) raises -> Int:
         """Writes a single byte to the internal buffer.
 
         Args:
@@ -127,6 +151,9 @@ struct Writer[W: MovableWriter, //](Sized):
 
         Returns:
             The number of bytes written, and an error if one occurred.
+
+        Raises:
+            Error: If an error occurs while writing to the internal buffer.
         """
         if self.err:
             raise self.err
@@ -139,7 +166,7 @@ struct Writer[W: MovableWriter, //](Sized):
         return 1
 
     @always_inline
-    fn write_bytes(inout self, bytes: Span[Byte, _]) -> None:
+    fn write_bytes(mut self, bytes: Span[Byte]) -> None:
         """Writes the contents of `src` into the internal buffer.
         If `total_bytes_written` < `len(src)`, it also returns an error explaining
         why the write is short.
@@ -163,7 +190,7 @@ struct Writer[W: MovableWriter, //](Sized):
             # Write whatever we can to fill the internal buffer, then flush it to the underlying writer.
             else:
                 byte_count = min(len(bytes_to_write), self.available())
-                parallel_memcpy(self.buf.unsafe_ptr().offset(self.buf.size), bytes_to_write.unsafe_ptr(), byte_count)
+                parallel_memcpy(self.buf.unsafe_ptr().offset(len(self.buf)), bytes_to_write.unsafe_ptr(), byte_count)
                 bytes_written += byte_count
                 self.buf.size += byte_count
                 self.bytes_written += byte_count
@@ -180,12 +207,19 @@ struct Writer[W: MovableWriter, //](Sized):
 
         # Write up to the remaining buffer capacity to the internal buffer, starting from the first available position.
         bytes_to_write = bytes[start:end]
-        parallel_memcpy(self.buf.unsafe_ptr().offset(self.buf.size), bytes_to_write.unsafe_ptr(), len(bytes_to_write))
+        parallel_memcpy(self.buf.unsafe_ptr().offset(len(self.buf)), bytes_to_write.unsafe_ptr(), len(bytes_to_write))
         self.buf.size += len(bytes_to_write)
         self.bytes_written += len(bytes_to_write)
 
-    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
-        """Write data to the `Writer`."""
+    fn write[*Ts: Writable](mut self, *args: *Ts) -> None:
+        """Write data to the `Writer`.
+
+        Parameters:
+            Ts: The types of data to write.
+
+        Args:
+            args: The data to write.
+        """
 
         @parameter
         fn write_arg[T: Writable](arg: T):
@@ -193,16 +227,21 @@ struct Writer[W: MovableWriter, //](Sized):
 
         args.each[write_arg]()
 
-    # TODO: Fix read_from
-    fn read_from[R: io.Reader](inout self, inout reader: R) raises -> Int:
+    fn read_from[R: io.Reader, //](mut self, mut reader: R) raises -> Int:
         """If there is buffered data and an underlying `read_from`, this fills
         the buffer and writes it before calling `read_from`.
+
+        Parameters:
+            R: The type of reader to read from.
 
         Args:
             reader: The reader to read from.
 
         Returns:
             The number of bytes read.
+
+        Raises:
+            Error: If an error occurs while reading from the reader.
         """
         if self.err:
             raise self.err

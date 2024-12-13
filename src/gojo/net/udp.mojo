@@ -1,5 +1,5 @@
 from collections import InlineArray, InlineList
-from utils import Span
+from memory import Span
 from ..syscall import SocketOptions, SocketType
 from .address import NetworkType, split_host_port, join_host_port, BaseAddr, resolve_internet_addr
 from .socket import Socket
@@ -17,45 +17,89 @@ struct UDPAddr(Addr):
     """
 
     var ip: String
+    """IP address."""
     var port: Int
+    """Port number."""
     var zone: String  # IPv6 addressing zone
+    """IPv6 addressing zone."""
 
-    fn __init__(inout self, ip: String = "127.0.0.1", port: Int = 8000, zone: String = ""):
+    fn __init__(out self, ip: String = "127.0.0.1", port: Int = 8000, zone: String = ""):
+        """Initializes a new UDP address.
+
+        Args:
+            ip: IP address.
+            port: Port number.
+            zone: IPv6 addressing zone.
+        """
+
         self.ip = ip
         self.port = port
         self.zone = zone
 
-    fn __init__(inout self, host_port: HostPort, zone: String = ""):
+    fn __init__(out self, host_port: HostPort, zone: String = ""):
+        """Initializes a new UDP address.
+
+        Args:
+            host_port: The host and port.
+            zone: IPv6 addressing zone.
+        """
+
         self.ip = host_port.host
         self.port = host_port.port
         self.zone = zone
 
-    fn __init__(inout self, addr: BaseAddr):
+    fn __init__(out self, addr: BaseAddr):
+        """Initializes a new UDP address.
+
+        Args:
+            addr: The base address.
+        """
         self.ip = addr.ip
         self.port = addr.port
         self.zone = addr.zone
 
     fn __str__(self) -> String:
+        """Returns the string representation of the UDP address.
+
+        Returns:
+            The string representation of the UDP address.
+        """
         if self.zone != "":
             return join_host_port(str(self.ip) + "%" + self.zone, str(self.port))
         return join_host_port(self.ip, str(self.port))
 
     fn network(self) -> String:
+        """Returns the network type.
+
+        Returns:
+            The network type.
+        """
         return NetworkType.udp.value
 
 
 struct UDPConnection(Movable):
-    """Implementation of the Conn interface for TCP network connections."""
+    """Implementation of the Conn interface for UDP network connections."""
 
     var socket: Socket
+    """The underlying socket."""
 
-    fn __init__(inout self, owned socket: Socket):
+    fn __init__(out self, owned socket: Socket):
+        """Initializes a new UDP connection.
+
+        Args:
+            socket: The underlying socket.
+        """
         self.socket = socket^
 
-    fn __moveinit__(inout self, owned existing: Self):
+    fn __moveinit__(out self, owned existing: Self):
+        """Initializes a new UDP connection by moving the data from an existing connection.
+
+        Args:
+            existing: The existing connection to move the data from.
+        """
         self.socket = existing.socket^
 
-    fn read_from(inout self, inout dest: List[Byte, True]) raises -> (Int, HostPort):
+    fn read_from(mut self, mut dest: List[Byte, True]) raises -> (Int, HostPort):
         """Reads data from the underlying file descriptor.
 
         Args:
@@ -63,10 +107,13 @@ struct UDPConnection(Movable):
 
         Returns:
             The number of bytes read, or an error if one occurred.
+
+        Raises:
+            Error: If an error occurred while reading data.
         """
         return self.socket.receive_from_into(dest)
 
-    fn write_to(inout self, src: Span[Byte], address: UDPAddr) raises -> Int:
+    fn write_to(mut self, src: Span[Byte], address: UDPAddr) raises -> Int:
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -75,10 +122,13 @@ struct UDPConnection(Movable):
 
         Returns:
             The number of bytes written, or an error if one occurred.
+
+        Raises:
+            Error: If an error occurred while writing data.
         """
         return self.socket.send_to(src, address.ip, address.port)
 
-    fn write_to(inout self, src: Span[Byte], host: String, port: Int) raises -> Int:
+    fn write_to(mut self, src: Span[Byte], host: String, port: Int) raises -> Int:
         """Writes data to the underlying file descriptor.
 
         Args:
@@ -88,10 +138,13 @@ struct UDPConnection(Movable):
 
         Returns:
             The number of bytes written, or an error if one occurred.
+
+        Raises:
+            Error: If an error occurred while writing data.
         """
         return self.socket.send_to(src, host, port)
 
-    fn close(inout self) raises -> None:
+    fn close(mut self) raises -> None:
         """Closes the underlying file descriptor."""
         return self.socket.close()
 
@@ -120,6 +173,12 @@ fn listen_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
     Args:
         network: The network type.
         local_address: The local address to listen on.
+
+    Returns:
+        A UDP connection.
+
+    Raises:
+        Error: If the address is invalid or failed to bind the socket.
     """
     socket = Socket(socket_type=SocketType.SOCK_DGRAM)
     socket.bind(local_address.ip, local_address.port)
@@ -133,6 +192,12 @@ fn listen_udp(network: String, local_address: String) raises -> UDPConnection:
     Args:
         network: The network type.
         local_address: The address to listen on. The format is "host:port".
+
+    Returns:
+        A UDP connection.
+
+    Raises:
+        Error: If the address is invalid or failed to bind the socket.
     """
     return listen_udp(network, UDPAddr(split_host_port(local_address)))
 
@@ -144,11 +209,18 @@ fn listen_udp(network: String, host: String, port: Int) raises -> UDPConnection:
         network: The network type.
         host: The address to listen on in ipv4 format.
         port: The port number.
+
+    Returns:
+        A UDP connection.
+
+    Raises:
+        Error: If the address is invalid or failed to bind the socket.
     """
     return listen_udp(network, UDPAddr(host, port))
 
 
 alias UDP_NETWORK_TYPES = InlineList[String, 3]("udp", "udp4", "udp6")
+"""The supported network types for UDP connections."""
 
 
 fn dial_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
@@ -160,7 +232,10 @@ fn dial_udp(network: String, local_address: UDPAddr) raises -> UDPConnection:
         local_address: The local address.
 
     Returns:
-        The TCP connection.
+        The UDP connection.
+
+    Raises:
+        Error: If the network type is not supported or failed to connect to the address.
     """
     # TODO: Add conversion of domain name to ip address
     if network not in UDP_NETWORK_TYPES:
@@ -179,7 +254,10 @@ fn dial_udp(network: String, local_address: String) raises -> UDPConnection:
         local_address: The local address to connect to. (The format is "host:port").
 
     Returns:
-        The TCP connection.
+        The UDP connection.
+
+    Raises:
+        Error: If the network type is not supported or failed to connect to the address.
     """
     return dial_udp(network, UDPAddr(split_host_port(local_address)))
 
@@ -194,6 +272,9 @@ fn dial_udp(network: String, host: String, port: Int) raises -> UDPConnection:
         port: The remote port.
 
     Returns:
-        The TCP connection.
+        The UDP connection.
+
+    Raises:
+        Error: If the network type is not supported or failed to connect to the address.
     """
     return dial_udp(network, UDPAddr(host, port))

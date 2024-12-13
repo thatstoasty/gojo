@@ -1,7 +1,7 @@
-from utils import StringSlice, Span
+from utils import StringSlice
 from os import abort
 from algorithm.memory import parallel_memcpy
-from memory import UnsafePointer
+from memory import UnsafePointer, Span
 import ..io
 
 
@@ -13,34 +13,61 @@ struct Reader(
     io.ByteScanner,
     io.Seeker,
 ):
+    """Reads data from a string."""
+
     var _data: String
     """String to read from."""
     var _index: Int
     """Current reading index."""
 
-    fn __init__(inout self, data: String = ""):
+    fn __init__(out self, data: String = ""):
+        """Initializes a new `Reader` instance.
+
+        Args:
+            data: The data to read from.
+        """
         self._data = data
         self._index = 0
 
     fn __len__(self) -> Int:
-        """Returns the number of bytes of the unread portion of the string."""
+        """Returns the number of bytes of the unread portion of the string.
+
+        Returns:
+            The number of bytes of the unread portion of the string.
+        """
         if self._index >= len(self._data):
             return 0
 
         return len(self._data) - self._index
 
-    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self._data)]:
-        """Returns a reference to the unread data of the `Reader`."""
+    fn as_bytes(ref self) -> Span[Byte, __origin_of(self._data)]:
+        """Returns a reference to the unread data of the `Reader`.
+
+        Returns:
+            The unread portion of the data as a `Span[Byte]`.
+        """
         return self._data.as_bytes()[self._index :]
 
     fn size(self) -> Int:
-        """Returns the original length of the underlying string."""
+        """Returns the original length of the underlying string.
+
+        Returns:
+            The original length of the underlying string.
+        """
         return len(self._data)
 
-    fn write_to[W: Writer](self, inout writer: W):
+    fn write_to[W: Writer, //](self, mut writer: W) -> None:
+        """Writes the remaining portion of the underlying data to the provided writer.
+
+        Parameters:
+            W: The type of writer.
+
+        Args:
+            writer: The writer to write the remaining portion of the data to.
+        """
         writer.write_bytes(self._data.as_bytes())
 
-    fn _read(inout self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
+    fn _read(mut self, dest: UnsafePointer[Byte], capacity: Int) raises -> Int:
         """Reads from the internal buffer into the destination buffer.
 
         Args:
@@ -49,6 +76,9 @@ struct Reader(
 
         Returns:
             Int: The number of bytes read into dest.
+
+        Raises:
+            Error: If the index is equal to or greater then the length of data. IE EOF.
         """
         if self._index >= len(self._data):
             raise io.EOF
@@ -60,7 +90,7 @@ struct Reader(
         self._index += count
         return count
 
-    fn read(inout self, inout dest: List[Byte, True]) raises -> Int:
+    fn read(mut self, mut dest: List[Byte, True]) raises -> Int:
         """Reads from the internal buffer into the destination buffer.
 
         Args:
@@ -68,18 +98,28 @@ struct Reader(
 
         Returns:
             Int: The number of bytes read into dest.
+
+        Raises:
+            Error: If the destination buffer is full.
         """
         if self._index >= len(self._data):
             raise io.EOF
         if dest.size == dest.capacity:
             raise Error("strings.Reader.read: no space left in destination buffer.")
 
-        bytes_read = self._read(dest.unsafe_ptr().offset(dest.size), dest.capacity - dest.size)
+        bytes_read = self._read(dest.unsafe_ptr().offset(len(dest)), dest.capacity - dest.size)
         dest.size += bytes_read
         return bytes_read
 
-    fn read_byte(inout self) raises -> Byte:
-        """Reads the next byte from the underlying _data."""
+    fn read_byte(mut self) raises -> Byte:
+        """Reads the next byte from the underlying data.
+
+        Returns:
+            The byte read.
+
+        Raises:
+            Error: If the reader is at the end of the data.
+        """
         if self._index >= len(self._data):
             raise io.EOF
 
@@ -87,15 +127,19 @@ struct Reader(
         self._index += 1
         return result
 
-    fn unread_byte(inout self) raises -> None:
-        """Unreads the last byte read. Only the most recent byte read can be unread."""
+    fn unread_byte(mut self) raises -> None:
+        """Unreads the last byte read. Only the most recent byte read can be unread.
+
+        Raises:
+            Error: If the reader is at the beginning of the data.
+        """
         if self._index <= 0:
-            raise Error("strings.Reader.unread_byte: at beginning of _data")
+            raise Error("strings.Reader.unread_byte: at beginning of data")
 
         self._index -= 1
 
-    fn seek(inout self, offset: Int, whence: Int) raises -> Int:
-        """Seeks to a new position in the underlying _data. The next read will start from that position.
+    fn seek(mut self, offset: Int, whence: Int) raises -> Int:
+        """Seeks to a new position in the underlying data. The next read will start from that position.
 
         Args:
             offset: The offset to seek to.
@@ -103,6 +147,9 @@ struct Reader(
 
         Returns:
             The new position in the _data.
+
+        Raises:
+            Error: If the whence is invalid or the position is negative.
         """
         position = 0
 
@@ -121,8 +168,11 @@ struct Reader(
         self._index = position
         return position
 
-    fn write_to[W: io.Writer, //](inout self, inout writer: W) raises -> Int:
+    fn write_to[W: Writer, //](mut self, mut writer: W) raises -> Int:
         """Writes the remaining portion of the underlying _data to the provided writer.
+
+        Parameters:
+            W: The type of writer.
 
         Args:
             writer: The writer to write the remaining portion of the _data to.
@@ -137,7 +187,7 @@ struct Reader(
         self._index += len(self)
         return len(self)
 
-    fn reset(inout self, data: String):
+    fn reset(mut self, data: String) -> None:
         """Resets the `Reader` to be reading from the beginning of the provided `data`.
 
         Args:
@@ -146,9 +196,12 @@ struct Reader(
         self._data = data
         self._index = 0
 
-    fn read_until_delimiter(inout self, delimiter: String = "\n") -> StringSlice[__origin_of(self)]:
+    fn read_until_delimiter(mut self, delimiter: String = "\n") -> StringSlice[__origin_of(self)]:
         """Reads from the underlying `data` until a delimiter is found.
         The delimiter is not included in the returned `data` slice.
+
+        Args:
+            delimiter: The delimiter to read until.
 
         Returns:
             The `data` slice containing the bytes read until the delimiter.
@@ -161,6 +214,4 @@ struct Reader(
             self._index += 1
 
         self._index += 1
-        return StringSlice[__origin_of(self)](
-            unsafe_from_utf8_ptr=self._data.unsafe_ptr() + start, len=self._index - start - 1
-        )
+        return StringSlice[__origin_of(self)](ptr=self._data.unsafe_ptr() + start, length=self._index - start - 1)

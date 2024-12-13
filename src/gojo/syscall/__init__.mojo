@@ -14,6 +14,7 @@ from .net import (
     sockaddr,
     sockaddr_in,
     socklen_t,
+    in_addr,
     socket,
     connect,
     htons,

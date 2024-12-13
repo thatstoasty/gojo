@@ -16,6 +16,7 @@ from ..syscall import (
     ProtocolFamily,
     sockaddr,
     sockaddr_in,
+    in_addr,
     htons,
     ntohs,
     inet_pton,
@@ -30,6 +31,17 @@ alias AddrInfo = Variant[addrinfo, addrinfo_unix]
 
 
 fn get_addr_info(host: String) raises -> AddrInfo:
+    """Get the address information of a host.
+
+    Args:
+        host: The host to get the address information of.
+
+    Returns:
+        The address information of the host.
+
+    Raises:
+        Error: If the address information could not be retrieved.
+    """
     if os_is_macos():
         var servinfo = UnsafePointer[addrinfo]().alloc(1)
         servinfo[0] = addrinfo()
@@ -81,7 +93,17 @@ fn get_addr_info(host: String) raises -> AddrInfo:
 
 
 fn get_ip_address(host: String) raises -> String:
-    """Get the IP address of a host."""
+    """Get the IP address of a host.
+
+    Args:
+        host: The host to get the IP address of.
+
+    Returns:
+        The IP address of the host.
+
+    Raises:
+        Error: If the IP address could not be retrieved.
+    """
     # Call getaddrinfo to get the IP address of the host.
     var result = get_addr_info(host)
     var ai_addr: UnsafePointer[sockaddr]
@@ -109,14 +131,39 @@ fn get_ip_address(host: String) raises -> String:
 
 
 fn convert_port_to_binary(port: Int) -> UInt16:
+    """Convert a port number to binary using htons.
+
+    Args:
+        port: The port number to convert.
+
+    Returns:
+        The port number in binary.
+    """
     return htons(UInt16(port))
 
 
 fn convert_binary_port_to_int(port: UInt16) -> Int:
+    """Convert a port number in binary to an integer using ntohs.
+
+    Args:
+        port: The port number in binary.
+
+    Returns:
+        The port number as an integer.
+    """
     return int(ntohs(port))
 
 
 fn convert_ip_to_binary(ip_address: String, address_family: Int) -> UInt32:
+    """Convert an IP address to binary using inet_pton.
+
+    Args:
+        ip_address: The IP address to convert.
+        address_family: The address family of the IP address.
+
+    Returns:
+        The IP address in binary.
+    """
     var ip = List[Byte, True](0, 0, 0, 0)
     var status = inet_pton(address_family, ip_address.unsafe_ptr(), ip.unsafe_ptr())
     if status == -1:
@@ -154,25 +201,45 @@ fn convert_binary_ip_to_string(owned ip_address: UInt32, address_family: Int32, 
 
 fn build_sockaddr(ip_address: String, port: Int, address_family: Int) -> sockaddr:
     """Build a sockaddr pointer from an IP address and port number.
-    https://learn.microsoft.com/en-us/windows/win32/winsock/sockaddr-2
-    https://learn.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-sockaddr_in.
+
+    Args:
+        ip_address: The IP address to use.
+        port: The port number to use.
+        address_family: The address family of the IP address.
+
+    Returns:
+        The sockaddr pointer.
+
+    Notes:
+        https://learn.microsoft.com/en-us/windows/win32/winsock/sockaddr-2
+        https://learn.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-sockaddr_in.
     """
     var bin_port = convert_port_to_binary(port)
     var bin_ip = convert_ip_to_binary(ip_address, address_family)
 
-    var ai = sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
+    var ai = sockaddr_in(address_family, bin_port, in_addr(bin_ip), StaticTuple[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
     return UnsafePointer.address_of(ai).bitcast[sockaddr]().take_pointee()
 
 
 fn build_sockaddr_in(ip_address: String, port: Int, address_family: Int) -> sockaddr_in:
     """Build a sockaddr pointer from an IP address and port number.
-    https://learn.microsoft.com/en-us/windows/win32/winsock/sockaddr-2
-    https://learn.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-sockaddr_in.
+
+    Args:
+        ip_address: The IP address to use.
+        port: The port number to use.
+        address_family: The address family of the IP address.
+
+    Returns:
+        The sockaddr_in struct.
+
+    Notes:
+        https://learn.microsoft.com/en-us/windows/win32/winsock/sockaddr-2
+        https://learn.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-sockaddr_in.
     """
     var bin_port = convert_port_to_binary(port)
     var bin_ip = convert_ip_to_binary(ip_address, address_family)
 
-    return sockaddr_in(address_family, bin_port, bin_ip, StaticTuple[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
+    return sockaddr_in(address_family, bin_port, in_addr(bin_ip), StaticTuple[c_char, 8](0, 0, 0, 0, 0, 0, 0, 0))
 
 
 fn convert_sockaddr_to_host_port(owned sockaddr: sockaddr) raises -> HostPort:
@@ -182,7 +249,10 @@ fn convert_sockaddr_to_host_port(owned sockaddr: sockaddr) raises -> HostPort:
         sockaddr: The sockaddr pointer to convert.
 
     Returns:
-        A tuple containing the HostPort and an Error if any occurred,.
+        The host and port as a HostPort object.
+
+    Raises:
+        Error: If the sockaddr pointer is null.
     """
     if not UnsafePointer.address_of(sockaddr):
         raise Error("sockaddr is null, nothing to convert.")

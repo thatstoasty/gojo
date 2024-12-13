@@ -5,9 +5,12 @@ alias BUFFER_SIZE = 4096
 """The default buffer size for reading and writing operations."""
 
 
-fn read_at_least[R: Reader, //](inout reader: R, inout dest: List[Byte, True], min: Int) raises -> Int:
+fn read_at_least[R: Reader, //](mut reader: R, mut dest: List[Byte, True], min: Int) raises -> Int:
     """Reads from `reader` into `dest` until it has read at least `min` bytes.
     If `reader` raises an Error having read at least min bytes, the error is dropped.
+
+    Parameters:
+        R: The type of reader to read from.
 
     Args:
         reader: The reader to read from.
@@ -44,9 +47,12 @@ fn read_at_least[R: Reader, //](inout reader: R, inout dest: List[Byte, True], m
     return bytes_read
 
 
-fn read_full[R: Reader, //](inout reader: R, inout dest: List[Byte, True]) raises -> Int:
+fn read_full[R: Reader, //](mut reader: R, mut dest: List[Byte, True]) raises -> Int:
     """Reads exactly `len(dest)` bytes from `reader` into `dest`.
     If `reader` raises an Error having read at least `len(dest)` bytes, the error is dropped.
+
+    Parameters:
+        R: The type of reader to read from.
 
     Args:
         reader: The reader to read from.
@@ -63,8 +69,11 @@ fn read_full[R: Reader, //](inout reader: R, inout dest: List[Byte, True]) raise
     return read_at_least(reader, dest, dest.capacity)
 
 
-fn read_all[R: Reader, //](inout reader: R) raises -> List[Byte, True]:
+fn read_all[R: Reader, //](mut reader: R) raises -> List[Byte, True]:
     """Reads from `reader` until an Error or `EOF` and returns the data it read.
+
+    Parameters:
+        R: The type of reader to read from.
 
     Args:
         reader: The reader to read from.
